@@ -1,0 +1,20 @@
+#!/bin/sh
+# Minimal config for OpenBSD/amd64 static bootstrap of musl
+# Usage: tools/config-openbsd-x86_64
+set -eu
+: ${CC:=cc}
+cat > config.mak <<'EOF'
+ARCH = x86_64
+prefix = /usr/local
+includedir = $(prefix)/include
+libdir = $(prefix)/lib
+CC = CC_PLACEHOLDER
+CFLAGS += -O2 -pipe -fvisibility=hidden
+CPPFLAGS += -D_OPENBSD_SOURCE -U__linux__
+LDFLAGS +=
+TARGET_OS = openbsd
+EOF
+sed -i '' -e "s|CC_PLACEHOLDER|${CC}|" config.mak 2>/dev/null || \
+sed -i -e "s|CC_PLACEHOLDER|${CC}|" config.mak
+echo "Wrote config.mak for OpenBSD/amd64 (static-only)."
+echo "Run: make -j\$(sysctl -n hw.ncpu 2>/dev/null || echo 4) libc.a"

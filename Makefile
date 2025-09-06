@@ -75,6 +75,27 @@ WRAPCC_CLANG = clang
 
 LDSO_PATHNAME = $(syslibdir)/ld-musl-$(ARCH)$(SUBARCH).so.1
 
+# --- Experimental OpenBSD hook (stage-1: static, single-thread) -------
+# Enable by running: tools/config-openbsd-x86_64
+ifneq ($(TARGET_OS),)
+CFLAGS   += -DMUSL_TARGET_OS_$(TARGET_OS)
+CPPFLAGS += -DMUSL_TARGET_OS_$(TARGET_OS)
+endif
+
+ifeq ($(TARGET_OS),openbsd)
+# Use arch-specific overrides first for this OS/arch.
+CPPFLAGS := -Iarch/openbsd/$(ARCH) $(CPPFLAGS)
+# Static-only for bootstrap; no dynlink in this stage.
+LDFLAGS  := -static $(LDFLAGS)
+# Mark this build stage explicitly.
+CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
+
+# Filter out Linux-only sources from the global SRCS list.
+# This is safe even if src/linux does not exist (wildcard -> empty).
+SRCS := $(filter-out $(wildcard src/linux/*.c) $(wildcard src/linux/*/*.c),$(SRCS))
+endif
+# ----------------------------------------------------------------------
+
 -include config.mak
 -include $(srcdir)/arch/$(ARCH)/arch.mak
 
