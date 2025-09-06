@@ -75,29 +75,33 @@ WRAPCC_CLANG = clang
 
 LDSO_PATHNAME = $(syslibdir)/ld-musl-$(ARCH)$(SUBARCH).so.1
 
-# --- Experimental OpenBSD hook (stage-1: static, single-thread) -------
-# Enable by running: tools/config-openbsd-x86_64
-ifneq ($(TARGET_OS),)
-CFLAGS   += -DMUSL_TARGET_OS_$(TARGET_OS)
-CPPFLAGS += -DMUSL_TARGET_OS_$(TARGET_OS)
-endif
-
-ifeq ($(TARGET_OS),openbsd)
-# Use arch-specific overrides first for this OS/arch.
-CPPFLAGS := -Iarch/openbsd/$(ARCH) $(CPPFLAGS)
-# Static-only for bootstrap; no dynlink in this stage.
-LDFLAGS  := -static $(LDFLAGS)
-# Mark this build stage explicitly.
-CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
-
-# Filter out Linux-only sources from the global SRCS list.
-# This is safe even if src/linux does not exist (wildcard -> empty).
-SRCS := $(filter-out $(wildcard src/linux/*.c) $(wildcard src/linux/*/*.c),$(SRCS))
-endif
-# ----------------------------------------------------------------------
-
 -include config.mak
 -include $(srcdir)/arch/$(ARCH)/arch.mak
+
+# --- Experimental OpenBSD hook (stage-1: static, single-thread) -------
+# NOTE: This block must come *after* the includes above so:
+#   - config.mak has defined TARGET_OS=openbsd
+#   - SRCS is fully populated (so filtering is effective)
+ifeq ($(TARGET_OS),openbsd)
+
+# Prefer OS-specific arch headers (overrides default arch/$(ARCH)):
+CPPFLAGS := -Iarch/openbsd/$(ARCH) $(CPPFLAGS)
+
+# Stage-1 bootstrap is static-only; we are not building ldso/threads yet.
+# (This only affects binaries linked during the build; libc.a contents are PIC as usual.)
+LDFLAGS  := -static $(LDFLAGS)
+
+# Mark stage-1 and enable OpenBSD feature macros
+CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
+CPPFLAGS += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
+
+# Filter out Linux-only sources and any generic getrandom implementation,
+# so src/misc/getrandom_openbsd.c is the sole provider.
+SRCS := $(filter-out src/linux/%,$(SRCS))
+SRCS := $(filter-out src/misc/getrandom.c,$(SRCS))
+
+endif
+# ----------------------------------------------------------------------
 
 ifeq ($(ARCH),)
 
