@@ -1,7 +1,8 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <stddef.h>
-#include <bits/syscall.h>  /* our OpenBSD numbers */
+#include <bits/syscall.h>  /* OpenBSD syscall numbers */
+#ifdef SYS_getentropy
 
 #ifdef MUSL_OBSD
 

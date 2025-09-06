@@ -86,6 +86,9 @@ ifeq ($(TARGET_OS),openbsd)
 
 # Prefer OS-specific arch headers (overrides default arch/$(ARCH)):
 CPPFLAGS := -Iarch/openbsd/$(ARCH) $(CPPFLAGS)
+# Make kernel syscall numbers visible even with -nostdinc.
+# Our -I paths remain first, so musl headers still win.
+CPPFLAGS += -isystem /usr/include
 
 # Stage-1 bootstrap is static-only; we are not building ldso/threads yet.
 # (This only affects binaries linked during the build; libc.a contents are PIC as usual.)
