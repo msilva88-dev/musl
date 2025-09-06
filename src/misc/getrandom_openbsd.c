@@ -1,7 +1,9 @@
 #include <sys/types.h>
-#include <sys/syscall.h>
 #include <errno.h>
 #include <stddef.h>
+#ifdef SYS_getentropy
+#include <sys/syscall.h>
+#endif
 
 #ifdef MUSL_OBSD
 
@@ -9,6 +11,7 @@
 extern long __syscall2(long, long, long);
 
 /* OpenBSD getentropy(2) limits reads to 256 bytes per call. */
+#if defined(SYS_getentropy)
 ssize_t getrandom(void *buf, size_t buflen, unsigned flags)
 {
 	(void)flags; /* TODO: honor NONBLOCK/RANDOM if needed */
@@ -28,5 +31,18 @@ ssize_t getrandom(void *buf, size_t buflen, unsigned flags)
 	}
 	return (ssize_t)total;
 }
+#else
+/* Stage-1 fallback: if we don't have the syscall number yet, return ENOSYS.
+ * This keeps the build going; later we will supply OpenBSD syscall numbers.
+ */
+ssize_t getrandom(void *buf, size_t buflen, unsigned flags)
+{
+	(void)buf;
+	(void)buflen;
+	(void)flags;
+	errno = ENOSYS;
+	return -1;
+}
+#endif
 
 #endif /* MUSL_OBSD */
