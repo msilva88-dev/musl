@@ -184,6 +184,10 @@ SRCS := $(filter-out src/misc/getrandom.c,$(SRCS))
 ALL_OBJS := $(filter-out obj/src/mman/mincore.o obj/src/mman/mincore.lo,$(ALL_OBJS))
 # (src/mman/mincore_openbsd.c will be picked up automatically.)
 
+# mremap(): Linux-only; provide OpenBSD stub and drop the generic one.
+ALL_OBJS := $(filter-out obj/src/mman/mremap.o obj/src/mman/mremap.lo,$(ALL_OBJS))
+# (src/mman/mremap_openbsd.c will be picked up automatically.)
+
 endif
 # ----------------------------------------------------------------------
 
