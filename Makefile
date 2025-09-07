@@ -110,6 +110,10 @@ CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
 # (Filter both .o and .lo in case shared objects are ever built.)
 ALL_OBJS := $(filter-out obj/src/misc/getrandom.o obj/src/misc/getrandom.lo,$(ALL_OBJS))
 
+# Drop Linux-only sources entirely for Stage-1.
+# Filtering at the object level ensures nothing under src/linux/ is compiled.
+ALL_OBJS := $(filter-out obj/src/linux/%,$(ALL_OBJS))
+
 # Mark stage-1 and enable OpenBSD feature macros
 CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
 CPPFLAGS += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
