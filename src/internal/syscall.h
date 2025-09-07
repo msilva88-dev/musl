@@ -15,6 +15,13 @@
 #endif
 #endif
 
+/* OpenBSD: kernel has no *_time64 syscall names.
+ * Ensure we never remap SYS_* to *_time64 on this target. */
+#ifdef MUSL_OBSD
+#undef  __SYSCALL_TIME64
+#define __SYSCALL_TIME64 0
+#endif
+
 #include "syscall_arch.h"
 
 #ifndef SYSCALL_RLIM_INFINITY
