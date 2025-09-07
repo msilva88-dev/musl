@@ -170,6 +170,10 @@ ALL_OBJS := $(filter-out obj/src/misc/setrlimit.o obj/src/misc/setrlimit.lo,$(AL
 ALL_OBJS := $(filter-out obj/src/misc/setdomainname.o obj/src/misc/setdomainname.lo,$(ALL_OBJS))
 # (src/misc/setdomainname_openbsd.c will be picked up automatically.)
 
+# uname(): no Linux SYS_uname on OpenBSD — use sysctl-based version.
+ALL_OBJS := $(filter-out obj/src/misc/uname.o obj/src/misc/uname.lo,$(ALL_OBJS))
+# (src/misc/uname_openbsd.c will be picked up automatically.)
+
 # Filter out Linux-only sources and any generic getrandom implementation,
 # so src/misc/getrandom_openbsd.c is the sole provider.
 SRCS := $(filter-out src/linux/%,$(SRCS))
