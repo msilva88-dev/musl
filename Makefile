@@ -159,6 +159,12 @@ CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS)
 SYSCALL_BITS_SRC  := $(srcdir)/arch/openbsd/$(ARCH)/bits/syscall.h
 SYSCALL_BITS_RULE := overlay
 
+# Use OpenBSD-specific getrlimit/setrlimit; the generic ones use
+# Linux prlimit64 which does not exist here.
+ALL_OBJS := $(filter-out obj/src/misc/getrlimit.o obj/src/misc/getrlimit.lo,$(ALL_OBJS))
+ALL_OBJS := $(filter-out obj/src/misc/setrlimit.o obj/src/misc/setrlimit.lo,$(ALL_OBJS))
+# (getrlimit_openbsd.c / setrlimit_openbsd.c will be picked up automatically)
+
 # Filter out Linux-only sources and any generic getrandom implementation,
 # so src/misc/getrandom_openbsd.c is the sole provider.
 SRCS := $(filter-out src/linux/%,$(SRCS))
