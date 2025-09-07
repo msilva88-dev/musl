@@ -188,6 +188,11 @@ ALL_OBJS := $(filter-out obj/src/mman/mincore.o obj/src/mman/mincore.lo,$(ALL_OB
 ALL_OBJS := $(filter-out obj/src/mman/mremap.o obj/src/mman/mremap.lo,$(ALL_OBJS))
 # (src/mman/mremap_openbsd.c will be picked up automatically.)
 
+# POSIX message queues are not provided via SYS_mq_* on OpenBSD.
+# Drop the Linux mq implementation and use stubs for stage-1.
+ALL_OBJS := $(filter-out obj/src/mq/%.o obj/src/mq/%.lo,$(ALL_OBJS))
+# (src/misc/mq_openbsd_stub.c supplies ENOSYS stubs.)
+
 endif
 # ----------------------------------------------------------------------
 
