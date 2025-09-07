@@ -179,6 +179,13 @@ ALL_OBJS := $(filter-out obj/src/misc/uname.o obj/src/misc/uname.lo,$(ALL_OBJS))
 SRCS := $(filter-out src/linux/%,$(SRCS))
 SRCS := $(filter-out src/misc/getrandom.c,$(SRCS))
 
+# Per-file system include path for sysctl-using shims (needed due to -nostdinc).
+# Keep it narrow to avoid header collisions: only these objects get -isystem.
+obj/src/misc/uname_openbsd.o:    CFLAGS_ALL += -isystem /usr/include
+obj/src/conf/sysconf_openbsd.o:  CFLAGS_ALL += -isystem /usr/include
+# If you add more OpenBSD shims that include <sys/sysctl.h>, append them here:
+#   obj/src/xyz/your_sysctl_shim.o: CFLAGS_ALL += -isystem /usr/include
+
 endif
 # ----------------------------------------------------------------------
 
