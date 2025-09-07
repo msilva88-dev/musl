@@ -8,17 +8,13 @@
 #include "syscall.h"
 #include "fork_impl.h"
 
-/* OpenBSD Stage-1:
- * The data-segment break syscall is named obreak(2). Some code paths refer
- * to SYS_brk, so provide a local alias to keep the allocator building even
- * if the overlay bits header is not picked up in this TU.
- */
-#ifdef MUSL_OBSD
+/* Stage-1 OpenBSD: ensure brk syscall number is visible even if the
+ * overlay bits header or -DMUSL_OBSD didn’t reach this TU.  Safe on
+ * other OSes: SYS_obreak won’t exist there, so this does nothing. */
 #ifndef SYS_brk
-#ifdef SYS_obreak
-#define SYS_brk SYS_obreak
-#endif
-#endif
+# ifdef SYS_obreak
+#  define SYS_brk SYS_obreak
+# endif
 #endif
 
 #define ALIGN 16
