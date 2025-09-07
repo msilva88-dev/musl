@@ -1,52 +1,23 @@
-/* OpenBSD uname() using sysctl(3) — Stage-1 bring-up.
- *
- * Fields:
- *   sysname  ← kern.ostype
- *   nodename ← kern.hostname
- *   release  ← kern.osrelease
- *   version  ← kern.version
- *   machine  ← hw.machine
+/* OpenBSD uname() — Stage-1 stub (no sysctl).
+ * Good enough for static bootstrap, avoids pulling kernel headers.
  */
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#ifdef MUSL_OBSD
-/* Pull in the *system* type headers so <sys/sysctl.h> sees u_intXX_t/intXX_t. */
-#include "/usr/include/sys/types.h"
-#include "/usr/include/stdint.h"
-#endif
-#include <sys/sysctl.h>
-#include <sys/types.h>
 #include <sys/utsname.h>
 #include <string.h>
 #include <errno.h>
 
-static int sysctl_str(int mib0, int mib1, char *dst, size_t dstsz)
-{
-	int mib[2] = { mib0, mib1 };
-	char buf[256];
-	size_t len = sizeof buf;
-	if (!dst || dstsz == 0) { errno = EFAULT; return -1; }
-	if (sysctl(mib, 2, buf, &len, 0, 0) == -1) return -1;
-	/* ensure NUL termination and truncation */
-	if (len >= sizeof buf) len = sizeof buf - 1;
-	buf[len] = 0;
-	size_t n = len < dstsz-1 ? len : dstsz-1;
-	memcpy(dst, buf, n);
-	dst[n] = 0;
-	return 0;
-}
-
 int uname(struct utsname *u)
 {
 	if (!u) { errno = EFAULT; return -1; }
-	/* zero to avoid leaking stack junk if any sysctl fails after copies */
 	memset(u, 0, sizeof *u);
-
-	if (sysctl_str(CTL_KERN, KERN_OSTYPE, u->sysname,  sizeof u->sysname)  == -1) return -1;
-	if (sysctl_str(CTL_KERN, KERN_HOSTNAME, u->nodename, sizeof u->nodename) == -1) return -1;
-	if (sysctl_str(CTL_KERN, KERN_OSRELEASE, u->release, sizeof u->release) == -1) return -1;
-	if (sysctl_str(CTL_KERN, KERN_VERSION, u->version,  sizeof u->version)  == -1) return -1;
-	if (sysctl_str(CTL_HW,   HW_MACHINE,   u->machine,  sizeof u->machine)  == -1) return -1;
-
+	/* Conservative placeholders; adjust later when sysctl wrapper exists. */
+	strlcpy(u->sysname,  "OpenBSD",     sizeof u->sysname);
+	strlcpy(u->nodename, "localhost",   sizeof u->nodename);
+	strlcpy(u->release,  "0",           sizeof u->release);
+	strlcpy(u->version,  "musl-stage1", sizeof u->version);
+#if defined(__x86_64__) || defined(__amd64__)
+	strlcpy(u->machine,  "amd64",       sizeof u->machine);
+#else
+	strlcpy(u->machine,  "unknown",     sizeof u->machine);
+#endif
 	return 0;
 }
