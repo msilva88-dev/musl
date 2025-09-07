@@ -232,6 +232,14 @@ ALL_OBJS := $(filter-out \
   $(ALL_OBJS))
 # (src/sched/sched_cpucount_openbsd.c is picked up automatically.)
 
+# sched_get_priority_{max,min}: Linux-only syscalls in generic sources.
+# Use OpenBSD shims and drop the Linux objects.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/sched_get_priority_max.o obj/src/sched/sched_get_priority_max.lo \
+  obj/src/sched/sched_get_priority_min.o obj/src/sched/sched_get_priority_min.lo, \
+  $(ALL_OBJS))
+# (openbsd variants are picked up automatically.)
+
 endif
 # ----------------------------------------------------------------------
 
