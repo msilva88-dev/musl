@@ -245,6 +245,11 @@ ALL_OBJS := $(filter-out \
   obj/src/sched/sched_getcpu.o obj/src/sched/sched_getcpu.lo, \
   $(ALL_OBJS))
 
+# sched_rr_get_interval(): Linux-only syscall; use OpenBSD stub.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/sched_rr_get_interval.o obj/src/sched/sched_rr_get_interval.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
