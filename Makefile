@@ -150,6 +150,15 @@ ALL_OBJS := $(filter-out obj/src/conf/sysconf.o obj/src/conf/sysconf.lo,$(ALL_OB
 CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
 CPPFLAGS += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
 
+# CFLAGS_ALL was formed earlier using :=. Pull in the *current*
+# CPPFLAGS/CFLAGS (now containing -DMUSL_OBSD) so every TU sees it.
+CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS)
+
+# Use the OpenBSD overlay to generate bits/syscall.h instead of the
+# Linux template. The recipe below will honor this via SYSCALL_BITS_RULE.
+SYSCALL_BITS_SRC  := $(srcdir)/arch/openbsd/$(ARCH)/bits/syscall.h
+SYSCALL_BITS_RULE := overlay
+
 # Filter out Linux-only sources and any generic getrandom implementation,
 # so src/misc/getrandom_openbsd.c is the sole provider.
 SRCS := $(filter-out src/linux/%,$(SRCS))
