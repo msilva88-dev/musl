@@ -91,9 +91,9 @@ CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
 	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CPPFLAGS)) \
 	-I$(srcdir)/arch/$(ARCH)
 
-# Make kernel syscall numbers visible even with -nostdinc.
-# Our -I paths remain first, so musl headers still win.
-CPPFLAGS += -isystem /usr/include
+# Do not add /usr/include globally: it can cause system headers (e.g.
+# <endian.h>) to override musl's. The OpenBSD overlay pulls in only the
+# needed kernel numbers directly (see bits/syscall.h).
 
 # Stage-1 bootstrap is static-only; we are not building ldso/threads yet.
 # (This only affects binaries linked during the build; libc.a contents are PIC as usual.)
