@@ -224,6 +224,14 @@ ALL_OBJS := $(filter-out \
   obj/src/sched/sched_getaffinity.o obj/src/sched/sched_getaffinity.lo, \
   $(ALL_OBJS))
 
+# Linux sched_cpucount pulls in affinity.c (uses SYS_sched_setaffinity).
+# For OpenBSD stage-1, drop both and supply a portable __sched_cpucount().
+ALL_OBJS := $(filter-out \
+  obj/src/sched/affinity.o obj/src/sched/affinity.lo \
+  obj/src/sched/sched_cpucount.o obj/src/sched/sched_cpucount.lo, \
+  $(ALL_OBJS))
+# (src/sched/sched_cpucount_openbsd.c is picked up automatically.)
+
 endif
 # ----------------------------------------------------------------------
 
