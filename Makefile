@@ -106,6 +106,12 @@ CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
 	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CFLAGS_ALL)) \
 	-I$(srcdir)/arch/$(ARCH)
 
+# Ensure the kernel syscall header is visible despite -nostdinc.
+# We only add a *system* include path here; musl's own -I paths still
+# precede it in CFLAGS_ALL, so musl headers win for generic includes.
+CPPFLAGS += -isystem /usr/include
+CFLAGS_ALL += -isystem /usr/include
+
 # Avoid building the generic getrandom so the OpenBSD version wins.
 # (Filter both .o and .lo in case shared objects are ever built.)
 ALL_OBJS := $(filter-out obj/src/misc/getrandom.o obj/src/misc/getrandom.lo,$(ALL_OBJS))
