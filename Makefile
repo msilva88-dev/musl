@@ -202,6 +202,11 @@ ALL_OBJS := $(filter-out \
 # (src/network/recvmmsg_openbsd.c and sendmmsg_openbsd.c will be picked up
 #  automatically by the toplevel source globs.)
 
+# _Fork: Linux version uses SYS_set_tid_address. Use OpenBSD variant.
+ALL_OBJS := $(filter-out obj/src/process/_Fork.o obj/src/process/_Fork.lo, \
+  $(ALL_OBJS))
+# (src/process/_Fork_openbsd.c will be picked up automatically.)
+
 endif
 # ----------------------------------------------------------------------
 
