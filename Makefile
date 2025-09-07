@@ -141,6 +141,11 @@ ALL_OBJS := $(filter-out obj/src/signal/%,$(ALL_OBJS))
 SYSCALL_BITS_SRC := $(srcdir)/arch/openbsd/$(ARCH)/bits/syscall.h
 SYSCALL_BITS_RULE := overlay
 
+# Use the OpenBSD-specific sysconf() and drop the generic one which
+# references Linux-only interfaces (sched_getaffinity, etc).
+ALL_OBJS := $(filter-out obj/src/conf/sysconf.o obj/src/conf/sysconf.lo,$(ALL_OBJS))
+# (src/conf/sysconf_openbsd.c will be picked up automatically.)
+
 # Mark stage-1 and enable OpenBSD feature macros
 CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
 CPPFLAGS += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
