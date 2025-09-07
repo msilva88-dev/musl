@@ -3,8 +3,15 @@
  */
 #include <unistd.h>
 #include <errno.h>
+/* Ensure kernel sysctl.h sees the real system typedefs, not musl shims. */
+#ifdef MUSL_OBSD
+#include "/usr/include/sys/types.h"
+#include "/usr/include/stdint.h"
+#endif
+#include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>  /* still fine if included twice; keeps POSIX names */
 
 static long sc_ncpu(int mib1)
 {

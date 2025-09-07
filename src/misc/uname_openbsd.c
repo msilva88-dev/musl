@@ -9,6 +9,13 @@
  */
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#ifdef MUSL_OBSD
+/* Pull in the *system* type headers so <sys/sysctl.h> sees u_intXX_t/intXX_t. */
+#include "/usr/include/sys/types.h"
+#include "/usr/include/stdint.h"
+#endif
+#include <sys/sysctl.h>
+#include <sys/types.h>
 #include <sys/utsname.h>
 #include <string.h>
 #include <errno.h>
