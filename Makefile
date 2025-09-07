@@ -99,6 +99,17 @@ CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
 # (This only affects binaries linked during the build; libc.a contents are PIC as usual.)
 LDFLAGS  := -static $(LDFLAGS)
 
+# Make sure the OpenBSD overlay is searched *before* arch/$(ARCH) in the
+# actual compile flags. CFLAGS_ALL hard-codes -Iarch/$(ARCH) ahead of
+# $(CPPFLAGS), so adjust CFLAGS_ALL ordering here.
+CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
+	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CFLAGS_ALL)) \
+	-I$(srcdir)/arch/$(ARCH)
+
+# Avoid building the generic getrandom so the OpenBSD version wins.
+# (Filter both .o and .lo in case shared objects are ever built.)
+ALL_OBJS := $(filter-out obj/src/misc/getrandom.o obj/src/misc/getrandom.lo,$(ALL_OBJS))
+
 # Mark stage-1 and enable OpenBSD feature macros
 CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
 CPPFLAGS += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
