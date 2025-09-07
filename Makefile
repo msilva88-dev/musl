@@ -193,6 +193,15 @@ ALL_OBJS := $(filter-out obj/src/mman/mremap.o obj/src/mman/mremap.lo,$(ALL_OBJS
 ALL_OBJS := $(filter-out obj/src/mq/%.o obj/src/mq/%.lo,$(ALL_OBJS))
 # (src/misc/mq_openbsd_stub.c supplies ENOSYS stubs.)
 
+# recvmmsg/sendmmsg are Linux-only; use OpenBSD stubs for Stage-1
+# and drop the generic Linux objects from the build.
+ALL_OBJS := $(filter-out \
+  obj/src/network/recvmmsg.o obj/src/network/recvmmsg.lo \
+  obj/src/network/sendmmsg.o obj/src/network/sendmmsg.lo, \
+  $(ALL_OBJS))
+# (src/network/recvmmsg_openbsd.c and sendmmsg_openbsd.c will be picked up
+#  automatically by the toplevel source globs.)
+
 endif
 # ----------------------------------------------------------------------
 
