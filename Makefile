@@ -179,6 +179,11 @@ ALL_OBJS := $(filter-out obj/src/misc/uname.o obj/src/misc/uname.lo,$(ALL_OBJS))
 SRCS := $(filter-out src/linux/%,$(SRCS))
 SRCS := $(filter-out src/misc/getrandom.c,$(SRCS))
 
+# mincore(): Linux-only SYS_mincore in generic file. Use OpenBSD stub and
+# drop the Linux implementation from the object list for Stage-1.
+ALL_OBJS := $(filter-out obj/src/mman/mincore.o obj/src/mman/mincore.lo,$(ALL_OBJS))
+# (src/mman/mincore_openbsd.c will be picked up automatically.)
+
 endif
 # ----------------------------------------------------------------------
 
