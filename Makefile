@@ -240,6 +240,11 @@ ALL_OBJS := $(filter-out \
   $(ALL_OBJS))
 # (openbsd variants are picked up automatically.)
 
+# sched_getcpu(): Linux-only SYS_getcpu; use OpenBSD stub for Stage-1.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/getcpu.o obj/src/sched/getcpu.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
