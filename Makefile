@@ -250,6 +250,14 @@ ALL_OBJS := $(filter-out \
   obj/src/sched/sched_rr_get_interval.o obj/src/sched/sched_rr_get_interval.lo, \
   $(ALL_OBJS))
 
+# select()/pselect(): Linux versions use pselect6(_time64).
+# Use OpenBSD syscalls instead and drop the Linux objects.
+ALL_OBJS := $(filter-out \
+  obj/src/select/select.o  obj/src/select/select.lo  \
+  obj/src/select/pselect.o obj/src/select/pselect.lo, \
+  $(ALL_OBJS))
+# (openbsd variants below are picked up by the toplevel source globs.)
+
 endif
 # ----------------------------------------------------------------------
 
