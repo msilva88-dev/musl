@@ -217,6 +217,13 @@ ALL_OBJS := $(filter-out obj/src/process/waitid.o obj/src/process/waitid.lo, \
   $(ALL_OBJS))
 # (src/process/waitid_openbsd.c will be picked up automatically.)
 
+# CPU affinity is not available on OpenBSD; use stubs for Stage-1 and
+# drop the Linux implementations that reference SYS_sched_*affinity.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/sched_setaffinity.o obj/src/sched/sched_setaffinity.lo \
+  obj/src/sched/sched_getaffinity.o obj/src/sched/sched_getaffinity.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
