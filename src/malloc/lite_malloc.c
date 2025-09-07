@@ -8,10 +8,12 @@
 #include "syscall.h"
 #include "fork_impl.h"
 
-/* Stage-1 OpenBSD: ensure brk syscall number is visible even if the
- * overlay bits header or -DMUSL_OBSD didn’t reach this TU.  Safe on
- * other OSes: SYS_obreak won’t exist there, so this does nothing. */
-#ifndef SYS_brk
+/* Stage-1 OpenBSD bootstrap:
+ * Ensure the break syscall number is visible even if the build
+ * didn’t pick up our overlay bits/syscall.h or -DMUSL_OBSD.
+ * Safe on other OSes: SYS_obreak won’t exist there. */
+ifndef SYS_brk
+#include <sys/syscall.h>
 # ifdef SYS_obreak
 #  define SYS_brk SYS_obreak
 # endif
