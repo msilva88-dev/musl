@@ -1,6 +1,12 @@
 #ifndef UNISTD_H
 #define UNISTD_H
 
+/* Prevent the internal syscall(...) macro (from src/internal/syscall.h)
+ * from rewriting the public prototype long syscall(long, ...); */
+#ifdef syscall
+#undef syscall
+#endif
+
 #include "../../include/unistd.h"
 
 extern char **__environ;
