@@ -120,6 +120,15 @@ ALL_OBJS := $(filter-out obj/src/misc/getrandom.o obj/src/misc/getrandom.lo,$(AL
 # Filtering at the object level ensures nothing under src/linux/ is compiled.
 ALL_OBJS := $(filter-out obj/src/linux/%,$(ALL_OBJS))
 
+# Also drop subsystems that depend on Linux interfaces or threads:
+#  - AIO uses rt_* signal syscalls on Linux
+#  - thread/ uses futex
+#  - signal/ uses rt_* signal syscalls on Linux
+# (These will be reintroduced in later stages with OpenBSD-specific shims.)
+ALL_OBJS := $(filter-out obj/src/aio/%,$(ALL_OBJS))
+ALL_OBJS := $(filter-out obj/src/thread/%,$(ALL_OBJS))
+ALL_OBJS := $(filter-out obj/src/signal/%,$(ALL_OBJS))
+
 # Mark stage-1 and enable OpenBSD feature macros
 CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
 CPPFLAGS += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
