@@ -207,6 +207,11 @@ ALL_OBJS := $(filter-out obj/src/process/_Fork.o obj/src/process/_Fork.lo, \
   $(ALL_OBJS))
 # (src/process/_Fork_openbsd.c will be picked up automatically.)
 
+# fexecve(): Linux version uses execveat; use OpenBSD variant instead.
+ALL_OBJS := $(filter-out obj/src/process/fexecve.o obj/src/process/fexecve.lo, \
+  $(ALL_OBJS))
+# (src/process/fexecve_openbsd.c will be picked up automatically.)
+
 endif
 # ----------------------------------------------------------------------
 
