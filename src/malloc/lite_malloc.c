@@ -11,12 +11,12 @@
 /* Stage-1 OpenBSD bootstrap:
  * Ensure the break syscall number is visible even if the build
  * didn’t pick up our overlay bits/syscall.h or -DMUSL_OBSD.
- * Safe on other OSes: SYS_obreak won’t exist there. */
-ifndef SYS_brk
+ * Safe on other OSes: SYS_obreak doesn’t exist there. */
+#ifndef SYS_brk
 #include <sys/syscall.h>
-# ifdef SYS_obreak
-#  define SYS_brk SYS_obreak
-# endif
+#ifdef SYS_obreak
+#define SYS_brk SYS_obreak
+#endif
 #endif
 
 #define ALIGN 16
