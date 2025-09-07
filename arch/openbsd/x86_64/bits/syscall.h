@@ -7,4 +7,15 @@
 
 /* Map/define Linux-only names here later if needed. */
 
+/* --- Compatibility aliases for musl sources expecting Linux names --- */
+/* brk(2) is named obreak(2) on OpenBSD */
+#if defined(SYS_obreak) && !defined(SYS_brk)
+#define SYS_brk SYS_obreak
+#endif
+
+/* add more aliases here as they pop up during bring-up */
+/* e.g. #if defined(SYS___getcwd) && !defined(SYS_getcwd)
+ * #define SYS_getcwd SYS___getcwd
+ * #endif */
+
 #endif
