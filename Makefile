@@ -212,6 +212,11 @@ ALL_OBJS := $(filter-out obj/src/process/fexecve.o obj/src/process/fexecve.lo, \
   $(ALL_OBJS))
 # (src/process/fexecve_openbsd.c will be picked up automatically.)
 
+# waitid(): Linux-only SYS_waitid; use OpenBSD stub for stage-1.
+ALL_OBJS := $(filter-out obj/src/process/waitid.o obj/src/process/waitid.lo, \
+  $(ALL_OBJS))
+# (src/process/waitid_openbsd.c will be picked up automatically.)
+
 endif
 # ----------------------------------------------------------------------
 
