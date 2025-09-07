@@ -84,8 +84,13 @@ LDSO_PATHNAME = $(syslibdir)/ld-musl-$(ARCH)$(SUBARCH).so.1
 #   - SRCS is fully populated (so filtering is effective)
 ifeq ($(TARGET_OS),openbsd)
 
-# Prefer OS-specific arch headers (overrides default arch/$(ARCH)):
-CPPFLAGS := -Iarch/openbsd/$(ARCH) $(CPPFLAGS)
+# Ensure the OpenBSD overlay really comes first: remove any earlier
+# -Iarch/$(ARCH) and append it after the overlay path we just added.
+# (Use $(srcdir) to match how arch paths are formed elsewhere.)
+CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
+	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CPPFLAGS)) \
+	-I$(srcdir)/arch/$(ARCH)
+
 # Make kernel syscall numbers visible even with -nostdinc.
 # Our -I paths remain first, so musl headers still win.
 CPPFLAGS += -isystem /usr/include
