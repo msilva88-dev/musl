@@ -11,8 +11,3 @@ int sched_getcpu(void)
 	errno = ENOSYS;
 	return -1;
 }
-
-/* Ensure we don't accidentally include the generic implementation. */
-#ifdef INCLUDE_LINUX_SCHED_GETCPU
-#error "Do not include generic sched_getcpu.c on OpenBSD"
-#endif
