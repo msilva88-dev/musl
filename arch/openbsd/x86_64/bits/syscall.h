@@ -13,9 +13,10 @@
 #define SYS_brk SYS_obreak
 #endif
 
-/* add more aliases here as they pop up during bring-up */
-/* e.g. #if defined(SYS___getcwd) && !defined(SYS_getcwd)
- * #define SYS_getcwd SYS___getcwd
- * #endif */
+/* add more aliases here as they show up during bring-up */
+/* e.g.
+#if defined(SYS___getcwd) && !defined(SYS_getcwd)
+#define SYS_getcwd SYS___getcwd
+#endif */
 
 #endif

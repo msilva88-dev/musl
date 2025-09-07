@@ -112,6 +112,13 @@ CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
 CPPFLAGS += -isystem /usr/include
 CFLAGS_ALL += -isystem /usr/include
 
+# Make sure the OpenBSD overlay is searched *before* arch/$(ARCH) in the
+# actual compile flags. CFLAGS_ALL hard-codes -Iarch/$(ARCH) ahead of
+# $(CPPFLAGS), so adjust CFLAGS_ALL ordering here.
+CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
+	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CFLAGS_ALL)) \
+	-I$(srcdir)/arch/$(ARCH)
+
 # Avoid building the generic getrandom so the OpenBSD version wins.
 # (Filter both .o and .lo in case shared objects are ever built.)
 ALL_OBJS := $(filter-out obj/src/misc/getrandom.o obj/src/misc/getrandom.lo,$(ALL_OBJS))
@@ -128,6 +135,11 @@ ALL_OBJS := $(filter-out obj/src/linux/%,$(ALL_OBJS))
 ALL_OBJS := $(filter-out obj/src/aio/%,$(ALL_OBJS))
 ALL_OBJS := $(filter-out obj/src/thread/%,$(ALL_OBJS))
 ALL_OBJS := $(filter-out obj/src/signal/%,$(ALL_OBJS))
+
+# Tell the bits/syscall.h rule to use the OpenBSD overlay header
+# instead of generating from the Linux .in file.
+SYSCALL_BITS_SRC := $(srcdir)/arch/openbsd/$(ARCH)/bits/syscall.h
+SYSCALL_BITS_RULE := overlay
 
 # Mark stage-1 and enable OpenBSD feature macros
 CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
@@ -161,9 +173,12 @@ $(OBJ_DIRS):
 obj/include/bits/alltypes.h: $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in $(srcdir)/tools/mkalltypes.sed
 	sed -f $(srcdir)/tools/mkalltypes.sed $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in > $@
 
-obj/include/bits/syscall.h: $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
+# Use overlay on OpenBSD; otherwise generate from the .in file.
+obj/include/bits/syscall.h: $(if $(filter overlay,$(SYSCALL_BITS_RULE)),$(SYSCALL_BITS_SRC),$(srcdir)/arch/$(ARCH)/bits/syscall.h.in)
 	cp $< $@
+ifneq ($(SYSCALL_BITS_RULE),overlay)
 	sed -n -e s/__NR_/SYS_/p < $< >> $@
+endif
 
 obj/src/internal/version.h: $(wildcard $(srcdir)/VERSION $(srcdir)/.git)
 	printf '#define VERSION "%s"\n' "$$(cd $(srcdir); sh tools/version.sh)" > $@
