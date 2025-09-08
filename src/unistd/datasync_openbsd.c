@@ -1,9 +1,9 @@
-/* OpenBSD Stage-1: implement fdatasync() using fsync(2).
- * This is slightly stronger than required, but correct and portable.
+/* OpenBSD Stage-1:
+ * datasync(2) is specified to sync data only; route to fdatasync(2).
  */
 #include <unistd.h>
 
-int fdatasync(int fd)
+int datasync(int fd)
 {
-	return fsync(fd);
+	return fdatasync(fd);
 }
