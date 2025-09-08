@@ -311,6 +311,11 @@ ALL_OBJS := $(filter-out \
   obj/src/unistd/getcwd.o obj/src/unistd/getcwd.lo, \
   $(ALL_OBJS))
 
+# _Exit(): generic uses SYS_exit_group (Linux). Use SYS_exit on OpenBSD.
+ALL_OBJS := $(filter-out \
+  obj/src/exit/_Exit.o obj/src/exit/_Exit.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
