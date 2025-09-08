@@ -299,6 +299,11 @@ ALL_OBJS := $(filter-out \
   obj/src/unistd/faccessat.o obj/src/unistd/faccessat.lo, \
   $(ALL_OBJS))
 
+# fdatasync(): OpenBSD has no SYS_fdatasync; map to fsync(2).
+ALL_OBJS := $(filter-out \
+  obj/src/unistd/datasync.o obj/src/unistd/datasync.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
