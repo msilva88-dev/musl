@@ -287,6 +287,11 @@ SRCS := $(filter-out \
   src/stat/statx.c, \
   $(SRCS))
 
+# Also drop the Linux fstatat.c that prefers statx(2).
+SRCS := $(filter-out \
+  src/stat/fstatat.c, \
+  $(SRCS))
+
 endif
 # ----------------------------------------------------------------------
 
