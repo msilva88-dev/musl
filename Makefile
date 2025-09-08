@@ -333,6 +333,12 @@ ALL_OBJS := $(filter-out \
   obj/src/fcntl/posix_fadvise.o obj/src/fcntl/posix_fadvise.lo, \
   $(ALL_OBJS))
 
+# posix_fallocate: no fallocate(2) on OpenBSD; provide fallback and
+# drop the Linux implementation which references SYS_fallocate.
+ALL_OBJS := $(filter-out \
+  obj/src/fcntl/posix_fallocate.o obj/src/fcntl/posix_fallocate.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
