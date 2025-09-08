@@ -1,14 +1,16 @@
 #ifndef _PTHREAD_ARCH_H
 #define _PTHREAD_ARCH_H
 
-/* Minimal __pthread_self for TLS-backed errno.
- * OpenBSD uses %fs for the TCB on amd64.
+/* OpenBSD/amd64 uses %fs for the thread pointer (TCB at TP).
+ * Expose __get_tp() so pthread_impl.h’s fallback __pthread_self()
+ * macro can compute the current pthread_t without redefining it here.
  */
-static inline struct pthread *__pthread_self(void)
+#include <stdint.h>
+static inline uintptr_t __get_tp(void)
 {
-	struct pthread *self;
-	__asm__ __volatile__("mov %%fs:0,%0" : "=r"(self));
-	return self;
+	uintptr_t tp;
+	__asm__ __volatile__("mov %%fs:0,%0" : "=r"(tp));
+	return tp;
 }
 
 /* TLS layout: TCB at TP. */
