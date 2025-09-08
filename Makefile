@@ -316,6 +316,18 @@ ALL_OBJS := $(filter-out \
   obj/src/exit/_Exit.o obj/src/exit/_Exit.lo, \
   $(ALL_OBJS))
 
+# abort/assert: generic uses Linux rt_sigaction; provide OpenBSD shims.
+ALL_OBJS := $(filter-out \
+  obj/src/exit/abort.o obj/src/exit/abort.lo \
+  obj/src/exit/assert.o obj/src/exit/assert.lo, \
+  $(ALL_OBJS))
+
+# sigaction/raise: avoid Linux rt_* implementations.
+ALL_OBJS := $(filter-out \
+  obj/src/signal/sigaction.o obj/src/signal/sigaction.lo \
+  obj/src/signal/raise.o     obj/src/signal/raise.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
