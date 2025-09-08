@@ -263,6 +263,11 @@ ALL_OBJS := $(filter-out \
   obj/src/stat/fchmodat.o obj/src/stat/fchmodat.lo, \
   $(ALL_OBJS))
 
+# statx(): Linux-only. Use an OpenBSD stub for Stage-1.
+ALL_OBJS := $(filter-out \
+  obj/src/stat/statx.o obj/src/stat/statx.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
