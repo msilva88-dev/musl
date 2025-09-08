@@ -306,6 +306,11 @@ ALL_OBJS := $(filter-out \
   obj/src/unistd/datasync.o  obj/src/unistd/datasync.lo, \
   $(ALL_OBJS))
 
+# getcwd(): generic uses SYS_getcwd; OpenBSD syscall is SYS___getcwd.
+ALL_OBJS := $(filter-out \
+  obj/src/unistd/getcwd.o obj/src/unistd/getcwd.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
