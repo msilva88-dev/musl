@@ -289,6 +289,11 @@ ALL_OBJS := $(filter-out \
   obj/src/time/timer_settime.o     obj/src/time/timer_settime.lo,    \
   $(ALL_OBJS))
 
+# times(): Linux uses SYS_times. Use our OpenBSD libc implementation.
+ALL_OBJS := $(filter-out \
+  obj/src/time/times.o obj/src/time/times.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
