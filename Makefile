@@ -495,10 +495,14 @@ musl-%.tar.gz: .git
 
 endif
 
+# Tiny OpenBSD stage-1 smoke test (static hello linked against ./lib/libc.a)
+smoke-openbsd: lib/libc.a
+	@sh tools/smoke-openbsd.sh
+
 clean:
 	rm -rf obj lib
 
 distclean: clean
 	rm -f config.mak
 
-.PHONY: all clean install install-libs install-headers install-tools
+.PHONY: all clean install install-libs install-headers install-tools smoke-openbsd
