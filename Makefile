@@ -328,6 +328,11 @@ ALL_OBJS := $(filter-out \
   obj/src/signal/raise.o     obj/src/signal/raise.lo, \
   $(ALL_OBJS))
 
+# posix_fadvise: no syscall on OpenBSD; provide stub and drop Linux object.
+ALL_OBJS := $(filter-out \
+  obj/src/fcntl/posix_fadvise.o obj/src/fcntl/posix_fadvise.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
