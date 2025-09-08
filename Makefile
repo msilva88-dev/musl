@@ -274,6 +274,12 @@ ALL_OBJS := $(filter-out \
   obj/src/stat/fstatat.o obj/src/stat/fstatat.lo, \
   $(ALL_OBJS))
 
+# clock_nanosleep(): Linux uses SYS_clock_nanosleep_time64.
+# Use our OpenBSD libc implementation instead.
+ALL_OBJS := $(filter-out \
+  obj/src/time/clock_nanosleep.o obj/src/time/clock_nanosleep.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
