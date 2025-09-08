@@ -95,9 +95,9 @@ CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
 # <endian.h>) to override musl's. The OpenBSD overlay pulls in only the
 # needed kernel numbers directly (see bits/syscall.h).
 
-# Stage-1 bootstrap is static-only; we are not building ldso/threads yet.
-# (This only affects binaries linked during the build; libc.a contents are PIC as usual.)
-LDFLAGS  := -static $(LDFLAGS)
+# Stage-2: allow shared builds (drop forced -static). We still filter Linux
+# sources elsewhere and build with MUSL_OBSD defined.
+# LDFLAGS stays as provided by the environment.
 
 # Make sure the OpenBSD overlay is searched *before* arch/$(ARCH) in the
 # actual compile flags. CFLAGS_ALL hard-codes -Iarch/$(ARCH) ahead of
@@ -146,9 +146,9 @@ SYSCALL_BITS_RULE := overlay
 ALL_OBJS := $(filter-out obj/src/conf/sysconf.o obj/src/conf/sysconf.lo,$(ALL_OBJS))
 # (src/conf/sysconf_openbsd.c will be picked up automatically.)
 
-# Mark stage-1 and enable OpenBSD feature macros
-CFLAGS   += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
-CPPFLAGS += -DMUSL_OBSD -DMUSL_STATIC_ONLY -D_OPENBSD_SOURCE -U__linux__
+# Mark OpenBSD and enable feature macros (no STATIC_ONLY)
+CFLAGS   += -DMUSL_OBSD -D_OPENBSD_SOURCE -U__linux__
+CPPFLAGS += -DMUSL_OBSD -D_OPENBSD_SOURCE -U__linux__
 
 # CFLAGS_ALL was formed earlier using :=. Pull in the *current*
 # CPPFLAGS/CFLAGS (now containing -DMUSL_OBSD) so every TU sees it.

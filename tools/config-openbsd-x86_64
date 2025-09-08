@@ -35,6 +35,7 @@ LDFLAGS +=
 TARGET_OS = openbsd
 EOF
 
-echo "Wrote ${topdir}/config.mak for OpenBSD/amd64 (static-only)."
+echo "Wrote ${topdir}/config.mak for OpenBSD/amd64"
 echo "Use GNU make:"
-echo "  gmake -j\$(sysctl -n hw.ncpu 2>/dev/null || echo 4) lib/libc.a"
+echo "  gmake -j\$(sysctl -n hw.ncpu 2>/dev/null || echo 4) lib/libc.so"
+echo "  gmake -j\$(sysctl -n hw.ncpu 2>/dev/null || echo 4) ldso/dynlink.lo"
