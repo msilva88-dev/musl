@@ -292,6 +292,12 @@ SRCS := $(filter-out \
   src/stat/fstatat.c, \
   $(SRCS))
 
+# fstatat(): drop Linux object that routes via statx(2); we provide
+# src/stat/fstatat_openbsd.c instead.
+ALL_OBJS := $(filter-out \
+  obj/src/stat/fstatat.o obj/src/stat/fstatat.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
