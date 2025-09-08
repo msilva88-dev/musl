@@ -19,4 +19,19 @@
 #define SYS_getcwd SYS___getcwd
 #endif */
 
+/* ---- BSD syscall name compatibility shims -------------------------
+ * OpenBSD exposes System V IPC control syscalls with leading
+ * double-underscore names; musl’s generic code expects SYS_* without
+ * underscores.  Provide aliases when appropriate.
+ */
+#if !defined(SYS_semctl) && defined(SYS___semctl)
+#define SYS_semctl SYS___semctl
+#endif
+#if !defined(SYS_msgctl) && defined(SYS___msgctl)
+#define SYS_msgctl SYS___msgctl
+#endif
+#if !defined(SYS_shmctl) && defined(SYS___shmctl)
+#define SYS_shmctl SYS___shmctl
+#endif
+
 #endif
