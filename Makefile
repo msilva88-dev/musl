@@ -268,30 +268,6 @@ ALL_OBJS := $(filter-out \
   obj/src/stat/statx.o obj/src/stat/statx.lo, \
   $(ALL_OBJS))
 
-# ------------ Filter at SRCS level too (more robust) -----------------
-# Drop Linux-only or incompatible sources outright so they never enter
-# the object lists. This avoids cases where a rule expands SRCS directly.
-SRCS := $(filter-out \
-  src/process/waitid.c \
-  src/sched/affinity.c \
-  src/sched/sched_cpucount.c \
-  src/sched/sched_setaffinity.c \
-  src/sched/sched_getaffinity.c \
-  src/sched/sched_get_priority_max.c \
-  src/sched/sched_get_priority_min.c \
-  src/sched/sched_getcpu.c \
-  src/sched/sched_rr_get_interval.c \
-  src/select/select.c \
-  src/select/pselect.c \
-  src/stat/fchmodat.c \
-  src/stat/statx.c, \
-  $(SRCS))
-
-# Also drop the Linux fstatat.c that prefers statx(2).
-SRCS := $(filter-out \
-  src/stat/fstatat.c, \
-  $(SRCS))
-
 # fstatat(): drop Linux object that routes via statx(2); we provide
 # src/stat/fstatat_openbsd.c instead.
 ALL_OBJS := $(filter-out \
