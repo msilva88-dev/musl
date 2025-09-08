@@ -258,6 +258,11 @@ ALL_OBJS := $(filter-out \
   $(ALL_OBJS))
 # (openbsd variants below are picked up by the toplevel source globs.)
 
+# fchmodat(): Linux generic uses SYS_fchmodat2; use OpenBSD syscall.
+ALL_OBJS := $(filter-out \
+  obj/src/stat/fchmodat.o obj/src/stat/fchmodat.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
