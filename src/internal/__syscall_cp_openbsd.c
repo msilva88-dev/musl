@@ -6,6 +6,11 @@
 #ifdef MUSL_OBSD
 #include "syscall.h"
 
+/* The name __syscall_cp is a macro in syscall.h; we are defining the
+ * actual symbol here, so drop the macro first.
+ */
+#undef __syscall_cp
+
 __attribute__((visibility("hidden")))
 long __syscall_cp(long n,
                   long a1, long a2, long a3,
