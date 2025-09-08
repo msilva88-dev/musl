@@ -294,6 +294,11 @@ ALL_OBJS := $(filter-out \
   obj/src/time/times.o obj/src/time/times.lo, \
   $(ALL_OBJS))
 
+# faccessat(): Linux uses faccessat2; use OpenBSD faccessat(2) instead.
+ALL_OBJS := $(filter-out \
+  obj/src/unistd/faccessat.o obj/src/unistd/faccessat.lo, \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
