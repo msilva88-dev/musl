@@ -280,6 +280,15 @@ ALL_OBJS := $(filter-out \
   obj/src/time/clock_nanosleep.o obj/src/time/clock_nanosleep.lo, \
   $(ALL_OBJS))
 
+# POSIX timers: use ENOSYS stubs on OpenBSD for stage-1.
+ALL_OBJS := $(filter-out \
+  obj/src/time/timer_create.o      obj/src/time/timer_create.lo      \
+  obj/src/time/timer_delete.o      obj/src/time/timer_delete.lo      \
+  obj/src/time/timer_getoverrun.o  obj/src/time/timer_getoverrun.lo  \
+  obj/src/time/timer_gettime.o     obj/src/time/timer_gettime.lo     \
+  obj/src/time/timer_settime.o     obj/src/time/timer_settime.lo,    \
+  $(ALL_OBJS))
+
 endif
 # ----------------------------------------------------------------------
 
