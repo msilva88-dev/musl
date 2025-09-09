@@ -1,8 +1,9 @@
 #ifndef _PTHREAD_ARCH_H
 #define _PTHREAD_ARCH_H
 
-/* OpenBSD/amd64 uses %fs as the thread pointer (TP) with the TCB at TP. */
+#include <stdint.h>
 
+/* OpenBSD/amd64: %fs:0 holds the pthread self pointer. */
 static inline uintptr_t __get_tp(void)
 {
 	uintptr_t tp;
@@ -10,16 +11,7 @@ static inline uintptr_t __get_tp(void)
 	return tp;
 }
 
-/* Provide an explicit __pthread_self() to avoid fallback macro paths. */
-struct pthread;
-static inline struct pthread *__pthread_self(void)
-{
-	return (struct pthread *)__get_tp();
-}
-
-/* TLS layout: TCB at TP. */
-#define TLS_ABOVE_TP
-#define TP_OFFSET 0
-#define DTP_OFFSET 0
+/* Intentionally do NOT define TLS_ABOVE_TP. We want musl's generic x86_64
+ * layout (__pthread_self() == __get_tp()) just like upstream Linux. */
 
 #endif
