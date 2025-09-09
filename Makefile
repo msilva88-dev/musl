@@ -92,8 +92,8 @@ CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
 	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CPPFLAGS)) \
 	-I$(srcdir)/arch/$(ARCH)
 
-# --- Prefer ports GCC and wire libgcc robustly ---
-# If CC wasn’t set on the command line and is cc/clang, force egcc.
+# --- Prefer ports GCC and wire libgcc robustly (OpenBSD stage-2) ---
+# If CC wasn’t passed on the command line and is cc/clang, force egcc.
 ifneq ($(origin CC), command line)
 EGCC_BIN := /usr/local/bin/egcc
 _CC_BASENAME := $(notdir $(firstword $(CC)))
@@ -117,8 +117,6 @@ override LIBCC := $(_LIBGCC_A)
 ifneq ($(_LIBGCC_EH),libgcc_eh.a)
 override LIBCC += $(_LIBGCC_EH)
 endif
-else
-LIBCC ?= -lgcc -lgcc_eh
 endif
 endif
 
@@ -137,8 +135,7 @@ CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
 	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CFLAGS_ALL)) \
 	-I$(srcdir)/arch/$(ARCH)
 
-# OpenBSD’s GCC enables stack protector by default, which would pull
-# __guard_local from the base libc. Build musl without SSP.
+# OpenBSD’s GCC enables stack protector by default; build musl without it.
 CFLAGS_ALL += -fno-stack-protector
 
 # Ensure the kernel syscall header is visible despite -nostdinc.
@@ -381,14 +378,15 @@ else
 all: $(ALL_LIBS) $(ALL_TOOLS)
 
 # Convenience: create the musl loader soname symlink pointing at libc.so.
-# This is useful in stage-2 where the loader lives inside libc.
+# Stage-2 supports only amd64 right now.
 .PHONY: ldso-symlink
 ldso-symlink: lib/libc.so
 	@mkdir -p lib
 	@case "$(ARCH)" in \
 	  amd64|x86_64) n=ld-musl-x86_64.so.1 ;; \
-	  i386|x86)     n=ld-musl-i386.so.1 ;; \
-	  *)            n=ld-musl-$(ARCH)$(SUBARCH).so.1 ;; \
+	  *) \
+	    echo "ldso-symlink: stage-2 supports only amd64 (ARCH=$(ARCH))" >&2; \
+	    exit 1 ;; \
 	esac ; \
 	ln -sf libc.so "lib/$$n"
 
