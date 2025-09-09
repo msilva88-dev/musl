@@ -16,7 +16,7 @@
 #define TPOFF_K 0
 #endif
 
-/* No extra gap reserved above TP on musl’s x86_64 model. */
+/* Also ensure GAP_ABOVE_TP is available when dynlink includes only reloc.h. */
 #ifndef GAP_ABOVE_TP
 #define GAP_ABOVE_TP 0
 #endif
