@@ -3,7 +3,8 @@
 #include <sys/syscall.h>
 #include <bits/syscall.h>
 
-/* OpenBSD: set FSBASE via sysarch(AMD64_SET_FSBASE, &arg) */
+/* OpenBSD exposes FSBASE set via sysarch(AMD64_SET_FSBASE, p).
+ * Avoid relying on system headers globally; use the syscall directly.
 
 #ifndef SYS_sysarch
 #define SYS_sysarch 165   /* OpenBSD 7.x */
@@ -13,14 +14,12 @@
 #define AMD64_SET_FSBASE 129  /* <machine/sysarch.h> */
 #endif
 
-struct __obsd_fsbase_arg { void *base; };
-
 long __syscall(long, ...); /* internal syscall glue */
 
 int __set_thread_area(void *p)
 {
-	struct __obsd_fsbase_arg arg = { .base = p };
-	long r = __syscall(SYS_sysarch, AMD64_SET_FSBASE, &arg);
+	/* Pass the TLS base value directly as the 2nd argument. */
+	long r = __syscall(SYS_sysarch, AMD64_SET_FSBASE, p);
 	if (r < 0) { errno = -r; return -1; }
 	return 0;
 }
