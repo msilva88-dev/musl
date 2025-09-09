@@ -6,10 +6,10 @@ int __libc_sigaction(int sig, const struct sigaction *sa, struct sigaction *old)
 	return sigaction(sig, sa, old);
 }
 
-/* musl declares: hidden void __get_handler_set(void *); */
-void __get_handler_set(void *set)
+/* musl declares: hidden void __get_handler_set(sigset_t *); */
+void __get_handler_set(sigset_t *set)
 {
-	if (set) sigemptyset((sigset_t *)set);
+	if (set) sigemptyset(set);
 }
 
 /* These helpers are declared with void* in musl internal headers. */
