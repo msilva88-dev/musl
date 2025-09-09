@@ -5,14 +5,13 @@
 
 /* OpenBSD/amd64 sets FSBASE via: sysarch(AMD64_SET_FSBASE, <void *base>) */
 
-#ifndef SYS_sysarch
+/* Define constants unconditionally to avoid preprocessor confusion. */
+#undef  SYS_sysarch
 #define SYS_sysarch 165   /* from <sys/syscall.h> */
-#endif
 
-/* <machine/sysarch.h> value; kept local to avoid global -isystem includes */
-#ifndef AMD64_SET_FSBASE
+/* <machine/sysarch.h> value; keep local to avoid global -isystem includes */
+#undef  AMD64_SET_FSBASE
 #define AMD64_SET_FSBASE 129
-#endif
 
 long __syscall(long, ...); /* provided by musl's syscall glue */
 
