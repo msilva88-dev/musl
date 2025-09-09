@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <sys/syscall.h>
+#include <stddef.h>
 #include <bits/syscall.h>
 
 /* OpenBSD/amd64 sets FSBASE via: sysarch(AMD64_SET_FSBASE, <void *base>) */
@@ -17,10 +18,11 @@ long __syscall(long, ...); /* provided by musl's syscall glue */
 
 int __set_thread_area(void *p)
 {
-	/* Pass the TLS base value directly as the 2nd argument. */
-	long r = __syscall(SYS_sysarch, AMD64_SET_FSBASE, p);
+	/* sysarch expects a pointer to the new FS base value. */
+	unsigned long base = (unsigned long)p;
+	long r = __syscall(SYS_sysarch, AMD64_SET_FSBASE, &base);
 	if (r < 0) {
-		errno = -r;
+		errno = -r;    /* __syscall returns -errno on failure */
 		return -1;
 	}
 	return 0;
