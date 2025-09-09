@@ -1,26 +1,11 @@
-/* Minimal stubs for fork/posix_spawn helpers (single-thread stage). */
-#include <stddef.h>
-#include <signal.h> /* for sigemptyset/sigset_t used internally */
+/* Minimal PTC hooks for single-thread stage. */
 
 /* Prevent “pthread cancellation” type interference around fork; no-op here. */
 void __inhibit_ptc(void) {}
 void __release_ptc(void) {}
 
-/* Block app signals around fork/exec; stage-2 no-op.
- * The interface uses void* in musl; if a buffer is provided, clear it.
+/* Note:
+ * __block_app_sigs/__restore_sigs/__block_all_sigs live in
+ * src/misc/sig_openbsd_stubs.c for stage-2. We intentionally
+ * do not duplicate them here to avoid multiple-definition errors.
  */
-void __block_app_sigs(void *set)
-{
-	if (set) sigemptyset((sigset_t *)set);
-}
-
-void __restore_sigs(void *set)
-{
-	(void)set;
-}
-
-/* Used by setxid/wordexp paths; return 0 = “nothing blocked”. */
-void __block_all_sigs(void *set)
-{
-	if (set) sigemptyset((sigset_t *)set);
-}
