@@ -1,10 +1,11 @@
 #!/bin/sh
 # Tiny OpenBSD stage-2 smoke: build libc.so + ldso and run a dynamic hello
-set -eu
+set -euo pipefail
 
 echo "[$0] building shared libc and ldso..."
 ${MAKE:-gmake} -j"$(sysctl -n hw.ncpu 2>/dev/null || echo 4)" lib/libc.so
-${MAKE:-gmake} -j"$(sysctl -n hw.ncpu 2>/dev/null || echo 4)" ldso/dynlink.lo
+# libc.so already contains the loader; just ensure the expected soname symlink
+${MAKE:-gmake} ldso-symlink
 
 # Ensure we have the loader name musl expects
 mkdir -p lib
@@ -15,12 +16,15 @@ case "$arch" in
 esac
 [ -e "lib/$ldname" ] || ln -sf libc.so "lib/$ldname"
 
+# Prefer ports gcc if available; otherwise fall back to cc
+: "${CC:=$(command -v egcc 2>/dev/null || echo cc)}"
+
 cat > /tmp/dhello.c <<'C'
 #include <unistd.h>
 int main(){ const char s[]="hello (dynamic) from musl/obsd\n"; write(1,s,sizeof s-1); }
 C
 echo "[$0] linking dynamic hello against ./lib..."
-cc -fPIC -o /tmp/dhello /tmp/dhello.c -Wl,-rpath,"$PWD/lib" -L./lib -lc
+"$CC" -fPIC -o /tmp/dhello /tmp/dhello.c -Wl,-rpath,"$PWD/lib" -L./lib -lc
 
 echo "----- program output -----"
 LD_LIBRARY_PATH="$PWD/lib" ./lib/$ldname /tmp/dhello

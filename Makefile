@@ -380,6 +380,18 @@ else
 
 all: $(ALL_LIBS) $(ALL_TOOLS)
 
+# Convenience: create the musl loader soname symlink pointing at libc.so.
+# This is useful in stage-2 where the loader lives inside libc.
+.PHONY: ldso-symlink
+ldso-symlink: lib/libc.so
+	@mkdir -p lib
+	@case "$(ARCH)" in \
+	  amd64|x86_64) n=ld-musl-x86_64.so.1 ;; \
+	  i386|x86)     n=ld-musl-i386.so.1 ;; \
+	  *)            n=ld-musl-$(ARCH)$(SUBARCH).so.1 ;; \
+	esac ; \
+	ln -sf libc.so "lib/$$n"
+
 OBJ_DIRS = $(sort $(patsubst %/,%,$(dir $(ALL_LIBS) $(ALL_TOOLS) $(ALL_OBJS) $(GENH) $(GENH_INT))) obj/include)
 
 $(ALL_LIBS) $(ALL_TOOLS) $(ALL_OBJS) $(ALL_OBJS:%.o=%.lo) $(GENH) $(GENH_INT): | $(OBJ_DIRS)
