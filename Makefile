@@ -137,6 +137,10 @@ CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
 	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CFLAGS_ALL)) \
 	-I$(srcdir)/arch/$(ARCH)
 
+# OpenBSD’s GCC enables stack protector by default, which would pull
+# __guard_local from the base libc. Build musl without SSP.
+CFLAGS_ALL += -fno-stack-protector
+
 # Ensure the kernel syscall header is visible despite -nostdinc.
 # We only add a *system* include path here; musl's own -I paths still
 # precede it in CFLAGS_ALL, so musl headers win for generic includes.
