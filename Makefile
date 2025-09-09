@@ -88,35 +88,39 @@ ifeq ($(TARGET_OS),openbsd)
 # -Iarch/$(ARCH) and append it after the overlay path we just added.
 # (Use $(srcdir) to match how arch paths are formed elsewhere.)
 
-#
-# Prefer ports GCC (egcc) if the user did not choose a compiler.
-# This keeps the toolchain aligned with HyperbolaBSD (GCC 8.x).
-ifeq ($(origin CC), default)
-ifneq ($(shell command -v egcc 2>/dev/null),)
-CC := egcc
-endif
-endif
-
-# If LIBCC was not provided by the user, derive absolute libgcc paths
-# from the selected compiler (works with egcc). Using absolute .a
-# archives avoids -lgcc resolution issues and keeps us independent of
-# the system linker defaults.
-ifeq ($(origin LIBCC), default)
-  # main libgcc archive
-  _LIBGCC_A := $(shell $(CC) -print-libgcc-file-name 2>/dev/null)
-  # optional EH/unwind archive; ignore if the compiler returns the bare name
-  _LIBGCC_EH_A := $(shell $(CC) -print-file-name=libgcc_eh.a 2>/dev/null)
-  ifneq ($(_LIBGCC_A),)
-    LIBCC := $(_LIBGCC_A)
-    ifneq ($(_LIBGCC_EH_A),libgcc_eh.a)
-      LIBCC += $(_LIBGCC_EH_A)
-    endif
-  endif
-endif
-
 CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
 	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CPPFLAGS)) \
 	-I$(srcdir)/arch/$(ARCH)
+
+# --- Prefer ports GCC and wire libgcc robustly ---
+# If CC wasn’t set on the command line and is cc/clang, force egcc.
+ifneq ($(origin CC), command line)
+EGCC_BIN := /usr/local/bin/egcc
+_CC_BASENAME := $(notdir $(firstword $(CC)))
+ifneq ($(wildcard $(EGCC_BIN)),)
+ifneq ($(filter cc clang,$(_CC_BASENAME)),)
+override CC := $(EGCC_BIN)
+endif
+endif
+endif
+
+# Ensure sub-makes and shell recipes also see ports’ bin first.
+export PATH := /usr/local/bin:$(PATH)
+
+# If LIBCC wasn’t passed on the command line, derive absolute archives
+# from the chosen compiler so link never relies on -lgcc search.
+ifneq ($(origin LIBCC), command line)
+_LIBGCC_A  := $(shell $(CC) -print-libgcc-file-name 2>/dev/null)
+_LIBGCC_EH := $(shell $(CC) -print-file-name=libgcc_eh.a 2>/dev/null)
+ifneq ($(_LIBGCC_A),)
+override LIBCC := $(_LIBGCC_A)
+ifneq ($(_LIBGCC_EH),libgcc_eh.a)
+override LIBCC += $(_LIBGCC_EH)
+endif
+else
+LIBCC ?= -lgcc -lgcc_eh
+endif
+endif
 
 # Do not add /usr/include globally: it can cause system headers (e.g.
 # <endian.h>) to override musl's. The OpenBSD overlay pulls in only the
@@ -138,13 +142,6 @@ CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
 # precede it in CFLAGS_ALL, so musl headers win for generic includes.
 CPPFLAGS += -isystem /usr/include
 CFLAGS_ALL += -isystem /usr/include
-
-# Make sure the OpenBSD overlay is searched *before* arch/$(ARCH) in the
-# actual compile flags. CFLAGS_ALL hard-codes -Iarch/$(ARCH) ahead of
-# $(CPPFLAGS), so adjust CFLAGS_ALL ordering here.
-CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
-	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CFLAGS_ALL)) \
-	-I$(srcdir)/arch/$(ARCH)
 
 # Avoid building the generic getrandom so the OpenBSD version wins.
 # (Filter both .o and .lo in case shared objects are ever built.)
