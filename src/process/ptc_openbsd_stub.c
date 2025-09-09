@@ -6,11 +6,11 @@
 void __inhibit_ptc(void) {}
 void __release_ptc(void) {}
 
-/* Block all app signals around fork/exec; for stage-2 we no-op safely. */
-int __block_app_sigs(sigset_t *set)
+/* Block app signals around fork/exec; for stage-2 we no-op safely. */
+void __block_app_sigs(sigset_t *set)
 {
-	(void)set;
-	return 0;
+	/* Provide a defined value for later restore calls. */
+	if (set) sigemptyset(set);
 }
 
 void __restore_sigs(const sigset_t *set)
@@ -19,8 +19,7 @@ void __restore_sigs(const sigset_t *set)
 }
 
 /* Used by setxid/wordexp paths; return 0 = “nothing blocked”. */
-int __block_all_sigs(sigset_t *set)
+void __block_all_sigs(sigset_t *set)
 {
 	if (set) sigemptyset(set);
-	return 0;
 }
