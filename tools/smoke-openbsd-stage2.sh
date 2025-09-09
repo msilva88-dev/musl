@@ -23,10 +23,15 @@ cat > /tmp/dhello.c <<'C'
 #include <unistd.h>
 int main(){ const char s[]="hello (dynamic) from musl/obsd\n"; write(1,s,sizeof s-1); }
 C
-echo "[$0] linking dynamic hello against ./lib..."
-"$CC" -fPIC -o /tmp/dhello /tmp/dhello.c -Wl,-rpath,"$PWD/lib" -L./lib -lc
+echo "[$0] linking dynamic hello against ./lib (embed loader)..."
+# Embed our loader path and rpath so we can run the binary directly.
+"$CC" -fPIC -o /tmp/dhello /tmp/dhello.c \
+  -Wl,-rpath,"$PWD/lib" \
+  -Wl,-dynamic-linker,"$PWD/lib/$ldname" \
+  -L./lib -lc
 
 echo "----- program output -----"
-LD_LIBRARY_PATH="$PWD/lib" ./lib/$ldname /tmp/dhello
+# Run the binary directly; it uses our musl loader.
+/tmp/dhello
 echo "--------------------------"
 echo "Stage-2 dynamic smoke OK."
