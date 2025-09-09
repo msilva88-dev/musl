@@ -44,7 +44,8 @@ echo "[$0] linking dynamic hello against ./lib (embed loader)..."
   -L./lib -lc
 
 echo "[$0] interp in /tmp/dhello:"
-readelf -lW /tmp/dhello | sed -n '/INTERP/,+3p'
+# BSD sed lacks the '/re/,+Np' form; use grep -A instead.
+readelf -lW /tmp/dhello | grep -A3 'INTERP'
 echo "----- program output -----"
 # Run the binary directly; it uses our musl loader.
 /tmp/dhello
