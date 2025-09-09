@@ -93,8 +93,8 @@ CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
 	-I$(srcdir)/arch/$(ARCH)
 
 # --- Prefer ports GCC and wire libgcc robustly (OpenBSD stage-2) ---
-# If CC wasn’t passed on the command line and is cc/clang, force egcc.
-ifneq ($(origin CC), command line)
+# If CC wasn’t provided by the user (cmdline/env) and is cc/clang, force egcc.
+ifeq ($(or $(filter command\ line,$(origin CC)),$(filter environment,$(origin CC)),$(filter override,$(origin CC))),)
 EGCC_BIN := /usr/local/bin/egcc
 _CC_BASENAME := $(notdir $(firstword $(CC)))
 ifneq ($(wildcard $(EGCC_BIN)),)
@@ -107,9 +107,9 @@ endif
 # Ensure sub-makes and shell recipes also see ports’ bin first.
 export PATH := /usr/local/bin:$(PATH)
 
-# If LIBCC wasn’t passed on the command line, derive absolute archives
+# If LIBCC wasn’t provided by the user (cmdline/env), derive absolute archives
 # from the chosen compiler so link never relies on -lgcc search.
-ifneq ($(origin LIBCC), command line)
+ifeq ($(or $(filter command\ line,$(origin LIBCC)),$(filter environment,$(origin LIBCC)),$(filter override,$(origin LIBCC))),)
 _LIBGCC_A  := $(shell $(CC) -print-libgcc-file-name 2>/dev/null)
 _LIBGCC_EH := $(shell $(CC) -print-file-name=libgcc_eh.a 2>/dev/null)
 ifneq ($(_LIBGCC_A),)
@@ -161,11 +161,6 @@ ALL_OBJS := $(filter-out obj/src/aio/%,$(ALL_OBJS))
 ALL_OBJS := $(filter-out obj/src/thread/%,$(ALL_OBJS))
 ALL_OBJS := $(filter-out obj/src/signal/%,$(ALL_OBJS))
 
-# Tell the bits/syscall.h rule to use the OpenBSD overlay header
-# instead of generating from the Linux .in file.
-SYSCALL_BITS_SRC := $(srcdir)/arch/openbsd/$(ARCH)/bits/syscall.h
-SYSCALL_BITS_RULE := overlay
-
 # Use the OpenBSD-specific sysconf() and drop the generic one which
 # references Linux-only interfaces (sched_getaffinity, etc).
 ALL_OBJS := $(filter-out obj/src/conf/sysconf.o obj/src/conf/sysconf.lo,$(ALL_OBJS))
@@ -181,6 +176,9 @@ CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS)
 
 # Use the OpenBSD overlay to generate bits/syscall.h instead of the
 # Linux template. The recipe below will honor this via SYSCALL_BITS_RULE.
+#
+# (this is the single authoritative assignment; an earlier duplicate
+#  was removed to reduce noise)
 SYSCALL_BITS_SRC  := $(srcdir)/arch/openbsd/$(ARCH)/bits/syscall.h
 SYSCALL_BITS_RULE := overlay
 
