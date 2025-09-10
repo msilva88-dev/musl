@@ -30,7 +30,8 @@ CC = ${CC}
 AR = ${AR}
 RANLIB = ${RANLIB}
 # Global build flags (keep musl's hidden model for libc objects)
-CFLAGS += -O2 -pipe -fvisibility=hidden
+# For shared libc, do NOT force global hidden visibility.
+CFLAGS += -O2 -pipe
 CPPFLAGS += -D_OPENBSD_SOURCE -U__linux__
 LDFLAGS +=
 
