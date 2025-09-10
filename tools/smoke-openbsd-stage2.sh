@@ -8,6 +8,14 @@ ${MAKE:-gmake} -j"$(sysctl -n hw.ncpu 2>/dev/null || echo 4)" lib/libc.so
 echo "[$0] ensuring ldso alias..."
 ${MAKE:-gmake} ldso-symlink
 
+# Ensure musl CRT objects exist (do not use system /usr/lib/crt*.o)
+echo "[$0] ensuring musl CRT objects..."
+${MAKE:-gmake} -j"$(sysctl -n hw.ncpu 2>/dev/null || echo 4)" \
+  lib/Scrt1.o lib/crti.o lib/crtn.o
+for f in lib/Scrt1.o lib/crti.o lib/crtn.o; do
+  [ -f "$f" ] || { echo "missing $f (musl CRT not built)"; exit 1; }
+done
+
 # Determine expected loader name (strip any stray CRs)
 arch="$( (uname -m 2>/dev/null || uname -p 2>/dev/null || echo unknown) | tr -d '\r' )"
 case "$arch" in
