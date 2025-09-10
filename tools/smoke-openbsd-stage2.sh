@@ -8,15 +8,14 @@ ${MAKE:-gmake} -j"$(sysctl -n hw.ncpu 2>/dev/null || echo 4)" lib/libc.so
 echo "[$0] ensuring ldso alias..."
 ${MAKE:-gmake} ldso-symlink
 
-# Determine expected loader name
-arch="$(uname -m)"
-+case "$arch" in
-  amd64|x86_64) ldname="ld-musl-x86_64.so.1" ;;
-  *)
-    echo "unsupported arch for this smoke: $arch" >&2
-    exit 1
-    ;;
-esac
+# Determine expected loader name (strip any stray CRs)
+arch="$( (uname -m 2>/dev/null || uname -p 2>/dev/null || echo unknown) | tr -d '\r' )"
+if [ "$arch" = "amd64" ] || [ "$arch" = "x86_64" ]; then
+  ldname="ld-musl-x86_64.so.1"
+else
+  echo "unsupported arch for this smoke: $arch" >&2
+  exit 1
+fi
 
 # Choose compiler
 : "${CC:=cc}"
