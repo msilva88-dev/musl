@@ -16,6 +16,13 @@ for f in lib/Scrt1.o lib/crti.o lib/crtn.o; do
   [ -f "$f" ] || { echo "missing $f (musl CRT not built)"; exit 1; }
 done
 
+# Quick diagnostic: does libc.so export __libc_start_main?
+if command -v readelf >/dev/null 2>&1; then
+  if ! readelf -Ws lib/libc.so | awk '$4=="FUNC" && $8=="__libc_start_main"{found=1} END{exit !found}'; then
+    echo "[warn] libc.so does not export __libc_start_main; link may fail." >&2
+  fi
+fi
+
 # Determine expected loader name (strip any stray CRs)
 arch="$( (uname -m 2>/dev/null || uname -p 2>/dev/null || echo unknown) | tr -d '\r' )"
 case "$arch" in
@@ -43,10 +50,11 @@ echo "[$0] compiling /tmp/dhello (PIE, musl CRT, rpath, custom interp)..."
 "$CC" -nostdlib -pie -o /tmp/dhello \
   ./lib/Scrt1.o ./lib/crti.o \
   /tmp/dhello.o \
+  -Wl,--no-as-needed \
   -Wl,-rpath,"$PWD/lib" \
   -Wl,-dynamic-linker,"$PWD/lib/$ldname" \
   -Wl,--allow-shlib-undefined \
-  -L./lib -lc \
+  ./lib/libc.so \
   ./lib/crtn.o
 
 echo "[$0] PT_INTERP for /tmp/dhello:"
