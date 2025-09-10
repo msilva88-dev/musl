@@ -426,6 +426,11 @@ obj/crt/%.o: CFLAGS_ALL += $(CRT_EXTRA_FLAGS)
 obj/crt/$(ARCH)/%.o: CFLAGS_ALL += $(CRT_EXTRA_FLAGS)
 endif
 
+# Ensure the start symbol is exported from libc.so even with global hidden vis.
+# (Both PIC .o and .lo units, depending on how the shared is produced.)
+obj/src/env/__libc_start_main.o:  CFLAGS_ALL += -fvisibility=default
+obj/src/env/__libc_start_main.lo: CFLAGS_ALL += -fvisibility=default
+
 OPTIMIZE_SRCS = $(wildcard $(OPTIMIZE_GLOBS:%=$(srcdir)/src/%))
 $(OPTIMIZE_SRCS:$(srcdir)/%.c=obj/%.o) $(OPTIMIZE_SRCS:$(srcdir)/%.c=obj/%.lo): CFLAGS += -O3
 
