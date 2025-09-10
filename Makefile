@@ -418,6 +418,12 @@ obj/crt/rcrt1.o: $(srcdir)/ldso/dlstart.c
 
 obj/crt/Scrt1.o obj/crt/rcrt1.o: CFLAGS_ALL += -fPIC
 
+# --- OpenBSD CRT visibility fix -------------------------------------------
+# Build CRT objects without hidden visibility so they can bind to libc.so.
+# Also neutralize the `hidden` attribute from internal headers for CRT only.
+# This applies to both arch-specific and generic CRT objects.
+obj/crt/$(ARCH)/%.o obj/crt/%.o: CFLAGS_ALL += -fvisibility=default -Dhidden=
+
 OPTIMIZE_SRCS = $(wildcard $(OPTIMIZE_GLOBS:%=$(srcdir)/src/%))
 $(OPTIMIZE_SRCS:$(srcdir)/%.c=obj/%.o) $(OPTIMIZE_SRCS:$(srcdir)/%.c=obj/%.lo): CFLAGS += -O3
 
