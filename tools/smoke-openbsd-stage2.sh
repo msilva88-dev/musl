@@ -1,5 +1,8 @@
 #!/bin/sh
 # Tiny OpenBSD stage-2 smoke: build libc.so and run a dynamic hello
+# Usage:
+#   sh tools/smoke-openbsd-stage2.sh
+#   MUSL_USE_MUSL_LDSO=1 sh tools/smoke-openbsd-stage2.sh   # force musl ldso in PT_INTERP
 set -eu
 
 echo "[$0] building shared libc..."
@@ -30,6 +33,24 @@ case "$arch" in
   *) echo "unsupported arch for this smoke: $arch" >&2; exit 1 ;;
 esac
 
+# Choose which dynamic loader to embed in PT_INTERP
+os="$(uname -s 2>/dev/null || echo unknown)"
+use_musl_ldso="${MUSL_USE_MUSL_LDSO:-0}"
+case "$os" in
+  OpenBSD)
+    if [ "$use_musl_ldso" = "1" ]; then
+      interp="$PWD/lib/$ldname"
+      echo "[$0] WARNING: forcing musl ldso as PT_INTERP on OpenBSD (may fail with ENOEXEC)."
+    else
+      interp="/usr/libexec/ld.so"
+    fi
+    ;;
+  *)
+    interp="$PWD/lib/$ldname"
+    ;;
+esac
+echo "[$0] using dynamic loader: $interp"
+
 # Choose compiler
 : "${CC:=cc}"
 
@@ -46,14 +67,13 @@ EOF
 echo "[$0] compiling /tmp/dhello (PIE, musl CRT, rpath, custom interp)..."
 # Build object first
 "$CC" -fPIE -c -o /tmp/dhello.o /tmp/dhello.c
-# Link with musl CRT and no system startup files
+# Link with musl CRT and no system startup files; link explicitly to our libc.so
 "$CC" -nostdlib -pie -o /tmp/dhello \
   ./lib/Scrt1.o ./lib/crti.o \
   /tmp/dhello.o \
   -Wl,--no-as-needed \
   -Wl,-rpath,"$PWD/lib" \
-  -Wl,-dynamic-linker,"$PWD/lib/$ldname" \
-  -Wl,--allow-shlib-undefined \
+  -Wl,-dynamic-linker,"$interp" \
   ./lib/libc.so \
   ./lib/crtn.o
 
@@ -67,6 +87,13 @@ else
   echo "(readelf not found)"
 fi
 
+echo "----- ldd (trace loader resolution) -----"
+if command -v ldd >/dev/null 2>&1; then
+  ldd /tmp/dhello || true
+fi
+echo "----- LD_TRACE_LOADED_OBJECTS=1 -----"
+LD_TRACE_LOADED_OBJECTS=1 /tmp/dhello 2>/dev/null || true
+
 echo "----- run directly (kernel uses PT_INTERP) -----"
 set +e
 env LD_LIBRARY_PATH="$PWD/lib" /tmp/dhello
@@ -76,12 +103,15 @@ if [ "$rc" -eq 0 ]; then
   echo "(direct run OK)"
 else
   echo "(direct run failed with rc=$rc)"
+  if [ "$os" = "OpenBSD" ] && [ "$use_musl_ldso" = "1" ]; then
+    echo "Note: OpenBSD does not exec non-system interpreters; failure is expected when forcing musl ldso."
+  fi
 fi
 
-echo "----- try explicit musl loader (may not work on OpenBSD) -----"
-# On OpenBSD, invoking a DSO as a program often fails with ENOEXEC.
-# Treat as best-effort and never fail the smoke because of it.
+echo "----- try explicit musl loader -----"
+# On OpenBSD this usually fails with ENOEXEC; treat as best-effort.
 env LD_LIBRARY_PATH="$PWD/lib" "./lib/$ldname" /tmp/dhello || \
-  echo "(explicit loader invocation not supported on this platform)"
+  echo "(explicit ldso invocation not supported on this platform)"
+
 echo "--------------------------------------------------------------"
 echo "Stage-2 dynamic smoke finished."
