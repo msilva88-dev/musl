@@ -10,12 +10,10 @@ ${MAKE:-gmake} ldso-symlink
 
 # Determine expected loader name (strip any stray CRs)
 arch="$( (uname -m 2>/dev/null || uname -p 2>/dev/null || echo unknown) | tr -d '\r' )"
-if [ "$arch" = "amd64" ] || [ "$arch" = "x86_64" ]; then
-  ldname="ld-musl-x86_64.so.1"
-else
-  echo "unsupported arch for this smoke: $arch" >&2
-  exit 1
-fi
+case "$arch" in
+  amd64|x86_64) ldname="ld-musl-x86_64.so.1" ;;
+  *) echo "unsupported arch for this smoke: $arch" >&2; exit 1 ;;
+esac
 
 # Choose compiler
 : "${CC:=cc}"
@@ -30,11 +28,18 @@ int main(void) {
 }
 EOF
 
-echo "[$0] compiling /tmp/dhello (PIE, rpath, custom interp)..."
-"$CC" -fPIE -pie -o /tmp/dhello /tmp/dhello.c \
+echo "[$0] compiling /tmp/dhello (PIE, musl CRT, rpath, custom interp)..."
+# Build object first
+"$CC" -fPIE -c -o /tmp/dhello.o /tmp/dhello.c
+# Link with musl CRT and no system startup files
+"$CC" -nostdlib -pie -o /tmp/dhello \
+  ./lib/Scrt1.o ./lib/crti.o \
+  /tmp/dhello.o \
   -Wl,-rpath,"$PWD/lib" \
   -Wl,-dynamic-linker,"$PWD/lib/$ldname" \
-  -L./lib -lc
+  -Wl,--allow-shlib-undefined \
+  -L./lib -lc \
+  ./lib/crtn.o
 
 echo "[$0] PT_INTERP for /tmp/dhello:"
 if command -v readelf >/dev/null 2>&1; then
@@ -49,7 +54,7 @@ fi
 echo "----- run via musl loader explicitly -----"
 env LD_LIBRARY_PATH="$PWD/lib" "./lib/$ldname" /tmp/dhello
 echo "----- run directly (may be ignored by kernel) -----"
-if /tmp/dhello 2>/dev/null; then
+if /tmp/dhello >/dev/null 2>&1; then
   echo "(ran directly)"
 else
   echo "(direct run did not succeed; expected on some OpenBSD setups)"
