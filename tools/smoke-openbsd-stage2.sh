@@ -35,12 +35,12 @@ esac
 
 # Pick which dynamic loader to embed in PT_INTERP
 os="$(uname -s 2>/dev/null || echo unknown)"
-use_musl_ldso="${MUSL_USE_MUSL_LDSO:-0}"
+use_musl_ldso="${MUSL_USE_MUSL_LDSO:-1}"
 case "$os" in
   OpenBSD)
     if [ "$use_musl_ldso" = "1" ]; then
       interp="$PWD/lib/$ldname"
-      echo "[$0] WARNING: forcing musl ldso as PT_INTERP on OpenBSD (may fail with ENOEXEC)."
+      echo "[$0] NOTE: musl ldso selected by default; OpenBSD will not exec non-system PT_INTERP (ENOEXEC)."
       ldflags_extra="-Wl,--allow-shlib-undefined"
     else
       interp="/usr/libexec/ld.so"
