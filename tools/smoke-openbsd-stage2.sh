@@ -33,7 +33,7 @@ case "$arch" in
   *) echo "unsupported arch for this smoke: $arch" >&2; exit 1 ;;
 esac
 
-# Choose which dynamic loader to embed in PT_INTERP
+# Pick which dynamic loader to embed in PT_INTERP
 os="$(uname -s 2>/dev/null || echo unknown)"
 use_musl_ldso="${MUSL_USE_MUSL_LDSO:-0}"
 case "$os" in
@@ -41,12 +41,15 @@ case "$os" in
     if [ "$use_musl_ldso" = "1" ]; then
       interp="$PWD/lib/$ldname"
       echo "[$0] WARNING: forcing musl ldso as PT_INTERP on OpenBSD (may fail with ENOEXEC)."
+      ldflags_extra="-Wl,--allow-shlib-undefined"
     else
       interp="/usr/libexec/ld.so"
+      ldflags_extra=""
     fi
     ;;
   *)
     interp="$PWD/lib/$ldname"
+    ldflags_extra=""
     ;;
 esac
 echo "[$0] using dynamic loader: $interp"
@@ -67,6 +70,7 @@ EOF
 echo "[$0] compiling /tmp/dhello (PIE, musl CRT, rpath, custom interp)..."
 # Build object first
 "$CC" -fPIE -c -o /tmp/dhello.o /tmp/dhello.c
+
 # Link with musl CRT and no system startup files; link explicitly to our libc.so
 "$CC" -nostdlib -pie -o /tmp/dhello \
   ./lib/Scrt1.o ./lib/crti.o \
@@ -74,6 +78,7 @@ echo "[$0] compiling /tmp/dhello (PIE, musl CRT, rpath, custom interp)..."
   -Wl,--no-as-needed \
   -Wl,-rpath,"$PWD/lib" \
   -Wl,-dynamic-linker,"$interp" \
+  ${ldflags_extra} \
   ./lib/libc.so \
   ./lib/crtn.o
 
