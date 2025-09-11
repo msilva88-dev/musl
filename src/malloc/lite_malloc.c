@@ -8,6 +8,19 @@
 #include "syscall.h"
 #include "fork_impl.h"
 
+/* Stage-1 OpenBSD bootstrap:
+ * Ensure the break syscall number is visible even if the build did not
+ * pick up our overlay bits/syscall.h or -DMUSL_OBSD.  Safe on other OSes:
+ * SYS_obreak/SYS_break won’t exist there. */
+#ifndef SYS_brk
+#include <sys/syscall.h>
+# if defined(SYS_obreak)
+#  define SYS_brk SYS_obreak
+# elif defined(SYS_break)
+#  define SYS_brk SYS_break
+# endif
+#endif
+
 #define ALIGN 16
 
 /* This function returns true if the interval [old,new]

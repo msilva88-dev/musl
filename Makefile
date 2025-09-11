@@ -40,7 +40,7 @@ IMPH = $(addprefix $(srcdir)/, src/internal/stdio_impl.h src/internal/pthread_im
 
 LDFLAGS =
 LDFLAGS_AUTO =
-LIBCC = -lgcc
+LIBCC ?= -lgcc
 CPPFLAGS =
 CFLAGS =
 CFLAGS_AUTO = -Os -pipe
@@ -78,6 +78,293 @@ LDSO_PATHNAME = $(syslibdir)/ld-musl-$(ARCH)$(SUBARCH).so.1
 -include config.mak
 -include $(srcdir)/arch/$(ARCH)/arch.mak
 
+# --- Experimental OpenBSD hook (stage-1: static, single-thread) -------
+# NOTE: This block must come *after* the includes above so:
+#   - config.mak has defined TARGET_OS=openbsd
+#   - SRCS is fully populated (so filtering is effective)
+ifeq ($(TARGET_OS),openbsd)
+
+# Ensure the OpenBSD overlay really comes first: remove any earlier
+# -Iarch/$(ARCH) and append it after the overlay path we just added.
+# (Use $(srcdir) to match how arch paths are formed elsewhere.)
+
+CPPFLAGS := -I$(srcdir)/arch/openbsd/$(ARCH) \
+	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CPPFLAGS)) \
+	-I$(srcdir)/arch/$(ARCH)
+
+# --- Prefer ports GCC and wire libgcc robustly (OpenBSD stage-2) ---
+# If CC wasn’t provided by the user (cmdline/env) and is cc/clang, force egcc.
+ifeq ($(or $(filter command\ line,$(origin CC)),$(filter environment,$(origin CC)),$(filter override,$(origin CC))),)
+EGCC_BIN := /usr/local/bin/egcc
+_CC_BASENAME := $(notdir $(firstword $(CC)))
+ifneq ($(wildcard $(EGCC_BIN)),)
+ifneq ($(filter cc clang,$(_CC_BASENAME)),)
+override CC := $(EGCC_BIN)
+endif
+endif
+endif
+
+# Ensure sub-makes and shell recipes also see ports’ bin first.
+export PATH := /usr/local/bin:$(PATH)
+
+# If LIBCC wasn’t provided by the user (cmdline/env), derive absolute archives
+# from the chosen compiler so link never relies on -lgcc search.
+ifeq ($(or $(filter command\ line,$(origin LIBCC)),$(filter environment,$(origin LIBCC)),$(filter override,$(origin LIBCC))),)
+_LIBGCC_A  := $(shell $(CC) -print-libgcc-file-name 2>/dev/null)
+_LIBGCC_EH := $(shell $(CC) -print-file-name=libgcc_eh.a 2>/dev/null)
+ifneq ($(_LIBGCC_A),)
+override LIBCC := $(_LIBGCC_A)
+ifneq ($(_LIBGCC_EH),libgcc_eh.a)
+override LIBCC += $(_LIBGCC_EH)
+endif
+endif
+endif
+
+# Do not add /usr/include globally: it can cause system headers (e.g.
+# <endian.h>) to override musl's. The OpenBSD overlay pulls in only the
+# needed kernel numbers directly (see bits/syscall.h).
+
+# Stage-2: allow shared builds (drop forced -static). We still filter Linux
+# sources elsewhere and build with MUSL_OBSD defined.
+# LDFLAGS stays as provided by the environment.
+
+# Make sure the OpenBSD overlay is searched *before* arch/$(ARCH) in the
+# actual compile flags. CFLAGS_ALL hard-codes -Iarch/$(ARCH) ahead of
+# $(CPPFLAGS), so adjust CFLAGS_ALL ordering here.
+CFLAGS_ALL := -I$(srcdir)/arch/openbsd/$(ARCH) \
+	$(filter-out -I$(srcdir)/arch/$(ARCH),$(CFLAGS_ALL)) \
+	-I$(srcdir)/arch/$(ARCH)
+
+# OpenBSD’s GCC enables stack protector by default; build musl without it.
+CFLAGS_ALL += -fno-stack-protector
+
+# Ensure the kernel syscall header is visible despite -nostdinc.
+# We only add a *system* include path here; musl's own -I paths still
+# precede it in CFLAGS_ALL, so musl headers win for generic includes.
+CPPFLAGS += -isystem /usr/include
+CFLAGS_ALL += -isystem /usr/include
+
+# Avoid building the generic getrandom so the OpenBSD version wins.
+# (Filter both .o and .lo in case shared objects are ever built.)
+ALL_OBJS := $(filter-out obj/src/misc/getrandom.o obj/src/misc/getrandom.lo,$(ALL_OBJS))
+
+# Drop Linux-only sources entirely for Stage-1.
+# Filtering at the object level ensures nothing under src/linux/ is compiled.
+ALL_OBJS := $(filter-out obj/src/linux/%,$(ALL_OBJS))
+
+# Also drop subsystems that depend on Linux interfaces or threads:
+#  - AIO uses rt_* signal syscalls on Linux
+#  - thread/ uses futex
+#  - signal/ uses rt_* signal syscalls on Linux
+# (These will be reintroduced in later stages with OpenBSD-specific shims.)
+ALL_OBJS := $(filter-out obj/src/aio/%,$(ALL_OBJS))
+ALL_OBJS := $(filter-out obj/src/thread/%,$(ALL_OBJS))
+ALL_OBJS := $(filter-out obj/src/signal/%,$(ALL_OBJS))
+
+# Use the OpenBSD-specific sysconf() and drop the generic one which
+# references Linux-only interfaces (sched_getaffinity, etc).
+ALL_OBJS := $(filter-out obj/src/conf/sysconf.o obj/src/conf/sysconf.lo,$(ALL_OBJS))
+# (src/conf/sysconf_openbsd.c will be picked up automatically.)
+
+# Mark OpenBSD and enable feature macros (no STATIC_ONLY)
+CFLAGS   += -DMUSL_OBSD -D_OPENBSD_SOURCE -U__linux__
+CPPFLAGS += -DMUSL_OBSD -D_OPENBSD_SOURCE -U__linux__
+
+# CFLAGS_ALL was formed earlier using :=. Pull in the *current*
+# CPPFLAGS/CFLAGS (now containing -DMUSL_OBSD) so every TU sees it.
+CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS)
+
+# Use the OpenBSD overlay to generate bits/syscall.h instead of the
+# Linux template. The recipe below will honor this via SYSCALL_BITS_RULE.
+#
+# (this is the single authoritative assignment; an earlier duplicate
+#  was removed to reduce noise)
+SYSCALL_BITS_SRC  := $(srcdir)/arch/openbsd/$(ARCH)/bits/syscall.h
+SYSCALL_BITS_RULE := overlay
+
+# Use OpenBSD-specific getrlimit/setrlimit; the generic ones use
+# Linux prlimit64 which does not exist here.
+ALL_OBJS := $(filter-out obj/src/misc/getrlimit.o obj/src/misc/getrlimit.lo,$(ALL_OBJS))
+ALL_OBJS := $(filter-out obj/src/misc/setrlimit.o obj/src/misc/setrlimit.lo,$(ALL_OBJS))
+# (getrlimit_openbsd.c / setrlimit_openbsd.c will be picked up automatically)
+
+# setdomainname(3) is Linux-only; use an OpenBSD stub and drop the
+# generic implementation that calls SYS_setdomainname.
+ALL_OBJS := $(filter-out obj/src/misc/setdomainname.o obj/src/misc/setdomainname.lo,$(ALL_OBJS))
+# (src/misc/setdomainname_openbsd.c will be picked up automatically.)
+
+# uname(): no Linux SYS_uname on OpenBSD — use sysctl-based version.
+ALL_OBJS := $(filter-out obj/src/misc/uname.o obj/src/misc/uname.lo,$(ALL_OBJS))
+# (src/misc/uname_openbsd.c will be picked up automatically.)
+
+# Filter out Linux-only sources and any generic getrandom implementation,
+# so src/misc/getrandom_openbsd.c is the sole provider.
+SRCS := $(filter-out src/linux/%,$(SRCS))
+SRCS := $(filter-out src/misc/getrandom.c,$(SRCS))
+
+# mincore(): Linux-only SYS_mincore in generic file. Use OpenBSD stub and
+# drop the Linux implementation from the object list for Stage-1.
+ALL_OBJS := $(filter-out obj/src/mman/mincore.o obj/src/mman/mincore.lo,$(ALL_OBJS))
+# (src/mman/mincore_openbsd.c will be picked up automatically.)
+
+# mremap(): Linux-only; provide OpenBSD stub and drop the generic one.
+ALL_OBJS := $(filter-out obj/src/mman/mremap.o obj/src/mman/mremap.lo,$(ALL_OBJS))
+# (src/mman/mremap_openbsd.c will be picked up automatically.)
+
+# POSIX message queues are not provided via SYS_mq_* on OpenBSD.
+# Drop the Linux mq implementation and use stubs for stage-1.
+ALL_OBJS := $(filter-out obj/src/mq/%.o obj/src/mq/%.lo,$(ALL_OBJS))
+# (src/misc/mq_openbsd_stub.c supplies ENOSYS stubs.)
+
+# recvmmsg/sendmmsg are Linux-only; use OpenBSD stubs for Stage-1
+# and drop the generic Linux objects from the build.
+ALL_OBJS := $(filter-out \
+  obj/src/network/recvmmsg.o obj/src/network/recvmmsg.lo \
+  obj/src/network/sendmmsg.o obj/src/network/sendmmsg.lo, \
+  $(ALL_OBJS))
+# (src/network/recvmmsg_openbsd.c and sendmmsg_openbsd.c will be picked up
+#  automatically by the toplevel source globs.)
+
+# _Fork: Linux version uses SYS_set_tid_address. Use OpenBSD variant.
+ALL_OBJS := $(filter-out obj/src/process/_Fork.o obj/src/process/_Fork.lo, \
+  $(ALL_OBJS))
+# (src/process/_Fork_openbsd.c will be picked up automatically.)
+
+# fexecve(): Linux version uses execveat; use OpenBSD variant instead.
+ALL_OBJS := $(filter-out obj/src/process/fexecve.o obj/src/process/fexecve.lo, \
+  $(ALL_OBJS))
+# (src/process/fexecve_openbsd.c will be picked up automatically.)
+
+# waitid(): Linux-only SYS_waitid; use OpenBSD stub for stage-1.
+ALL_OBJS := $(filter-out obj/src/process/waitid.o obj/src/process/waitid.lo, \
+  $(ALL_OBJS))
+# (src/process/waitid_openbsd.c will be picked up automatically.)
+
+# CPU affinity is not available on OpenBSD; use stubs for Stage-1 and
+# drop the Linux implementations that reference SYS_sched_*affinity.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/sched_setaffinity.o obj/src/sched/sched_setaffinity.lo \
+  obj/src/sched/sched_getaffinity.o obj/src/sched/sched_getaffinity.lo, \
+  $(ALL_OBJS))
+
+# Linux sched_cpucount pulls in affinity.c (uses SYS_sched_setaffinity).
+# For OpenBSD stage-1, drop both and supply a portable __sched_cpucount().
+ALL_OBJS := $(filter-out \
+  obj/src/sched/affinity.o obj/src/sched/affinity.lo \
+  obj/src/sched/sched_cpucount.o obj/src/sched/sched_cpucount.lo, \
+  $(ALL_OBJS))
+# (src/sched/sched_cpucount_openbsd.c is picked up automatically.)
+
+# sched_get_priority_{max,min}: Linux-only syscalls in generic sources.
+# Use OpenBSD shims and drop the Linux objects.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/sched_get_priority_max.o obj/src/sched/sched_get_priority_max.lo \
+  obj/src/sched/sched_get_priority_min.o obj/src/sched/sched_get_priority_min.lo, \
+  $(ALL_OBJS))
+# (openbsd variants are picked up automatically.)
+
+# sched_getcpu(): Linux-only SYS_getcpu; use OpenBSD stub for Stage-1.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/sched_getcpu.o obj/src/sched/sched_getcpu.lo, \
+  $(ALL_OBJS))
+
+# sched_rr_get_interval(): Linux-only syscall; use OpenBSD stub.
+ALL_OBJS := $(filter-out \
+  obj/src/sched/sched_rr_get_interval.o obj/src/sched/sched_rr_get_interval.lo, \
+  $(ALL_OBJS))
+
+# select()/pselect(): Linux versions use pselect6(_time64).
+# Use OpenBSD syscalls instead and drop the Linux objects.
+ALL_OBJS := $(filter-out \
+  obj/src/select/select.o  obj/src/select/select.lo  \
+  obj/src/select/pselect.o obj/src/select/pselect.lo, \
+  $(ALL_OBJS))
+# (openbsd variants below are picked up by the toplevel source globs.)
+
+# fchmodat(): Linux generic uses SYS_fchmodat2; use OpenBSD syscall.
+ALL_OBJS := $(filter-out \
+  obj/src/stat/fchmodat.o obj/src/stat/fchmodat.lo, \
+  $(ALL_OBJS))
+
+# statx(): Linux-only. Use an OpenBSD stub for Stage-1.
+ALL_OBJS := $(filter-out \
+  obj/src/stat/statx.o obj/src/stat/statx.lo, \
+  $(ALL_OBJS))
+
+# fstatat(): drop Linux object that routes via statx(2); we provide
+# src/stat/fstatat_openbsd.c instead.
+ALL_OBJS := $(filter-out \
+  obj/src/stat/fstatat.o obj/src/stat/fstatat.lo, \
+  $(ALL_OBJS))
+
+# clock_nanosleep(): Linux uses SYS_clock_nanosleep_time64.
+# Use our OpenBSD libc implementation instead.
+ALL_OBJS := $(filter-out \
+  obj/src/time/clock_nanosleep.o obj/src/time/clock_nanosleep.lo, \
+  $(ALL_OBJS))
+
+# POSIX timers: use ENOSYS stubs on OpenBSD for stage-1.
+ALL_OBJS := $(filter-out \
+  obj/src/time/timer_create.o      obj/src/time/timer_create.lo      \
+  obj/src/time/timer_delete.o      obj/src/time/timer_delete.lo      \
+  obj/src/time/timer_getoverrun.o  obj/src/time/timer_getoverrun.lo  \
+  obj/src/time/timer_gettime.o     obj/src/time/timer_gettime.lo     \
+  obj/src/time/timer_settime.o     obj/src/time/timer_settime.lo,    \
+  $(ALL_OBJS))
+
+# times(): Linux uses SYS_times. Use our OpenBSD libc implementation.
+ALL_OBJS := $(filter-out \
+  obj/src/time/times.o obj/src/time/times.lo, \
+  $(ALL_OBJS))
+
+# faccessat(): Linux uses faccessat2; use OpenBSD faccessat(2) instead.
+ALL_OBJS := $(filter-out \
+  obj/src/unistd/faccessat.o obj/src/unistd/faccessat.lo, \
+  $(ALL_OBJS))
+
+# fdatasync()/datasync(): OpenBSD has no SYS_fdatasync; use fsync(2).
+# Filter the Linux objects only via ALL_OBJS (do not touch SRCS).
+ALL_OBJS := $(filter-out \
+  obj/src/unistd/fdatasync.o obj/src/unistd/fdatasync.lo \
+  obj/src/unistd/datasync.o  obj/src/unistd/datasync.lo, \
+  $(ALL_OBJS))
+
+# getcwd(): generic uses SYS_getcwd; OpenBSD syscall is SYS___getcwd.
+ALL_OBJS := $(filter-out \
+  obj/src/unistd/getcwd.o obj/src/unistd/getcwd.lo, \
+  $(ALL_OBJS))
+
+# _Exit(): generic uses SYS_exit_group (Linux). Use SYS_exit on OpenBSD.
+ALL_OBJS := $(filter-out \
+  obj/src/exit/_Exit.o obj/src/exit/_Exit.lo, \
+  $(ALL_OBJS))
+
+# abort/assert: generic uses Linux rt_sigaction; provide OpenBSD shims.
+ALL_OBJS := $(filter-out \
+  obj/src/exit/abort.o obj/src/exit/abort.lo \
+  obj/src/exit/assert.o obj/src/exit/assert.lo, \
+  $(ALL_OBJS))
+
+# sigaction/raise: avoid Linux rt_* implementations.
+ALL_OBJS := $(filter-out \
+  obj/src/signal/sigaction.o obj/src/signal/sigaction.lo \
+  obj/src/signal/raise.o     obj/src/signal/raise.lo, \
+  $(ALL_OBJS))
+
+# posix_fadvise: no syscall on OpenBSD; provide stub and drop Linux object.
+ALL_OBJS := $(filter-out \
+  obj/src/fcntl/posix_fadvise.o obj/src/fcntl/posix_fadvise.lo, \
+  $(ALL_OBJS))
+
+# posix_fallocate: no fallocate(2) on OpenBSD; provide fallback and
+# drop the Linux implementation which references SYS_fallocate.
+ALL_OBJS := $(filter-out \
+  obj/src/fcntl/posix_fallocate.o obj/src/fcntl/posix_fallocate.lo, \
+  $(ALL_OBJS))
+
+endif
+# ----------------------------------------------------------------------
+
 ifeq ($(ARCH),)
 
 all:
@@ -87,6 +374,19 @@ all:
 else
 
 all: $(ALL_LIBS) $(ALL_TOOLS)
+
+# Convenience: create the musl loader soname symlink pointing at libc.so.
+# Stage-2 supports only amd64 right now.
+.PHONY: ldso-symlink
+ldso-symlink: lib/libc.so
+	@mkdir -p lib
+	@case "$(ARCH)" in \
+	  amd64|x86_64) n=ld-musl-x86_64.so.1 ;; \
+	  *) \
+	    echo "ldso-symlink: stage-2 supports only amd64 (ARCH=$(ARCH))" >&2; \
+	    exit 1 ;; \
+	esac ; \
+	ln -sf libc.so "lib/$$n"
 
 OBJ_DIRS = $(sort $(patsubst %/,%,$(dir $(ALL_LIBS) $(ALL_TOOLS) $(ALL_OBJS) $(GENH) $(GENH_INT))) obj/include)
 
@@ -98,9 +398,12 @@ $(OBJ_DIRS):
 obj/include/bits/alltypes.h: $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in $(srcdir)/tools/mkalltypes.sed
 	sed -f $(srcdir)/tools/mkalltypes.sed $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in > $@
 
-obj/include/bits/syscall.h: $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
+# Use overlay on OpenBSD; otherwise generate from the .in file.
+obj/include/bits/syscall.h: $(if $(filter overlay,$(SYSCALL_BITS_RULE)),$(SYSCALL_BITS_SRC),$(srcdir)/arch/$(ARCH)/bits/syscall.h.in)
 	cp $< $@
+ifneq ($(SYSCALL_BITS_RULE),overlay)
 	sed -n -e s/__NR_/SYS_/p < $< >> $@
+endif
 
 obj/src/internal/version.h: $(wildcard $(srcdir)/VERSION $(srcdir)/.git)
 	printf '#define VERSION "%s"\n' "$$(cd $(srcdir); sh tools/version.sh)" > $@
@@ -114,6 +417,19 @@ obj/crt/crt1.o obj/crt/Scrt1.o obj/crt/rcrt1.o obj/ldso/dlstart.lo: $(srcdir)/ar
 obj/crt/rcrt1.o: $(srcdir)/ldso/dlstart.c
 
 obj/crt/Scrt1.o obj/crt/rcrt1.o: CFLAGS_ALL += -fPIC
+
+# Per-CRT overrides from config.mak (e.g. -fvisibility=default, -DMUSL_NO_HIDDEN)
+# Apply to both generic and arch-specific CRT sources.
+CRT_EXTRA_FLAGS := $(strip $(CFLAGS_CRT) $(CPPFLAGS_CRT))
+ifneq ($(CRT_EXTRA_FLAGS),)
+obj/crt/%.o: CFLAGS_ALL += $(CRT_EXTRA_FLAGS)
+obj/crt/$(ARCH)/%.o: CFLAGS_ALL += $(CRT_EXTRA_FLAGS)
+endif
+
+# Ensure the start symbol is exported from libc.so even with global hidden vis.
+# (Both PIC .o and .lo units, depending on how the shared is produced.)
+obj/src/env/__libc_start_main.o:  CFLAGS_ALL += -fvisibility=default
+obj/src/env/__libc_start_main.lo: CFLAGS_ALL += -fvisibility=default
 
 OPTIMIZE_SRCS = $(wildcard $(OPTIMIZE_GLOBS:%=$(srcdir)/src/%))
 $(OPTIMIZE_SRCS:$(srcdir)/%.c=obj/%.o) $(OPTIMIZE_SRCS:$(srcdir)/%.c=obj/%.lo): CFLAGS += -O3
@@ -228,10 +544,14 @@ musl-%.tar.gz: .git
 
 endif
 
+# Tiny OpenBSD stage-1 smoke test (static hello linked against ./lib/libc.a)
+smoke-openbsd: lib/libc.a
+	@sh tools/smoke-openbsd.sh
+
 clean:
 	rm -rf obj lib
 
 distclean: clean
 	rm -f config.mak
 
-.PHONY: all clean install install-libs install-headers install-tools
+.PHONY: all clean install install-libs install-headers install-tools smoke-openbsd
