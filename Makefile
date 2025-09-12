@@ -17,6 +17,8 @@ includedir = $(prefix)/include
 libdir = $(prefix)/lib
 syslibdir = /lib
 
+UNAME_S := $(shell uname -s)
+
 MALLOC_DIR = mallocng
 SRC_DIRS = $(addprefix $(srcdir)/,src/* src/malloc/$(MALLOC_DIR) crt ldso $(COMPAT_SRC_DIRS))
 BASE_GLOBS = $(addsuffix /*.c,$(SRC_DIRS))
@@ -56,10 +58,27 @@ AR      = $(CROSS_COMPILE)ar
 RANLIB  = $(CROSS_COMPILE)ranlib
 INSTALL = $(srcdir)/tools/install.sh
 
+COMMON_HEADERS = $(wildcard include/*.h)
+COMMON_HEADERS += $(wildcard include/arpa/*.h)
+COMMON_HEADERS += $(wildcard include/net/*.h)
+COMMON_HEADERS += $(wildcard include/netinet/*.h)
+COMMON_HEADERS += $(wildcard include/netpacket/*.h)
+COMMON_HEADERS += $(wildcard include/scsi/*.h)
+COMMON_HEADERS += sys/mount.h sys/reboot.h sys/swap.h sys/syscall.h sys/wait.h
+HBBSD_HEADERS = sys/pledge.h sys/unveil.h
+LINUX_HEADERS = sys/sysinfo.h sys/xattr.h
+OBSD_HEADERS := $(HBBSD_HEADERS)
 ARCH_INCLUDES = $(wildcard $(srcdir)/arch/$(ARCH)/bits/*.h)
 GENERIC_INCLUDES = $(wildcard $(srcdir)/arch/generic/bits/*.h)
-INCLUDES = $(wildcard $(srcdir)/include/*.h $(srcdir)/include/*/*.h)
-ALL_INCLUDES = $(sort $(INCLUDES:$(srcdir)/%=%) $(GENH:obj/%=%) $(ARCH_INCLUDES:$(srcdir)/arch/$(ARCH)/%=include/%) $(GENERIC_INCLUDES:$(srcdir)/arch/generic/%=include/%))
+ifeq ($(UNAME_S),HyperbolaBSD)
+INCLUDES := $(COMMON_HEADERS) $(HBBSD_HEADERS)
+else ifeq ($(UNAME_S),Linux)
+INCLUDES := $(COMMON_HEADERS) $(LINUX_HEADERS)
+else ifeq ($(UNAME_S),OpenBSD)
+INCLUDES := $(COMMON_HEADERS) $(OBSD_HEADERS)
+endif
+ALL_INCLUDES = $(sort $(INCLUDES:$(srcdir)/%=%) $(GENH:obj/%=%)
+ $(ARCH_INCLUDES:$(srcdir)/arch/$(ARCH)/%=include/%) $(GENERIC_INCLUDES:$(srcdir)/arch/generic/%=include/%))
 
 EMPTY_LIB_NAMES = m rt pthread crypt util xnet resolv dl
 EMPTY_LIBS = $(EMPTY_LIB_NAMES:%=lib/lib%.a)
@@ -167,8 +186,8 @@ ALL_OBJS := $(filter-out obj/src/conf/sysconf.o obj/src/conf/sysconf.lo,$(ALL_OB
 # (src/conf/sysconf_openbsd.c will be picked up automatically.)
 
 # Mark OpenBSD and enable feature macros (no STATIC_ONLY)
-CFLAGS   += -DMUSL_OBSD -D_OPENBSD_SOURCE -U__linux__
-CPPFLAGS += -DMUSL_OBSD -D_OPENBSD_SOURCE -U__linux__
+CFLAGS   += -DMUSL_OBSD
+CPPFLAGS += -DMUSL_OBSD
 
 # CFLAGS_ALL was formed earlier using :=. Pull in the *current*
 # CPPFLAGS/CFLAGS (now containing -DMUSL_OBSD) so every TU sees it.

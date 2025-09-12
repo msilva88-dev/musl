@@ -172,12 +172,20 @@ static void *__expand_heap(size_t *pn)
 	n += -n & PAGE_SIZE-1;
 
 	if (!brk) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		brk = __syscall(SYS_break, 0);
+#elif defined(__linux__)
 		brk = __syscall(SYS_brk, 0);
+#endif
 		brk += -brk & PAGE_SIZE-1;
 	}
 
 	if (n < SIZE_MAX-brk && !traverses_stack_p(brk, brk+n)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	    && __syscall(SYS_break, brk+n)==brk+n) {
+#elif defined(__linux__)
 	    && __syscall(SYS_brk, brk+n)==brk+n) {
+#endif
 		*pn = n;
 		brk += n;
 		return (void *)(brk-n);

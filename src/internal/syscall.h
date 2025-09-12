@@ -4,20 +4,10 @@
 #include <features.h>
 #include <errno.h>
 #include <sys/syscall.h>
-#ifdef MUSL_OBSD
-/* On OpenBSD, the break syscall is named obreak(2). If the system headers
- * do not provide SYS_brk, map it here so musl sources that reference
- * SYS_brk (e.g. lite_malloc) compile cleanly in Stage-1. */
-#ifndef SYS_brk
-#ifdef SYS_obreak
-#define SYS_brk SYS_obreak
-#endif
-#endif
-#endif
 
 /* OpenBSD: kernel has no *_time64 syscall names.
  * Ensure we never remap SYS_* to *_time64 on this target. */
-#ifdef MUSL_OBSD
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #undef  __SYSCALL_TIME64
 #define __SYSCALL_TIME64 0
 #endif

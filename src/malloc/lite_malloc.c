@@ -8,19 +8,6 @@
 #include "syscall.h"
 #include "fork_impl.h"
 
-/* Stage-1 OpenBSD bootstrap:
- * Ensure the break syscall number is visible even if the build did not
- * pick up our overlay bits/syscall.h or -DMUSL_OBSD.  Safe on other OSes:
- * SYS_obreak/SYS_break won’t exist there. */
-#ifndef SYS_brk
-#include <sys/syscall.h>
-# if defined(SYS_obreak)
-#  define SYS_brk SYS_obreak
-# elif defined(SYS_break)
-#  define SYS_brk SYS_break
-# endif
-#endif
-
 #define ALIGN 16
 
 /* This function returns true if the interval [old,new]
@@ -72,14 +59,22 @@ static void *__simple_malloc(size_t n)
 		size_t req = n - (end-cur) + PAGE_SIZE-1 & -PAGE_SIZE;
 
 		if (!cur) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+			brk = __syscall(SYS_break, 0);
+#elif defined(__linux__)
 			brk = __syscall(SYS_brk, 0);
+#endif
 			brk += -brk & PAGE_SIZE-1;
 			cur = end = brk;
 		}
 
 		if (brk == end && req < SIZE_MAX-brk
 		    && !traverses_stack_p(brk, brk+req)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		    && __syscall(SYS_break, brk+req)==brk+req) {
+#elif defined(__linux__)
 		    && __syscall(SYS_brk, brk+req)==brk+req) {
+#endif
 			brk = end += req;
 		} else {
 			int new_area = 0;

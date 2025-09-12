@@ -1,21 +1,6 @@
 #ifndef MALLOC_GLUE_H
 #define MALLOC_GLUE_H
 
-#include "syscall.h"
-
-/* Stage-1 OpenBSD bootstrap:
- * Ensure the data-segment break syscall number is visible even if the
- * overlay bits/syscall.h or build defines did not reach this TU.
- * Safe on other OSes: SYS_obreak/SYS_break won’t exist there. */
-#ifndef SYS_brk
-#include <sys/syscall.h>
-# if defined(SYS_obreak)
-#  define SYS_brk SYS_obreak
-# elif defined(SYS_break)
-#  define SYS_brk SYS_break
-# endif
-#endif
-
 #include <stdint.h>
 #include <sys/mman.h>
 #include <pthread.h>
@@ -48,7 +33,11 @@
 #define assert(x) do { if (!(x)) a_crash(); } while(0)
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define brk(p) ((uintptr_t)__syscall(SYS_break, p))
+#elif defined(__linux__)
 #define brk(p) ((uintptr_t)__syscall(SYS_brk, p))
+#endif
 
 #define mmap __mmap
 #define madvise __madvise
