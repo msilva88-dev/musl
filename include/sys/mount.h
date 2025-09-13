@@ -64,9 +64,16 @@ extern "C" {
 #define MNT_EXPIRE      4
 #define UMOUNT_NOFOLLOW 8
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+int mount(const char *, const char *, int, void *);
+int unmount(const char *, int);
+#elif defined(__linux__)
 int mount(const char *, const char *, const char *, unsigned long, const void *);
+#endif
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 int umount(const char *);
 int umount2(const char *, int);
+#endif
 
 #ifdef __cplusplus
 }

@@ -28,7 +28,11 @@ ssize_t writev (int, const struct iovec *, int);
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 ssize_t preadv (int, const struct iovec *, int, off_t);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+ssize_t pwritev (int, const struct iovec *, int, int, off_t);
+#elif defined(__linux__)
 ssize_t pwritev (int, const struct iovec *, int, off_t);
+#endif
 #if defined(_LARGEFILE64_SOURCE)
 #define preadv64 preadv
 #define pwritev64 pwritev
@@ -40,7 +44,9 @@ ssize_t pwritev (int, const struct iovec *, int, off_t);
 ssize_t process_vm_writev(pid_t, const struct iovec *, unsigned long, const struct iovec *, unsigned long, unsigned long);
 ssize_t process_vm_readv(pid_t, const struct iovec *, unsigned long, const struct iovec *, unsigned long, unsigned long);
 ssize_t preadv2 (int, const struct iovec *, int, off_t, int);
+#if defined(__linux__)
 ssize_t pwritev2 (int, const struct iovec *, int, off_t, int);
+#endif
 #define RWF_HIPRI 0x00000001
 #define RWF_DSYNC 0x00000002
 #define RWF_SYNC 0x00000004

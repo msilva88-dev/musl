@@ -184,6 +184,11 @@ int getentropy(void *, size_t);
 extern int optreset;
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+int pledge(const char *, const char *);
+int unveil(const char *, const char *);
+#endif
+
 #ifdef _GNU_SOURCE
 extern char **environ;
 int setresuid(uid_t, uid_t, uid_t);

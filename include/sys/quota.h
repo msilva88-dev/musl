@@ -93,7 +93,11 @@ struct dqinfo {
 	uint32_t dqi_valid;
 };
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+int quotactl(const char *, int, int, char *);
+#elif defined(__linux__)
 int quotactl(int, const char *, int, char *);
+#endif
 
 #ifdef __cplusplus
 }
