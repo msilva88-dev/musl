@@ -30,16 +30,16 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 	va_list ap;
 	va_start(ap, arg);
 	if (flags & CLONE_SETTLS | CLONE_THREAD) {
-		/* (struct start_args *)args */ pargs = va_arg(ap, void *);
+		args = va_arg(ap, struct start_args *);
 	}
 	if (flags & (CLONE_PARENT_SETTID | CLONE_CHILD_SETTID)) {
-		/* (int *)&new->tid */ ptid = va_arg(ap, void *);
+		ptid = va_arg(ap, int *);
 	}
 	if (flags & CLONE_SETTLS | CLONE_THREAD) {
-		/* (struct pthread *+)TP_ADJ(new) */ pthread = va_arg(ap, void *);
+		pth = va_arg(ap, void *);
 	}
 	if (flags & CLONE_SIGHAND | CLONE_THREAD) {
-		/* (volatile int *)&__thread_list_lock */ _thread_lock = va_arg(ap, void *);
+		_thread_lock = va_arg(ap, int *);
 	}
 	va_end(ap);
 
@@ -53,14 +53,15 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 				/* ==1 if application alloced */
 			size_t len; /* total size of allocated stack */
 		};
-		struct bsd_pthread_str { // <- tib->tib_thread
+
+		struct bsd_pthread {
 			//struct __sem donesem; // <- sem <- _SPINLOCK_UNLOCKED
 			unsigned int flags;
 			//_atomic_lock_t flags_lock; <- _SPINLOCK_UNLOCKED
-			struct tib *tib; // <- tib
+			struct tib *tib;
 			void *retval;
-			void *(*fn)(void *); // <- entry/start/c11_start
-			void *arg; // <- args
+			void *(*fn)(void *);
+			void *arg;
 			char name[32];
 			struct stack *stack;
 			//LIST_ENTRY(pthread) threads;
@@ -72,7 +73,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 
 			/* cancel received in a delayed cancel block? */
 			int delayed_cancel;
-		} *bsd_thread;
+		};
 
 		struct tib {
 #if defined(__i386) || defined(__amd64)
@@ -89,42 +90,35 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			pid_t tib_tid;
 			int tib_thread_flags; /* internal to libpthread */
 			void *tib_atexit;
-		} *bsd_tib = __init_tls(sizeof(*bsd_thread));
+		} *bsd_tib = __init_tls(sizeof(struct bsd_pthread));
 
-		if (tib == NULL) {
+		if (bsd_tib == NULL) {
 			return ENOMEM;
 		}
 
-		// Add pointer from tib_thread to bsd_thread
-		bsd_thread = bsd_tib->tib_thread;
-
-		// Add dynamic memory with zeros to bsd_thread
-		memset(bsd_thread, 0, sizeof(*bsd_thread));
-
-		// Add respective pointers and values
-		bsd_thread->tib = bsd_tib;
-		bsd_thread->tib = tib;
-
-#if 0
-		/*
-		 * Some architectures use one as spinlock (like HPPA)
-		 */
-		bsd_thread->donesem.lock = 1;
-		bsd_thread->flags_lock = 1;
-#endif
-
-		bsd_thread->fn = args->start_func;
-		bsd_thread->arg = args->start_arg;
 		bsd_tib->tib_tid = -1;
 
-		struct stack bsd_stack = { NULL, stack };
+		struct stack bsd_stack = {
+			NULL,
+			pth->stack, // void *stack -> void *sp
+			pth->map_base, // unsigned char *map_base -> void *base
+			pth->guard_size, // size_t guard_size -> size_t guardsize
+			pth->stack_size // size_t stack_size -> size_t len
+		};
+
 		struct __tfork {
-			void *tf_tcb;   /* Thread control block (TLS base) */
-			void *tf_stack; /* Stack pointer */
-			void *tf_func;  /* Initial function */
-			void *tf_arg;   /* Argument */
-			void *tf_tid;	/* ? */
-		} param = { TP_ADJ(bsd_tib), &bsd_stack, args->start_func, args->start_arg, &tls->tid };
+			void *tf_tcb; // Thread control block (TLS base)
+			void *tf_stack; // Stack pointer
+			void *tf_func; // Initial function
+			void *tf_arg; // Argument
+			void *tf_tid; // Thread ID
+		} param = {
+			TP_ADJ(bsd_tib),
+			&bsd_stack,
+			args->start_func,
+			args->start_arg,
+			&bsd_tib->tib_tid // ptid or &pth->tid
+		};
 
 		pid_t ret = syscall(SYS___tfork, &param, sizeof(param));
 
@@ -132,19 +126,22 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			return ret;
 		}
 
-		param.tf_func(param.tf_arg);
+		fn(args);
+
 		syscall(SYS___threxit, 0);
 	}
+
 	/* If there are no thread flags, use fork() */
 	pid_t pid = fork();
+
 	if (pid < 0) {
 		return -1;
-	}
-	if (pid == 0) {
+	} else if (pid == 0) {
 		/* child: execute the function */
 		int ret = fn(arg);
 		_exit(ret);
 	}
+
 	/* parent: return the child's PID */
 	return pid;
 }
