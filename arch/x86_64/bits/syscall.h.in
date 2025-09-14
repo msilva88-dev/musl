@@ -240,6 +240,7 @@
 #define __NR_arch_prctl			158
 #define __NR_adjtimex			159
 */
+#define __NR_adjtime			140
 #define __NR_setrlimit			195
 #define __NR_chroot			61
 #define __NR_getfsstat			62
@@ -429,9 +430,6 @@
 #define __NR_name_to_handle_at		303
 #define __NR_open_by_handle_at		304
 #define __NR_clock_adjtime		305
-*/
-#define __NR_adjtime			140
-/*
 #define __NR_syncfs			306
 #define __NR_sendmmsg			307
 #define __NR_setns			308

@@ -262,8 +262,10 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define SYS_clock_settime SYS_clock_settime64
 #endif
 
+#if defined(__linux__)
 #ifndef SYS_clock_adjtime
 #define SYS_clock_adjtime SYS_clock_adjtime64
+#endif
 #endif
 
 #ifndef SYS_clock_getres

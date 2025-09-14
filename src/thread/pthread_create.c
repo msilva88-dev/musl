@@ -6,6 +6,9 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <stddef.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <pthread.h>
+#endif
 
 static void dummy_0()
 {
@@ -155,6 +158,7 @@ _Noreturn void __pthread_exit(void *result)
 		 * moments of existence. */
 		__block_all_sigs(&set);
 
+#if defined(__linux__)
 		/* Robust list will no longer be valid, and was already
 		 * processed above, so unregister it with the kernel. */
 		if (self->robust_list.off)
@@ -163,6 +167,9 @@ _Noreturn void __pthread_exit(void *result)
 		/* The following call unmaps the thread's stack mapping
 		 * and then exits without touching the stack. */
 		__unmapself(self->map_base, self->map_size);
+#elif defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		__syscall(SYS_munmap, self->map_base, self->map_size);
+#endif
 	}
 
 	/* Wake any joiner. */
@@ -198,12 +205,18 @@ static int start(void *p)
 	if (state) {
 		if (a_cas(&args->control, 1, 2)==1)
 			__wait(&args->control, 0, 2, 1);
+#if defined(__linux__)
 		if (args->control) {
 			__syscall(SYS_set_tid_address, &args->control);
 			for (;;) __syscall(SYS_exit, 0);
 		}
+#endif
 	}
+#if defined(__linux__)
 	__syscall(SYS_rt_sigprocmask, SIG_SETMASK, &args->sig_mask, 0, _NSIG/8);
+#elif defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	__syscall(SYS_sigprocmask, SIG_SETMASK, &args->sig_mask);
+#endif
 	__pthread_exit(args->start_func(args->start_arg));
 	return 0;
 }
@@ -255,7 +268,11 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		init_file_lock(__stdin_used);
 		init_file_lock(__stdout_used);
 		init_file_lock(__stderr_used);
+#if defined(__linux__)
 		__syscall(SYS_rt_sigprocmask, SIG_UNBLOCK, SIGPT_SET, 0, _NSIG/8);
+#elif defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		__syscall(SYS_sigprocmask, SIG_UNBLOCK, SIGPT_SET);
+#endif
 		self->tsd = (void **)__pthread_tsd_main;
 		__membarrier_init();
 		libc.threaded = 1;
@@ -361,8 +378,16 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	if (ret < 0) {
 		ret = -EAGAIN;
 	} else if (attr._a_sched) {
+#if defined(__linux__)
 		ret = __syscall(SYS_sched_setscheduler,
 			new->tid, attr._a_policy, &attr._a_prio);
+#elif defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		struct sched_param param;
+		param.sched_priority = attr._a_prio;
+		int policy = attr._a_policy;
+
+		ret = pthread_setschedparam(pthread_self(), policy, &param);
+#endif
 		if (a_swap(&args->control, ret ? 3 : 0)==2)
 			__wake(&args->control, 1, 1);
 		if (ret)
