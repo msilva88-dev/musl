@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <sys/syscall.h>
 
-/* OpenBSD: kernel has no *_time64 syscall names.
+/* HyperbolaBSD/OpenBSD: kernel has no *_time64 syscall names.
  * Ensure we never remap SYS_* to *_time64 on this target. */
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #undef  __SYSCALL_TIME64
