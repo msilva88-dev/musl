@@ -19,13 +19,7 @@ int __init_tp(void *p)
 	if (r < 0) return -1;
 	if (!r) libc.can_do_threads = 1;
 	td->detach_state = DT_JOINABLE;
-#if defined(MUSL_OBSD) && defined(SYS_getthrid)
-	/* OpenBSD: no set_tid_address.  Single-thread stage-1 only needs a tid. */
-	td->tid = __syscall(SYS_getthrid);
-#else
-	/* Linux: register clear_child_tid and obtain tid in one go. */
 	td->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
-#endif
 	td->locale = &libc.global_locale;
 	td->robust_list.head = &td->robust_list.head;
 	td->sysinfo = __sysinfo;
