@@ -40,8 +40,9 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 	uintptr_t sp = ((uintptr_t)stack & ~0xF);
 #endif
 	struct start_args *args = NULL;
-	struct pthread *pth = NULL; // tls
-	int *ptid = NULL, *_thread_lock = NULL __attribute__((unused));
+	struct pthread *tls = NULL;
+	int *ptid = NULL, *ctid = NULL __attribute__((unused));
+	pid_t ptid_def = -1;
 
 	va_start(ap, arg);
 	if (flags & (CLONE_SETTLS | CLONE_THREAD)) {
@@ -62,30 +63,28 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 		sp -= 16;
 #endif
 	}
-	if (flags & (CLONE_PARENT_SETTID | CLONE_CHILD_SETTID)) {
+	if (flags & (CLONE_PARENT_SETTID | CLONE_THREAD)) {
 		ptid = va_arg(ap, int *);
 		if (!ptid) {
 			return -EINVAL;
 		}
 	}
 	if (flags & (CLONE_SETTLS | CLONE_THREAD)) {
-		// tls
-		pth = va_arg(ap, struct pthread *);
-		if (!pth) {
+		tls = va_arg(ap, struct pthread *);
+		if (!tls) {
 			return -EINVAL;
 		}
 	}
-	if (flags & (CLONE_SIGHAND | CLONE_THREAD)) {
-		// ctid
-		_thread_lock = va_arg(ap, int *);
-		if (!_thread_lock) {
+	if (flags & (CLONE_CHILD_SETTID | CLONE_THREAD)) {
+		ctid = va_arg(ap, int *);
+		if (!ctid) {
 			return -EINVAL;
 		}
 	}
 	va_end(ap);
 
 	/* If CLONE_VM or thread flags are requested, use pthread */
-	if (flags & CLONE_VM) {
+	if (flags & (CLONE_THREAD | CLONE_VM)) {
 #if defined(__aarch64__) \
         || defined(__i386__) \
         || (defined(__loongarch__) && defined(__loongarch64)) \
@@ -149,7 +148,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			 */
 			size_t guardsize;
 			size_t len; // Total size of allocated stack
-		};
+		} bsd_stack = { NULL, NULL, NULL, 0, 0 };
 
 		struct tib {
 #if defined(__i386__) || defined(__x86_64__)
@@ -165,24 +164,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			pid_t tib_tid;
 			int tib_thread_flags; // Internal to libpthread
 			void *tib_atexit;
-		};
-
-		struct tib *bsd_tib =
-			__init_tls(sizeof(struct bsd_pthread_padd));
-
-		if (bsd_tib == NULL) {
-			return ENOMEM;
-		}
-
-		bsd_tib->tib_tid = ptid ? *ptid : -1;
-
-		struct stack bsd_stack = {
-			NULL,
-			(void *)sp, // void *stack -> void *sp
-			pth->map_base, // unsigned char *map_base -> void *base
-			pth->guard_size, // size_t guard_size -> size_t guardsize
-			pth->stack_size // size_t stack_size -> size_t len
-		};
+		} *bsd_tib = NULL;
 
 		struct __tfork {
 			void *tf_tcb; // Thread control block (TLS base)
@@ -190,13 +172,52 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			void *tf_func; // Initial function
 			void *tf_arg; // Argument
 			void *tf_tid; // Thread ID
-		} param = {
-			TP_ADJ(bsd_tib),
-			bsd_stack.sp,
-			args->start_func,
-			args->start_arg,
-			&bsd_tib->tib_tid // ptid or &pth->tid
-		};
+		} param = { NULL, NULL, NULL, NULL, NULL };
+
+		if (flags & CLONE_SETTLS) {
+			bsd_tib = __init_tls(sizeof(struct bsd_pthread_padd));
+
+			if (bsd_tib == NULL) {
+				return ENOMEM;
+			}
+
+			if (ptid && (flags & CLONE_PARENT_SETTID)) {
+				bsd_tib->tib_tid = ptid;
+			} else {
+				bsd_tib->tib_tid = ptid_def;
+			}
+
+			bsd_stack.sp = (void *)sp; // uintptr_t -> void *
+			bsd_stack.base = tls->map_base; // uchar_t * -> void *
+			bsd_stack.guardsize = tls->guard_size; // size_t
+			bsd_stack.len = tls->stack_size; // size_t
+
+			// Thread control block (TLS base)
+			param.tf_tcb = TP_ADJ(bsd_tib);
+			// Stack pointer
+			param.tf_stack = bsd_stack.sp;
+			// Start function
+			param.tf_func = args->start_func;
+			// Start argument
+			param.tf_arg = args->start_arg;
+			// Thread ID
+			param.tf_tid = &bsd_tib->tib_tid;
+		} else {
+			bsd_stack.sp = (void *)sp; // uintptr_t -> void *
+
+			// Stack pointer
+			param.tf_stack = bsd_stack.sp;
+			// Start function
+			param.tf_func = args->start_func;
+			// Start argument
+			param.tf_arg = args->start_arg;
+
+			if (ptid && (flags & CLONE_PARENT_SETTID)) {
+				param.tf_tid = &ptid;
+			} else {
+				param.tf_tid = &ptid_def;
+			}
+		}
 
 		pid_t ret = syscall(SYS___tfork, &param, sizeof(param));
 
@@ -222,6 +243,11 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 
 		ret = child_fn(child_arg);
 #endif
+
+		if (ctid && (flags & CLONE_CHILD_CLEARTID)) {
+			*ctid = 0;
+			futex(ctid, FUTEX_WAKE, 1, NULL, NULL, 0);
+		}
 
 		syscall(SYS___threxit, ret);
 		__builtin_unreachable();
