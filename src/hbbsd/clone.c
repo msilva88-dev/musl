@@ -21,25 +21,66 @@ static int clone_start(void *arg)
 	return csa->func(csa->arg);
 }
 
-/* musl prototype uses varargs to carry ptid/tls/ctid when present */
 int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 {
-	// struct start_args *, int *, struct pthread *+, volatile int *
-	// args, &new->tid, TP_ADJ(new), &__thread_list_lock
-	/* swallow optional variadic arguments (ptid, tls, ctid) */
+	if (!fn || !stack) {
+		return -EINVAL;
+	}
+
 	va_list ap;
+#if defined(__i386__) \
+	|| defined(__powerpc64__) \
+	|| (defined(__riscv) && (__riscv_xlen == 64))
+	uintptr_t sp = ((uintptr_t)stack & ~0xF) - 16;
+#elif defined(__s390x__)
+	uintptr_t sp = ((uintptr_t)stack & ~0xF) - 160;
+#elif defined(__x86_64__)
+	uintptr_t sp = ((uintptr_t)stack & ~0xF) - 8;
+#else
+	uintptr_t sp = ((uintptr_t)stack & ~0xF);
+#endif
+	struct start_args *args = NULL;
+	struct pthread *pth = NULL; // tls
+	int *ptid = NULL, *_thread_lock = NULL __attribute__((unused));
+
 	va_start(ap, arg);
-	if (flags & CLONE_SETTLS | CLONE_THREAD) {
+	if (flags & (CLONE_SETTLS | CLONE_THREAD)) {
 		args = va_arg(ap, struct start_args *);
+		if (!args) {
+			return -EINVAL;
+		}
+#if defined(__i386__) || defined(__x86_64__)
+		((void **)sp)[0] = args;
+#elif defined(__s390x__)
+		((void **)sp)[1] = fn;
+		((void **)sp)[2] = args;
+#else
+		((void **)sp)[0] = fn;
+		((void **)sp)[1] = args;
+#endif
+#if defined(__loongarch__) && defined(__loongarch64)
+		sp -= 16;
+#endif
 	}
 	if (flags & (CLONE_PARENT_SETTID | CLONE_CHILD_SETTID)) {
 		ptid = va_arg(ap, int *);
+		if (!ptid) {
+			return -EINVAL;
+		}
 	}
-	if (flags & CLONE_SETTLS | CLONE_THREAD) {
-		pth = va_arg(ap, void *);
+	if (flags & (CLONE_SETTLS | CLONE_THREAD)) {
+		// tls
+		pth = va_arg(ap, struct pthread *);
+		if (!pth) {
+			return -EINVAL;
+		}
 	}
-	if (flags & CLONE_SIGHAND | CLONE_THREAD) {
+	if (flags & (CLONE_SIGHAND | CLONE_THREAD)) {
+		// ctid
 		_thread_lock = va_arg(ap, int *);
+		if (!_thread_lock) {
+			return -EINVAL;
+		}
 	}
 	va_end(ap);
 
@@ -50,6 +91,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
         || (defined(__loongarch__) && defined(__loongarch64)) \
         || defined(__powerpc64__) \
         || (defined(__riscv) && (__riscv_xlen == 64)) \
+        || defined(__s390x__) \
         || defined(__x86_64__)
 #define _atomic_lock_t int
 #else
@@ -57,43 +99,44 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 #endif
 
 		// This structures is required by bsd_tib pointer
-		struct bsd_pthread_padd {
+		struct bsd_pthread_unused {
 			struct { // __sem
-				_atomic_lock_t; // lock
-				volatile int; // waitcount
-				volatile int; // value
-				int; // shared
-			}; // donesem
-			unsigned int; // flags
-			_atomic_lock_t; // flags_lock
-			struct tib *; // tib
-			void *; // retval
-			void *; // (*fn)(void *)
-			void *; // arg
-			char [32]; // name[32]
-			struct stack *; // stack
+				_atomic_lock_t lock;
+				// waitcount and value
+				volatile int wc_v[2];
+				int shared;
+			} donesem;
+			unsigned int flags;
+			_atomic_lock_t flags_lock;
+			struct tib *tib;
+			void *retval;
+			void *(*fn)(void *);
+			void *arg;
+			char name[32];
+			struct stack *stack;
 			struct { // LIST ENTRY
-				struct bsd_pthread_padd *; // le_next
-				struct bsd_pthread_padd **; // le_prev
-			}; // threads
+				struct bsd_pthread_padd *le_next;
+				struct bsd_pthread_padd **le_prev;
+			} threads;
 			struct { // TAILQ ENTRY
-				struct bsd_pthread_padd *; // tqe_next
-				struct bsd_pthread_padd **; // tqe_prev
-			}; // waiting
-			void *; //(pthread_cond *)blocking_cond;
+				struct bsd_pthread_padd *tqe_next;
+				struct bsd_pthread_padd **tqe_prev;
+			} waiting;
+			void *blocking_cond; // pthread_cond *
 			struct { // pthread_attr
-				void *; // stack_addr
-				size_t [2]; // stack_size and guard_size
+				void *stack_addr;
+				// stack_size and guard_size
+				size_t ss_gs[2];
 				// detach_state, contention_scope, sched_policy
-				int [3];
+				int st_cs_sp[3];
 				struct { // sched_param
-					int; // sched_priority
-				}; // sched_param
-				int; // sched_inherit
-			}; // attr;
-			void *; // (struct rthread_storage *)local_storage
-			void *; // (struct rthread_cleanup_fn *)cleanup_fns
-			int; //delayed_cancel
+					int sched_priority;
+				} sched_param;
+				int sched_inherit;
+			} attr;
+			void *local_storage; // struct rthread_storage *
+			void *cleanup_fns; // struct rthread_cleanup_fn *
+			int delayed_cancel;
 		};
 
 		struct stack {
@@ -113,7 +156,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			struct tib *__tib_self;
 #endif
 			void *tib_dtv; // Internal to the runtime linker
-			void *; // tib_thread (musl is already have own pthread)
+			void *tib_thread; // Unused
 			void *tib_locale;
 			int tib_errno;
 			int tib_canceled;
@@ -131,11 +174,11 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			return ENOMEM;
 		}
 
-		bsd_tib->tib_tid = -1;
+		bsd_tib->tib_tid = ptid ? *ptid : -1;
 
 		struct stack bsd_stack = {
 			NULL,
-			pth->stack, // void *stack -> void *sp
+			(void *)sp, // void *stack -> void *sp
 			pth->map_base, // unsigned char *map_base -> void *base
 			pth->guard_size, // size_t guard_size -> size_t guardsize
 			pth->stack_size // size_t stack_size -> size_t len
@@ -157,13 +200,31 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 
 		pid_t ret = syscall(SYS___tfork, &param, sizeof(param));
 
-		if (ret != 0 || ret == -1) {
+		// syscall failed, propagate error
+		if (ret != 0) {
+			// ret non-zero is always non-zero
+			// ret -1 is always -1
 			return ret;
 		}
 
-		fn(args);
+#if defined(__i386__) || defined(__x86_64__)
+		void *child_arg = ((void **)sp)[1];
 
-		syscall(SYS___threxit, 0);
+		ret = fn(child_arg);
+#elif defined(__s390x__)
+		int (*child_fn)(void *) = ((int (*)(void *))((void **)sp)[1]);
+		void *child_arg = ((void **)sp)[2];
+
+		ret = child_fn(child_arg);
+#else
+		int (*child_fn)(void *) = ((int (*)(void *))((void **)sp)[0]);
+		void *child_arg = ((void **)sp)[1];
+
+		ret = child_fn(child_arg);
+#endif
+
+		syscall(SYS___threxit, ret);
+		__builtin_unreachable();
 	}
 
 	/* If there are no thread flags, use fork() */
