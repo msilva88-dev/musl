@@ -45,51 +45,87 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 
 	/* If CLONE_VM or thread flags are requested, use pthread */
 	if (flags & CLONE_VM) {
-		struct stack {
-			struct stack *link; /* link for free default stacks */
-			void *sp; /* machine stack pointer */
-			void *base; /* bottom of allocated area */
-			size_t guardsize; /* size of PROT_NONE zone or */
-				/* ==1 if application alloced */
-			size_t len; /* total size of allocated stack */
+#if defined(__aarch64__) \
+        || defined(__i386__) \
+        || (defined(__loongarch__) && defined(__loongarch64)) \
+        || defined(__powerpc64__) \
+        || (defined(__riscv) && (__riscv_xlen == 64)) \
+        || defined(__x86_64__)
+#define _atomic_lock_t int
+#else
+#define _atomic_lock_t unsigned char
+#endif
+
+		// This structures is required by bsd_tib pointer
+		struct bsd_pthread_padd {
+			struct { // __sem
+				_atomic_lock_t; // lock
+				volatile int; // waitcount
+				volatile int; // value
+				int; // shared
+			}; // donesem
+			unsigned int; // flags
+			_atomic_lock_t; // flags_lock
+			struct tib *; // tib
+			void *; // retval
+			void *; // (*fn)(void *)
+			void *; // arg
+			char [32]; // name[32]
+			struct stack *; // stack
+			struct { // LIST ENTRY
+				struct bsd_pthread_padd *; // le_next
+				struct bsd_pthread_padd **; // le_prev
+			}; // threads
+			struct { // TAILQ ENTRY
+				struct bsd_pthread_padd *; // tqe_next
+				struct bsd_pthread_padd **; // tqe_prev
+			}; // waiting
+			void *; //(pthread_cond *)blocking_cond;
+			struct { // pthread_attr
+				void *; // stack_addr
+				size_t [2]; // stack_size and guard_size
+				// detach_state, contention_scope, sched_policy
+				int [3];
+				struct { // sched_param
+					int; // sched_priority
+				}; // sched_param
+				int; // sched_inherit
+			}; // attr;
+			void *; // (struct rthread_storage *)local_storage
+			void *; // (struct rthread_cleanup_fn *)cleanup_fns
+			int; //delayed_cancel
 		};
 
-		struct bsd_pthread {
-			//struct __sem donesem; // <- sem <- _SPINLOCK_UNLOCKED
-			unsigned int flags;
-			//_atomic_lock_t flags_lock; <- _SPINLOCK_UNLOCKED
-			struct tib *tib;
-			void *retval;
-			void *(*fn)(void *);
-			void *arg;
-			char name[32];
-			struct stack *stack;
-			//LIST_ENTRY(pthread) threads;
-			//TAILQ_ENTRY(pthread) waiting;
-			//pthread_cond_t blocking_cond;
-			//struct pthread_attr attr;
-			//struct rthread_storage *local_storage;
-			//struct rthread_cleanup_fn *cleanup_fns;
-
-			/* cancel received in a delayed cancel block? */
-			int delayed_cancel;
+		struct stack {
+			struct stack *link; // Link for free default stacks
+			void *sp; //Machine stack pointer
+			void *base; // Bottom of allocated area
+			/*
+			 * Size of PROT_NONE zone or
+			 * one if application allocated.
+			 */
+			size_t guardsize;
+			size_t len; // Total size of allocated stack
 		};
 
 		struct tib {
 #if defined(__i386__) || defined(__x86_64__)
 			struct tib *__tib_self;
 #endif
-			void *tib_dtv; /* internal to the runtime linker */
-			void *tib_thread;
+			void *tib_dtv; // Internal to the runtime linker
+			void *; // tib_thread (musl is already have own pthread)
 			void *tib_locale;
 			int tib_errno;
 			int tib_canceled;
 			int tib_cancel_point;
 			int tib_cantcancel;
 			pid_t tib_tid;
-			int tib_thread_flags; /* internal to libpthread */
+			int tib_thread_flags; // Internal to libpthread
 			void *tib_atexit;
-		} *bsd_tib = __init_tls(sizeof(struct bsd_pthread));
+		};
+
+		struct tib *bsd_tib =
+			__init_tls(sizeof(struct bsd_pthread_padd));
 
 		if (bsd_tib == NULL) {
 			return ENOMEM;
