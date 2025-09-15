@@ -76,9 +76,8 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 		};
 
 		struct tib {
-#if defined(__i386) || defined(__amd64)
+#if defined(__i386__) || defined(__x86_64__)
 			struct tib *__tib_self;
-#define __tib_tcb __tib_self
 #endif
 			void *tib_dtv; /* internal to the runtime linker */
 			void *tib_thread;
@@ -114,7 +113,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			void *tf_tid; // Thread ID
 		} param = {
 			TP_ADJ(bsd_tib),
-			&bsd_stack,
+			bsd_stack.sp,
 			args->start_func,
 			args->start_arg,
 			&bsd_tib->tib_tid // ptid or &pth->tid
