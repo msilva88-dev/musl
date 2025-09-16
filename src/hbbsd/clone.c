@@ -21,6 +21,76 @@ static int clone_start(void *arg)
 	return csa->func(csa->arg);
 }
 
+/*
+ * Notes:
+ *
+ * CLONE_DETACHED:
+ * This flag is obsolete and ignored by modern Linux kernels.
+ * Detached state is handled entirely in user space
+ * (e.g. the pthread library), not via clone(2) flags.
+ *
+ * Consequently, it has no effect in this implementation.
+ *
+ * CLONE_FILES:
+ * On Linux kernel, this flag allows the child process
+ * to share the parent's file descriptor table,
+ * so that changes to file descriptors (open/close/fcntl)
+ * affect all threads sharing the table.
+ *
+ * HyperbolaBSD and OpenBSD do not support sharing
+ * the file descriptor table between processes.
+ *
+ * In this implementation:
+ * - When using SYS___tfork, each thread shares
+ *   the same fd table in memory, but does not provide
+ *   a mechanism to atomically share the parent's table
+ *   in a new thread context.
+ * - When using fork() or vfork(),
+ *   the child receives a copy of the fd table.
+ *
+ * Therefore, in this implementation is ignored (no-op).
+ *
+ * CLONE_FS:
+ * On Linux kernel, this flag allows the child process
+ * to share the parent's filesystem information,
+ * including current working directory, root directory, and umask.
+ * Changes in the child (chdir, chroot, umask) affect the parent.
+ *
+ * HyperbolaBSD and OpenBSD do not support sharing
+ * filesystem information between processes.
+ *
+ * In this implementation:
+ * - When using SYS___tfork (CLONE_THREAD + CLONE_VM), the child shares
+ *   the thread’s TLS and stack, but filesystem info is not shared.
+ * - When using fork() or vfork(), the child always gets a copy of
+ *   the parent's filesystem context.
+ *   Changes in the child do not affect the parent.
+ *
+ * Therefore, in this implementation is ignored (no-op).
+ *
+ * CLONE_SIGHAND:
+ * On Linux kernel, this flag allows the child to share the parent's
+ * signal handler table. Changes to signal dispositions in one
+ * thread affect the other.
+ *
+ * HyperbolaBSD and OpenBSD do not support sharing signal handlers
+ * between processes. Each process has an independent signal table.
+ *
+ * Therefore, this flag is ignored in this implementation.
+ *
+ * CLONE_SYSVSEM:
+ * On Linux kernel, this flag allows the child process
+ * to share the parent's list of semaphore undo operations (sem_undo)
+ * across CLONE_VM threads.
+ *
+ * HyperbolaBSD and OpenBSD do not implement this behavior.
+ * As documented in fork(2): "The child process' semaphore undo values
+ * are set to 0; see semop(2)." Each process always begins with a fresh
+ * sem_undo list, and there is no mechanism to share it between parent
+ * and child.
+ *
+ * Consequently, it is a no-op in this implementation.
+ */
 int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 {
 	if (!fn || !stack) {
