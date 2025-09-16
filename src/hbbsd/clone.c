@@ -40,51 +40,59 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 	uintptr_t sp = ((uintptr_t)stack & ~0xF);
 #endif
 	struct start_args *args = NULL;
+	pid_t *ctid = NULL __attribute__((unused)),
+	pid_t pid = -1, *ptid = NULL, ptid_def = -1;
+	int ret = 0;
+	void *shmem = NULL;
 	struct pthread *tls = NULL;
-	int *ptid = NULL, *ctid = NULL __attribute__((unused));
-	pid_t ptid_def = -1;
 
 	va_start(ap, arg);
-	if (flags & (CLONE_SETTLS | CLONE_THREAD)) {
-		args = va_arg(ap, struct start_args *);
-		if (!args) {
-			return -EINVAL;
-		}
+
+	args = va_arg(ap, struct start_args *);
+	if (!args) {
+		return -EINVAL;
+	}
+
 #if defined(__i386__) || defined(__x86_64__)
-		((void **)sp)[0] = args;
+	((void **)sp)[0] = args;
 #elif defined(__s390x__)
-		((void **)sp)[1] = fn;
-		((void **)sp)[2] = args;
+	((void **)sp)[1] = fn;
+	((void **)sp)[2] = args;
 #else
-		((void **)sp)[0] = fn;
-		((void **)sp)[1] = args;
+	((void **)sp)[0] = fn;
+	((void **)sp)[1] = args;
 #endif
 #if defined(__loongarch__) && defined(__loongarch64)
-		sp -= 16;
+	sp -= 16;
 #endif
-	}
-	if (flags & (CLONE_PARENT_SETTID | CLONE_THREAD)) {
-		ptid = va_arg(ap, int *);
-		if (!ptid) {
-			return -EINVAL;
+
+	if (flags & CLONE_THREAD) {
+		if (flags & CLONE_PARENT_SETTID) {
+			ptid = va_arg(ap, pid_t *);
+			if (!ptid) {
+				return -EINVAL;
+			}
+		}
+
+		if (flags & CLONE_SETTLS) {
+			tls = va_arg(ap, struct pthread *);
+			if (!tls) {
+				return -EINVAL;
+			}
+		}
+
+		if (flags & CLONE_CHILD_SETTID) {
+			ctid = va_arg(ap, pid_t *);
+			if (!ctid) {
+				return -EINVAL;
+			}
 		}
 	}
-	if (flags & (CLONE_SETTLS | CLONE_THREAD)) {
-		tls = va_arg(ap, struct pthread *);
-		if (!tls) {
-			return -EINVAL;
-		}
-	}
-	if (flags & (CLONE_CHILD_SETTID | CLONE_THREAD)) {
-		ctid = va_arg(ap, int *);
-		if (!ctid) {
-			return -EINVAL;
-		}
-	}
+
 	va_end(ap);
 
-	/* If CLONE_VM or thread flags are requested, use pthread */
-	if (flags & (CLONE_THREAD | CLONE_VM)) {
+	/* If CLONE_VM and thread flags are requested, use pthread */
+	if ((flags & CLONE_THREAD) && (flags & CLONE_VM)) {
 #if defined(__aarch64__) \
         || defined(__i386__) \
         || (defined(__loongarch__) && defined(__loongarch64)) \
@@ -182,7 +190,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			}
 
 			if (ptid && (flags & CLONE_PARENT_SETTID)) {
-				bsd_tib->tib_tid = ptid;
+				bsd_tib->tib_tid = *ptid;
 			} else {
 				bsd_tib->tib_tid = ptid_def;
 			}
@@ -219,53 +227,102 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			}
 		}
 
-		pid_t ret = syscall(SYS___tfork, &param, sizeof(param));
+		pid = syscall(SYS___tfork, &param, sizeof(param));
+	/* If CLONE_VM without thread flags are requested */
+	} else if ((flags & CLONE_VM) && (flags & CLONE_VFORK)) {
+		shmem = mmap(
+			NULL,
+			sizeof(char[1024+PATH_MAX]),
+			PROT_READ | PROT_WRITE,
+			MAP_ANON | MAP_SHARED,
+			-1,
+			0
+		);
 
-		// syscall failed, propagate error
-		if (ret != 0) {
-			// ret non-zero is always non-zero
-			// ret -1 is always -1
-			return ret;
+	        if (shmem == MAP_FAILED) {
+	            return -ENOMEM;
+	        }
+
+	        stack = shmem;
+	}
+
+	struct sigaction sanew = {
+		0,
+		.sa_handler = SIG_DFL,
+		.sa_flags = SA_NOCLDWAIT
+	}, saold = { 0 };
+
+        /* If there are no thread flags, use fork() */
+	if (!(flags & CLONE_THREAD)) {
+		if (!(flags & SIGCHLD)) {
+			sigaction(SIGCHLD, &sanew, &saold);
 		}
 
+		if (flags & CLONE_VFORK) {
+			pid = vfork();
+		} else {
+			pid = fork();
+		}
+	}
+
+	// syscall or fork failed, propagate error
+	if (pid != 0) {
+		if (
+			shmem
+			&& (flags & CLONE_VM)
+			&& (flags & CLONE_VFORK)
+			&& !(flags & CLONE_THREAD)
+		) {
+			munmap(shmem, sizeof(char[1024+PATH_MAX]));
+		}
+
+		if (!(flags & SIGCHLD)) {
+			sigaction(SIGCHLD, &saold, NULL);
+		}
+
+		// pid non-zero is always non-zero
+		// pid -1 is always -1
+		/* parent: return the child's PID */
+		return pid;
+	}
+
+	/* child: execute the function */
 #if defined(__i386__) || defined(__x86_64__)
-		void *child_arg = ((void **)sp)[1];
+	void *child_arg = ((void **)sp)[1];
 
-		ret = fn(child_arg);
+	ret = fn(child_arg);
 #elif defined(__s390x__)
-		int (*child_fn)(void *) = ((int (*)(void *))((void **)sp)[1]);
-		void *child_arg = ((void **)sp)[2];
+	int (*child_fn)(void *) = ((int (*)(void *))((void **)sp)[1]);
+	void *child_arg = ((void **)sp)[2];
 
-		ret = child_fn(child_arg);
+	ret = child_fn(child_arg);
 #else
-		int (*child_fn)(void *) = ((int (*)(void *))((void **)sp)[0]);
-		void *child_arg = ((void **)sp)[1];
+	int (*child_fn)(void *) = ((int (*)(void *))((void **)sp)[0]);
+	void *child_arg = ((void **)sp)[1];
 
-		ret = child_fn(child_arg);
+	ret = child_fn(child_arg);
 #endif
 
-		if (ctid && (flags & CLONE_CHILD_CLEARTID)) {
+	if ((flags & CLONE_THREAD) && (flags & CLONE_VM)) {
+		if (
+			ctid
+			&& (flags & CLONE_CHILD_CLEARTID)
+			&& (flags & CLONE_CHILD_SETTID)
+		) {
 			*ctid = 0;
 			futex(ctid, FUTEX_WAKE, 1, NULL, NULL, 0);
 		}
 
 		syscall(SYS___threxit, ret);
-		__builtin_unreachable();
-	}
+	} else {
+		if (!(flags & SIGCHLD)) {
+			sigaction(SIGCHLD, &saold, NULL);
+		}
 
-	/* If there are no thread flags, use fork() */
-	pid_t pid = fork();
-
-	if (pid < 0) {
-		return -1;
-	} else if (pid == 0) {
-		/* child: execute the function */
-		int ret = fn(arg);
 		_exit(ret);
 	}
 
-	/* parent: return the child's PID */
-	return pid;
+	__builtin_unreachable();
 }
 
 int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
