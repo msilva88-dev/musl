@@ -216,18 +216,6 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			int delayed_cancel;
 		};
 
-		struct stack {
-			struct stack *link; // Link for free default stacks
-			void *sp; //Machine stack pointer
-			void *base; // Bottom of allocated area
-			/*
-			 * Size of PROT_NONE zone or
-			 * one if application allocated.
-			 */
-			size_t guardsize;
-			size_t len; // Total size of allocated stack
-		} bsd_stack = { NULL, NULL, NULL, 0, 0 };
-
 		struct tib {
 #if defined(__i386__) || defined(__x86_64__)
 			struct tib *__tib_self;
@@ -265,15 +253,10 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 				bsd_tib->tib_tid = ptid_def;
 			}
 
-			bsd_stack.sp = (void *)sp; // uintptr_t -> void *
-			bsd_stack.base = tls->map_base; // uchar_t * -> void *
-			bsd_stack.guardsize = tls->guard_size; // size_t
-			bsd_stack.len = tls->stack_size; // size_t
-
 			// Thread control block (TLS base)
 			param.tf_tcb = TP_ADJ(bsd_tib);
 			// Stack pointer
-			param.tf_stack = bsd_stack.sp;
+			param.tf_stack = (void *)sp;
 			// Start function
 			param.tf_func = args->start_func;
 			// Start argument
@@ -281,10 +264,8 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			// Thread ID
 			param.tf_tid = &bsd_tib->tib_tid;
 		} else {
-			bsd_stack.sp = (void *)sp; // uintptr_t -> void *
-
 			// Stack pointer
-			param.tf_stack = bsd_stack.sp;
+			param.tf_stack = (void *)sp;
 			// Start function
 			param.tf_func = args->start_func;
 			// Start argument
