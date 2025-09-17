@@ -17,9 +17,20 @@ extern "C" {
 #define POLLNVAL   0x020
 #define POLLRDNORM 0x040
 #define POLLRDBAND 0x080
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef POLLWRNORM
+#undef POLLWRNORM
+#define POLLWRNORM POLLOUT
+#ifdef POLLWRBAND
+#undef POLLWRBAND
+#define POLLWRBAND 0x100
+#endif
+#define INFTIM   (-0x001)
+#elif defined(__linux__)
 #ifndef POLLWRNORM
 #define POLLWRNORM 0x100
 #define POLLWRBAND 0x200
+#endif
 #endif
 #ifndef POLLMSG
 #define POLLMSG    0x400

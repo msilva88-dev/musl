@@ -73,7 +73,11 @@ TYPEDEF struct __mbstate_t { unsigned __opaque1, __opaque2; } mbstate_t;
 
 TYPEDEF struct __locale_struct * locale_t;
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+TYPEDEF uint32_t sigset_t;
+#elif defined(__linux__)
 TYPEDEF struct __sigset_t { unsigned long __bits[128/sizeof(long)]; } sigset_t;
+#endif
 
 STRUCT iovec { void *iov_base; size_t iov_len; };
 

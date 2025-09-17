@@ -4,11 +4,16 @@
 #include <errno.h>
 #include "syscall.h"
 
+#if defined(__linux__)
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
 #define CLAMP(x) (int)(IS32BIT(x) ? (x) : 0x7fffffffU+((0ULL+(x))>>63))
+#endif
 
 int ppoll(struct pollfd *fds, nfds_t n, const struct timespec *to, const sigset_t *mask)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall(SYS_ppoll, fds, n, to, mask);
+#elif defined(__linux__)
 	time_t s = to ? to->tv_sec : 0;
 	long ns = to ? to->tv_nsec : 0;
 #ifdef SYS_ppoll_time64
@@ -23,4 +28,5 @@ int ppoll(struct pollfd *fds, nfds_t n, const struct timespec *to, const sigset_
 #endif
 	return syscall_cp(SYS_ppoll, fds, n,
 		to ? ((long[]){s, ns}) : 0, mask, _NSIG/8);
+#endif
 }

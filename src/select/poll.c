@@ -5,6 +5,9 @@
 
 int poll(struct pollfd *fds, nfds_t n, int timeout)
 {
+#if defiend(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall(SYS_poll, fds, n, timeout);
+#elif defined(__linux__)
 #ifdef SYS_poll
 	return syscall_cp(SYS_poll, fds, n, timeout);
 #else
@@ -16,5 +19,6 @@ int poll(struct pollfd *fds, nfds_t n, int timeout)
 	return syscall_cp(SYS_ppoll, fds, n, timeout>=0 ?
 		((ppoll_ts_t){ timeout/1000, timeout%1000*1000000 }) : 0,
 		0, _NSIG/8);
+#endif
 #endif
 }
