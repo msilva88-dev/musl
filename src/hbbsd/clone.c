@@ -361,7 +361,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			&& (flags & CLONE_CHILD_SETTID)
 		) {
 			*ctid = 0;
-			futex(ctid, FUTEX_WAKE, 1, NULL, NULL, 0);
+			syscall(SYS_futex, ctid, FUTEX_WAKE, 1, NULL, NULL);
 		}
 
 		syscall(SYS___threxit, ret);

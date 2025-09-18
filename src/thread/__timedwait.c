@@ -5,12 +5,19 @@
 #include "syscall.h"
 #include "pthread_impl.h"
 
+#if defined(__linux__)
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
 #define CLAMP(x) (int)(IS32BIT(x) ? (x) : 0x7fffffffU+((0ULL+(x))>>63))
+#endif
 
 static int __futex4_cp(volatile void *addr, int op, int val, const struct timespec *to)
 {
 	int r;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	r = __syscall_cp(SYS_futex, addr, op, val, to, NULL);
+	if (r != -ENOSYS) return r;
+	return __syscall_cp(SYS_futex, addr, op, val, to, NULL);
+#elif defined(__linux__)
 #ifdef SYS_futex_time64
 	time_t s = to ? to->tv_sec : 0;
 	long ns = to ? to->tv_nsec : 0;
@@ -24,6 +31,7 @@ static int __futex4_cp(volatile void *addr, int op, int val, const struct timesp
 	r = __syscall_cp(SYS_futex, addr, op, val, to);
 	if (r != -ENOSYS) return r;
 	return __syscall_cp(SYS_futex, addr, op & ~FUTEX_PRIVATE, val, to);
+#endif
 }
 
 static volatile int dummy = 0;

@@ -33,7 +33,7 @@ static int pshared_barrier_wait(pthread_barrier_t *b)
 		while ((v=b->_b_count))
 			__wait(&b->_b_count, &b->_b_waiters2, v, 0);
 	}
-	
+
 	/* Perform a recursive unlock suitable for self-sync'd destruction */
 	do {
 		v = b->_b_lock;
@@ -84,8 +84,13 @@ int pthread_barrier_wait(pthread_barrier_t *b)
 			a_spin();
 		a_inc(&inst->finished);
 		while (inst->finished == 1)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+			__syscall(SYS_futex,&inst->finished,FUTEX_WAIT|FUTEX_PRIVATE,1,NULL,NULL) != -ENOSYS
+			|| __syscall(SYS_futex,&inst->finished,FUTEX_WAIT,1,NULL,NULL);
+#elif defined(__linux__)
 			__syscall(SYS_futex,&inst->finished,FUTEX_WAIT|FUTEX_PRIVATE,1,0) != -ENOSYS
 			|| __syscall(SYS_futex,&inst->finished,FUTEX_WAIT,1,0);
+#endif
 		return PTHREAD_BARRIER_SERIAL_THREAD;
 	}
 

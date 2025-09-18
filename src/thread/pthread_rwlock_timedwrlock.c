@@ -3,10 +3,10 @@
 int __pthread_rwlock_timedwrlock(pthread_rwlock_t *restrict rw, const struct timespec *restrict at)
 {
 	int r, t;
-	
+
 	r = pthread_rwlock_trywrlock(rw);
 	if (r != EBUSY) return r;
-	
+
 	int spins = 100;
 	while (spins-- && rw->_rw_lock && !rw->_rw_waiters) a_spin();
 

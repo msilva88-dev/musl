@@ -322,8 +322,10 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define SYS_rt_sigtimedwait SYS_rt_sigtimedwait_time64
 #endif
 
+#if defined(__linux__)
 #ifndef SYS_futex
 #define SYS_futex SYS_futex_time64
+#endif
 #endif
 
 #ifndef SYS_sched_rr_get_interval

@@ -1,10 +1,15 @@
 #include "pthread_impl.h"
 
+#if defined(__linux__)
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
 #define CLAMP(x) (int)(IS32BIT(x) ? (x) : 0x7fffffffU+((0ULL+(x))>>63))
+#endif
 
 static int __futex4(volatile void *addr, int op, int val, const struct timespec *to)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return __syscall(SYS_futex, addr, op, val, to, NULL);
+#elif defined(__linux__)
 #ifdef SYS_futex_time64
 	time_t s = to ? to->tv_sec : 0;
 	long ns = to ? to->tv_nsec : 0;
@@ -16,6 +21,7 @@ static int __futex4(volatile void *addr, int op, int val, const struct timespec 
 	to = to ? (void *)(long[]){CLAMP(s), ns} : 0;
 #endif
 	return __syscall(SYS_futex, addr, op, val, to);
+#endif
 }
 
 static int pthread_mutex_timedlock_pi(pthread_mutex_t *restrict m, const struct timespec *restrict at)
@@ -66,7 +72,7 @@ int __pthread_mutex_timedlock(pthread_mutex_t *restrict m, const struct timespec
 	if (r != EBUSY) return r;
 
 	if (type&8) return pthread_mutex_timedlock_pi(m, at);
-	
+
 	int spins = 100;
 	while (spins-- && m->_m_lock && !m->_m_waiters) a_spin();
 
