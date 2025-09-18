@@ -24,6 +24,7 @@ static int __futex4(volatile void *addr, int op, int val, const struct timespec 
 #endif
 }
 
+#if defined(__linux__)
 static int pthread_mutex_timedlock_pi(pthread_mutex_t *restrict m, const struct timespec *restrict at)
 {
 	int type = m->_m_type;
@@ -58,6 +59,7 @@ static int pthread_mutex_timedlock_pi(pthread_mutex_t *restrict m, const struct 
 	while (e != ETIMEDOUT);
 	return e;
 }
+#endif
 
 int __pthread_mutex_timedlock(pthread_mutex_t *restrict m, const struct timespec *restrict at)
 {
@@ -71,7 +73,9 @@ int __pthread_mutex_timedlock(pthread_mutex_t *restrict m, const struct timespec
 	r = __pthread_mutex_trylock(m);
 	if (r != EBUSY) return r;
 
+#if defined(__linux__)
 	if (type&8) return pthread_mutex_timedlock_pi(m, at);
+#endif
 
 	int spins = 100;
 	while (spins-- && m->_m_lock && !m->_m_waiters) a_spin();

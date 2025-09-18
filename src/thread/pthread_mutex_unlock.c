@@ -30,6 +30,7 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 		if (next != &self->robust_list.head) *(volatile void *volatile *)
 			((char *)next - sizeof(void *)) = prev;
 	}
+#if defined(__linux__)
 	if (type&8) {
 		if (old<0 || a_cas(&m->_m_lock, old, new)!=old) {
 			if (new) a_store(&m->_m_waiters, -1);
@@ -38,6 +39,9 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 		cont = 0;
 		waiters = 0;
 	} else {
+#else
+	{
+#endif
 		cont = a_swap(&m->_m_lock, new);
 	}
 	if (type != PTHREAD_MUTEX_NORMAL && !priv) {

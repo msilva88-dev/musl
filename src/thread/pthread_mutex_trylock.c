@@ -41,12 +41,14 @@ int __pthread_mutex_trylock_owner(pthread_mutex_t *m)
 	}
 
 success:
+#if defined(__linux__)
 	if ((type&8) && m->_m_waiters) {
 		int priv = (type & 128) ^ 128;
 		__syscall(SYS_futex, &m->_m_lock, FUTEX_UNLOCK_PI|priv);
 		self->robust_list.pending = 0;
 		return (type&4) ? ENOTRECOVERABLE : EBUSY;
 	}
+#endif
 
 	volatile void *next = self->robust_list.head;
 	m->_m_next = next;
