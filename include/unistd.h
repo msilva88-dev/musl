@@ -199,7 +199,9 @@ char *get_current_dir_name(void);
 int syncfs(int);
 int euidaccess(const char *, int);
 int eaccess(const char *, int);
+#if defined(__linux__)
 ssize_t copy_file_range(int, off_t *, int, off_t *, size_t, unsigned);
+#endif
 pid_t gettid(void);
 #endif
 

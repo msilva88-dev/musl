@@ -46,10 +46,11 @@ LIBCC = -lgcc
 CPPFLAGS =
 CFLAGS =
 CFLAGS_AUTO = -Os -pipe
-CFLAGS_C99FSE = -std=c99 -ffreestanding -nostdinc 
+CFLAGS_C99FSE = -std=c99 -ffreestanding -nostdinc
 
 CFLAGS_ALL = $(CFLAGS_C99FSE)
-CFLAGS_ALL += -D_XOPEN_SOURCE=700 -I$(srcdir)/arch/$(ARCH) -I$(srcdir)/arch/generic -Iobj/src/internal -I$(srcdir)/src/include -I$(srcdir)/src/internal -Iobj/include -I$(srcdir)/include
+CFLAGS_ALL += -D_XOPEN_SOURCE=700 -I$(srcdir)/arch/$(ARCH) -I$(srcdir)/arch/generic
+CFLAGS_ALL += -Iobj/src/internal -I$(srcdir)/src/include -I$(srcdir)/src/internal -Iobj/include -I$(srcdir)/include
 CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS_AUTO) $(CFLAGS)
 
 LDFLAGS_ALL = $(LDFLAGS_AUTO) $(LDFLAGS)
@@ -66,7 +67,7 @@ COMMON_HEADERS += $(wildcard include/netpacket/*.h)
 COMMON_HEADERS += $(wildcard include/scsi/*.h)
 COMMON_HEADERS += sys/mount.h sys/reboot.h sys/swap.h sys/syscall.h sys/wait.h
 HBBSD_HEADERS = sys/event.h
-LINUX_HEADERS = sys/epoll.h sys/eventfd.h sys/sysinfo.h sys/timex.h sys/xattr.h
+LINUX_HEADERS = sys/epoll.h sys/eventfd.h sys/fanotify.h sys/inotify.h sys/personality.h sys/sysinfo.h sys/timex.h sys/xattr.h
 OBSD_HEADERS := $(HBBSD_HEADERS)
 ARCH_INCLUDES = $(wildcard $(srcdir)/arch/$(ARCH)/bits/*.h)
 GENERIC_INCLUDES = $(wildcard $(srcdir)/arch/generic/bits/*.h)
@@ -154,7 +155,8 @@ CC_CMD = $(CC) $(CFLAGS_ALL) -c -o $@ $<
 
 # Choose invocation of assembler to be used
 ifeq ($(ADD_CFI),yes)
-	AS_CMD = LC_ALL=C awk -f $(srcdir)/tools/add-cfi.common.awk -f $(srcdir)/tools/add-cfi.$(ARCH).awk $< | $(CC) $(CFLAGS_ALL) -x assembler -c -o $@ -
+	AS_CMD = LC_ALL=C awk -f $(srcdir)/tools/add-cfi.common.awk
+	AS_CMD += -f $(srcdir)/tools/add-cfi.$(ARCH).awk $< | $(CC) $(CFLAGS_ALL) -x assembler -c -o $@ -
 else
 	AS_CMD = $(CC_CMD)
 endif

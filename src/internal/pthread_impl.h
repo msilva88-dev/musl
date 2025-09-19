@@ -158,7 +158,9 @@ extern hidden void *__pthread_tsd_main[];
 extern hidden volatile int __eintr_valid_flag;
 
 hidden int __clone(int (*)(void *), void *, int, void *, ...);
+#if defined(__linux__)
 hidden int __set_thread_area(void *);
+#endif
 hidden int __libc_sigaction(int, const struct sigaction *, struct sigaction *);
 hidden void __unmapself(void *, size_t);
 

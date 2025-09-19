@@ -15,9 +15,26 @@ int __init_tp(void *p)
 {
 	pthread_t td = p;
 	td->self = td;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	/*
+	 * Thread-local storage initialization:
+	 *
+	 * On HyperbolaBSD, OpenBSD and derivatives,
+	 * __set_thread_area is not available because
+	 * SYS_arch_prctl does not exist. The closest alternative,
+	 * SYS___set_tcb, cannot report errors,
+	 * so it cannot be relied upon for validation.
+	 *
+	 * As a result,
+	 * thread support is always considered enabled in libc:
+	 * libc.can_do_threads is set to 1 unconditionally.
+	 */
+	libc.can_do_threads = 1;
+#elif defined(__linux__)
 	int r = __set_thread_area(TP_ADJ(p));
 	if (r < 0) return -1;
 	if (!r) libc.can_do_threads = 1;
+#endif
 	td->detach_state = DT_JOINABLE;
 	td->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
 	td->locale = &libc.global_locale;
