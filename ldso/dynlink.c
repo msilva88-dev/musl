@@ -18,9 +18,10 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <semaphore.h>
-#include <sys/membarrier.h>
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #include <sys/sysctl.h>
+#elif defined(__linux__)
+#include <sys/membarrier.h>
 #endif
 #include "pthread_impl.h"
 #include "fork_impl.h"
@@ -1762,12 +1763,51 @@ static void install_new_tls(void)
 		if (p->tls_id == tls_cnt) break;
 	}
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	/*
+	 * Broadcast barrier to ensure that the contents of the new DTV
+	 * (dynamic thread vector) are visible if the pointer has changed.
+	 *
+	 * Since SYS_membarrier is not available on HyperbolaBSD/OpenBSD,
+	 * this emulation uses signals (SIGUSR1) and a semaphore to synchronize
+	 * all threads of the process, providing semantics equivalent to the
+	 * PRIVATE_EXPEDITED command in Linux.
+	 *
+	 * If any initialization step fails (sem_init or sigaction), the
+	 * emulation is silently skipped, similar to the Linux fallback.
+	 */
+	pthread_t self = __pthread_self(), td;
+	struct sigaction sa;
+
+	if (sem_init(&barrier_sem, 0, 0) == 0) {
+		memset(&sa, 0, sizeof sa);
+
+		sa.sa_flags = SA_RESTART | SA_ONSTACK;
+		sa.sa_handler = membarrier_handler;
+
+		sigfillset(&sa.sa_mask);
+
+		int n = 0;
+		if (sigaction(SIGUSR1, &sa, &old_sa) == 0) {
+			for (td = self->next; td != self; td = td->next) {
+				if (pthread_kill(td->tid, SIGUSR1) == 0) n++;
+			}
+
+			for (int i = 0; i < n; i++) sem_wait(&barrier_sem);
+
+			sigaction(SIGUSR1, &old_sa, NULL);
+		}
+
+		sem_destroy(&barrier_sem);
+	}
+#elif defined(__linux__)
 	/* Broadcast barrier to ensure contents of new dtv is visible
 	 * if the new dtv pointer is. The __membarrier function has a
 	 * fallback emulation using signals for kernels that lack the
 	 * feature at the syscall level. */
 
 	__membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0);
+#endif
 
 	/* Install new dtv for each thread. */
 	for (j=0, td=self; !j || td!=self; j++, td=td->next) {

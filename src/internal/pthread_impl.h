@@ -146,7 +146,9 @@ hidden int __init_tp(void *);
 hidden void *__copy_tls(unsigned char *);
 hidden void __reset_tls();
 
+#if defined(__linux__)
 hidden void __membarrier_init(void);
+#endif
 hidden void __dl_thread_cleanup(void);
 hidden void __testcancel();
 hidden void __do_cleanup_push(struct __ptcb *);
