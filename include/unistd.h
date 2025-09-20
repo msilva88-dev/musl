@@ -93,7 +93,9 @@ int execle(const char *, const char *, ...);
 int execl(const char *, const char *, ...);
 int execvp(const char *, char *const []);
 int execlp(const char *, const char *, ...);
+#if defined(__linux__)
 int fexecve(int, char *const [], char *const []);
+#endif
 _Noreturn void _exit(int);
 
 pid_t getpid(void);
@@ -103,8 +105,10 @@ pid_t getpgid(pid_t);
 int setpgid(pid_t, pid_t);
 pid_t setsid(void);
 pid_t getsid(pid_t);
+#if defined(__linux__)
 char *ttyname(int);
 int ttyname_r(int, char *, size_t);
+#endif
 int isatty(int);
 pid_t tcgetpgrp(int);
 int tcsetpgrp(int, pid_t);

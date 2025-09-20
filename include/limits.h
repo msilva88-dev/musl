@@ -39,20 +39,38 @@
 
 #include <bits/limits.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define PIPE_BUF 512
+#elif defined(__linux__)
 #define PIPE_BUF 4096
+#endif
 #define FILESIZEBITS 64
 #ifndef NAME_MAX
 #define NAME_MAX 255
 #endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define PATH_MAX 1024
+#define NGROUPS_MAX 16
+#define ARG_MAX 524288
+#elif defined(__linux__)
 #define PATH_MAX 4096
 #define NGROUPS_MAX 32
 #define ARG_MAX 131072
+#endif
 #define IOV_MAX 1024
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SYMLOOP_MAX 32
+#elif defined(__linux__)
 #define SYMLOOP_MAX 40
+#endif
 #define WORD_BIT 32
 #define SSIZE_MAX LONG_MAX
 #define TZNAME_MAX 6
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TTY_NAME_MAX 260
+#elif defined(__linux__)
 #define TTY_NAME_MAX 32
+#endif
 #define HOST_NAME_MAX 255
 
 #if LONG_MAX == 0x7fffffffL
@@ -74,20 +92,35 @@
 
 /* Arbitrary numbers... */
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define BC_BASE_MAX 0x7fffffff
+#define BC_DIM_MAX 0xffff
+#define BC_SCALE_MAX 0x7fffffff
+#define BC_STRING_MAX 0x7fffffff
+#elif defined(__linux__)
 #define BC_BASE_MAX 99
 #define BC_DIM_MAX 2048
 #define BC_SCALE_MAX 99
 #define BC_STRING_MAX 1000
+#endif
 #define CHARCLASS_NAME_MAX 14
 #define COLL_WEIGHTS_MAX 2
 #define EXPR_NEST_MAX 32
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define LINE_MAX 4096
+#elif defined(__OpenBSD__)
+#define LINE_MAX 2048
+#endif
 #define RE_DUP_MAX 255
 
 #define NL_ARGMAX 9
 #define NL_MSGMAX 32767
 #define NL_SETMAX 255
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define NL_TEXTMAX 2048
+#elif defined(__OpenBSD__)
+#define NL_TEXTMAX 255
+#endif
 
 #endif
 
@@ -97,14 +130,22 @@
 #define PAGE_SIZE PAGESIZE
 #endif
 #define NZERO 20
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define NL_LANGMAX 32
+#elif defined(__OpenBSD__)
+#define NL_LANGMAX 14
+#endif
 
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE) \
  || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE+0 < 700)
 
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define NL_NMAX 16
+#elif defined(__OpenBSD__)
+#define NL_NMAX 1
+#endif
 
 #endif
 
@@ -141,7 +182,11 @@
 #define _POSIX_SYMLOOP_MAX      8
 #define _POSIX_THREAD_DESTRUCTOR_ITERATIONS 4
 #define _POSIX_THREAD_KEYS_MAX  128
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define _POSIX_THREAD_THREADS_MAX 64
+#elif defined(__OpenBSD__)
+#define _POSIX_THREAD_THREADS_MAX 4
+#endif
 #define _POSIX_TIMER_MAX        32
 #define _POSIX_TRACE_EVENT_NAME_MAX 30
 #define _POSIX_TRACE_NAME_MAX   8

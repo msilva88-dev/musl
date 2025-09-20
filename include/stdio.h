@@ -48,10 +48,17 @@ extern "C" {
 #define _IONBF 2
 
 #define BUFSIZ 1024
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define FILENAME_MAX 1024
+#define FOPEN_MAX 20
+#define TMP_MAX 2147483647
+#define L_tmpnam 1024
+#elif defined(__linux__)
 #define FILENAME_MAX 4096
 #define FOPEN_MAX 1000
 #define TMP_MAX 10000
 #define L_tmpnam 20
+#endif
 
 typedef union _G_fpos64_t {
 	char __opaque[16];

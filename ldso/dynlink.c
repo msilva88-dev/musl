@@ -923,7 +923,6 @@ static ssize_t get_execpath_bsd(char *buf, size_t buf_size)
 	}
 
 	argv0 = strdup(argv0buf);
-	argv0buf = NULL;
 	free(argvbuf);
 	if (!argv0) return -1;
 
@@ -931,6 +930,9 @@ static ssize_t get_execpath_bsd(char *buf, size_t buf_size)
 	if (strchr(argv0, '/')) {
 		if (!realpath(argv0, buf)) {
 			free(argv0);
+			return -1;
+		}
+		if (strlen(buf) > PATH_MAX) {
 			return -1;
 		}
 		buflen = strlen(buf);
@@ -952,6 +954,9 @@ static ssize_t get_execpath_bsd(char *buf, size_t buf_size)
 		while (dir) {
 			snprintf(buf, buf_size, "%s/%s", dir, argv0);
 			if (access(buf, X_OK) == 0 && realpath(buf, buf)) {
+				if (strlen(buf) > PATH_MAX) {
+					return -1;
+				}
 				buflen = strlen(buf);
 				break;
 			}
