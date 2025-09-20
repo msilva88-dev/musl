@@ -32,6 +32,9 @@ struct pthread {
 #endif
 
 	/* Part 2 -- implementation details, non-ABI. */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	char name[32];
+#endif
 	int tid;
 	int errno_val;
 	volatile int detach_state;

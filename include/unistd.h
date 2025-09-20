@@ -202,9 +202,14 @@ int eaccess(const char *, int);
 #if defined(__linux__)
 ssize_t copy_file_range(int, off_t *, int, off_t *, size_t, unsigned);
 #endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+pid_t getthrid(void);
+#endif
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 pid_t gettid(void);
 #endif
 
+#if defined(__linux__)
 #if defined(_LARGEFILE64_SOURCE)
 #define lseek64 lseek
 #define pread64 pread
@@ -213,6 +218,7 @@ pid_t gettid(void);
 #define ftruncate64 ftruncate
 #define lockf64 lockf
 #define off64_t off_t
+#endif
 #endif
 
 #define POSIX_CLOSE_RESTART     0

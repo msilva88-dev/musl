@@ -19,6 +19,9 @@
 #include <dlfcn.h>
 #include <semaphore.h>
 #include <sys/membarrier.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <sys/sysctl.h>
+#endif
 #include "pthread_impl.h"
 #include "fork_impl.h"
 #include "libc.h"
@@ -894,9 +897,77 @@ static int path_open(const char *name, const char *s, char *buf, size_t buf_size
 	}
 }
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static ssize_t get_execpath_bsd(char *buf, size_t buf_size)
+{
+	if (!buf || !buf_size) return -1;
+
+	char *argv0 = NULL, *argv0buf = NULL, *argvbuf = NULL;
+	size_t argvlen = 0, size_t buflen = 0;
+	int mib_argv[4] = { CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV };
+
+	if (sysctl(mib_argv, 4, NULL, &argvlen, NULL, 0) == -1) return -1;
+
+	argvbuf = malloc(argvlen);
+	if (!argvbuf) return -1;
+
+	if (sysctl(mib_argv, 4, argvbuf, &argvlen, NULL, 0) == -1) {
+		free(argvbuf);
+		return -1;
+	}
+
+	argv0buf = ((char **)argvbuf)[0];
+	if (!argv0buf) {
+		free(argvbuf);
+		return -1;
+	}
+
+	argv0 = strdup(argv0buf);
+	argv0buf = NULL;
+	free(argvbuf);
+	if (!argv0) return -1;
+
+	// argv0 contains '/', solve the absolute path
+	if (strchr(argv0, '/')) {
+		if (!realpath(argv0, buf)) {
+			free(argv0);
+			return -1;
+		}
+		buflen = strlen(buf);
+	// argv0 no contains '/', search in PATH
+	} else {
+		char *path_env = getenv("PATH");
+		// Fallback path
+		if (!path_env) path_env =
+			"/bin:/sbin:/usr/bin:/usr/sbin:/usr/games:"
+			"/usr/local/bin:/usr/local/sbin:/usr/local/games";
+
+		char *copy = strdup(path_env);
+		if (!copy) {
+			free(argv0);
+			return -1;
+		}
+
+		char *saveptr, *dir = strtok_r(copy, ":", &saveptr);
+		while (dir) {
+			snprintf(buf, buf_size, "%s/%s", dir, argv0);
+			if (access(buf, X_OK) == 0 && realpath(buf, buf)) {
+				buflen = strlen(buf);
+				break;
+			}
+			dir = strtok_r(NULL, ":", &saveptr);
+		}
+		free(copy);
+	}
+	free(argv0);
+	return buflen;
+}
+#endif
+
 static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 {
-	size_t n, l;
+	size_t n;
+	ssize_t l;
 	const char *s, *t, *origin;
 	char *d;
 	if (p->rpath || !p->rpath_orig) return 0;
@@ -923,10 +994,17 @@ static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 		 * (either system paths or a call to dlopen). */
 		if (libc.secure)
 			return 0;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		l = get_execpath_bsd(buf, buf_size);
+#elif defined(__linux__)
 		l = readlink("/proc/self/exe", buf, buf_size);
+#endif
 		if (l == -1) switch (errno) {
 		case ENOENT:
 		case ENOTDIR:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		case ESRCH:
+#endif
 		case EACCES:
 			return 0;
 		default:
@@ -936,6 +1014,7 @@ static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 			return 0;
 		buf[l] = 0;
 		origin = buf;
+#endif
 	} else {
 		origin = p->name;
 	}
@@ -1851,10 +1930,12 @@ void __dls3(size_t *sp, size_t *auxv)
 		if (DL_FDPIC) app.loadmap = app_loadmap;
 		if (app.tls.size) app.tls.image = laddr(&app, tls_image);
 		if (interp_off) ldso.name = laddr(&app, interp_off);
+#if defined(__linux__)
 		if ((aux[0] & (1UL<<AT_EXECFN))
 		    && strncmp((char *)aux[AT_EXECFN], "/proc/", 6))
 			app.name = (char *)aux[AT_EXECFN];
 		else
+#endif
 			app.name = argv[0];
 		kernel_mapped_dso(&app);
 	} else {

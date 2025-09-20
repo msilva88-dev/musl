@@ -7,12 +7,18 @@
 #define	_PATH_BSHELL	"/bin/sh"
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_DEVNULL	"/dev/null"
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _PATH_KLOG	"/dev/klog"
+#elif defined(__linux__)
 #define	_PATH_KLOG	"/proc/kmsg"
+#endif
 #define	_PATH_LASTLOG	"/var/log/lastlog"
 #define	_PATH_MAILDIR	"/var/mail"
 #define	_PATH_MAN	"/usr/share/man"
 #define	_PATH_MNTTAB	"/etc/fstab"
+#if defined(__linux__)
 #define	_PATH_MOUNTED	"/etc/mtab"
+#endif
 #define	_PATH_NOLOGIN	"/etc/nologin"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHADOW	"/etc/shadow"

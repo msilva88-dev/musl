@@ -1,6 +1,8 @@
 #define _BSD_SOURCE
 #include <unistd.h>
+#if defined(__linux__)
 #include <sys/random.h>
+#endif
 #include <pthread.h>
 #include <errno.h>
 
@@ -17,7 +19,11 @@ int getentropy(void *buffer, size_t len)
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
 	while (len) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		ret = syscall(getentropy, pos, len);
+#elif defined(__linux__)
 		ret = getrandom(pos, len, 0);
+#endif
 		if (ret < 0) {
 			if (errno == EINTR) continue;
 			else break;
