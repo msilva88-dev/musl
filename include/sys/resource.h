@@ -53,9 +53,11 @@ int getrusage (int, struct rusage *);
 int getpriority (int, id_t);
 int setpriority (int, id_t, int);
 
+#if defined(__linux__)
 #ifdef _GNU_SOURCE
 int prlimit(pid_t, int, const struct rlimit *, struct rlimit *);
 #define prlimit64 prlimit
+#endif
 #endif
 
 #define PRIO_MIN (-20)

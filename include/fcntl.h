@@ -189,9 +189,9 @@ struct f_owner_ex {
 int fallocate(int, off_t, off_t);
 #elif defined(__linux__)
 int fallocate(int, int, off_t, off_t);
-#endif
 int name_to_handle_at(int, const char *, struct file_handle *, int *, int);
 int open_by_handle_at(int, struct file_handle *, int);
+#endif
 ssize_t readahead(int, off_t, size_t);
 int sync_file_range(int, off_t, off_t, unsigned);
 ssize_t vmsplice(int, const struct iovec *, size_t, unsigned);

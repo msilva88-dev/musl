@@ -129,8 +129,10 @@ int munlockall (void);
 #ifdef _GNU_SOURCE
 void *mremap (void *, size_t, size_t, int, ...);
 int remap_file_pages (void *, size_t, int, size_t, int);
+#if defined(__linux__)
 int memfd_create (const char *, unsigned);
 int mlock2 (const void *, size_t, unsigned);
+#endif
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
