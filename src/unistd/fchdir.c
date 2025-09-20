@@ -9,7 +9,9 @@ int fchdir(int fd)
 	if (ret != -EBADF || __syscall(SYS_fcntl, fd, F_GETFD) < 0)
 		return __syscall_ret(ret);
 
+#if defined(__linux__)
 	char buf[15+3*sizeof(int)];
 	__procfdname(buf, fd);
 	return syscall(SYS_chdir, buf);
+#endif
 }

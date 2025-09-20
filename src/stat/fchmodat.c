@@ -5,6 +5,9 @@
 
 int fchmodat(int fd, const char *path, mode_t mode, int flag)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return __syscall(SYS_fchmodat, fd, path, mode, flag);
+#elif defined(__linux__)
 	if (!flag) return syscall(SYS_fchmodat, fd, path, mode);
 
 	int ret = __syscall(SYS_fchmodat2, fd, path, mode, flag);
@@ -37,4 +40,5 @@ int fchmodat(int fd, const char *path, mode_t mode, int flag)
 
 	__syscall(SYS_close, fd2);
 	return ret;
+#endif
 }

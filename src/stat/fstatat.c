@@ -7,6 +7,7 @@
 #include <sys/sysmacros.h>
 #include "syscall.h"
 
+#if defined(__linux__)
 struct statx {
 	uint32_t stx_mask;
 	uint32_t stx_blksize;
@@ -68,8 +69,9 @@ static int fstatat_statx(int fd, const char *restrict path, struct stat *restric
 	};
 	return 0;
 }
+#endif
 
-#ifdef SYS_fstatat
+#if defined(SYS_fstatat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 
 #include "kstat.h"
 
@@ -85,7 +87,7 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
 			if (ret==-EINVAL) {
 				char buf[15+3*sizeof(int)];
 				__procfdname(buf, fd);
-#ifdef SYS_stat
+#if defined(SYS_stat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 				ret = __syscall(SYS_stat, buf, &kst);
 #else
 				ret = __syscall(SYS_fstatat, AT_FDCWD, buf, &kst, 0);
@@ -93,11 +95,11 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
 			}
 		}
 	}
-#ifdef SYS_lstat
+#if defined(SYS_lstat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	else if ((fd == AT_FDCWD || *path=='/') && flag==AT_SYMLINK_NOFOLLOW)
 		ret = __syscall(SYS_lstat, path, &kst);
 #endif
-#ifdef SYS_stat
+#if defined(SYS_stat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	else if ((fd == AT_FDCWD || *path=='/') && !flag)
 		ret = __syscall(SYS_stat, path, &kst);
 #endif
@@ -139,7 +141,7 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
 int __fstatat(int fd, const char *restrict path, struct stat *restrict st, int flag)
 {
 	int ret;
-#ifdef SYS_fstatat
+#if defined(SYS_fstatat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	if (sizeof((struct kstat){0}.st_atime_sec) < sizeof(time_t)) {
 		ret = fstatat_statx(fd, path, st, flag);
 		if (ret!=-ENOSYS) return __syscall_ret(ret);
