@@ -148,7 +148,7 @@ static void static_init_tls(size_t *aux)
 		+ MIN_TLS_ALIGN-1 & -MIN_TLS_ALIGN;
 
 	if (libc.tls_size > sizeof builtin_tls) {
-#ifndef SYS_mmap2
+#if !defined(SYS_mmap2) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define SYS_mmap2 SYS_mmap
 #endif
 		mem = (void *)__syscall(

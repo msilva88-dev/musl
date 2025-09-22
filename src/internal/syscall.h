@@ -4,21 +4,13 @@
 #include <features.h>
 #include <errno.h>
 #include <sys/syscall.h>
-
-/* HyperbolaBSD/OpenBSD: kernel has no *_time64 syscall names.
- * Ensure we never remap SYS_* to *_time64 on this target. */
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#undef  __SYSCALL_TIME64
-#define __SYSCALL_TIME64 0
-#endif
-
 #include "syscall_arch.h"
 
 #ifndef SYSCALL_RLIM_INFINITY
 #define SYSCALL_RLIM_INFINITY (~0ULL)
 #endif
 
-#ifndef SYSCALL_MMAP2_UNIT
+#if !defined(SYSCALL_MMAP2_UNIT) && defined(__linux__)
 #define SYSCALL_MMAP2_UNIT 4096ULL
 #endif
 
@@ -72,7 +64,7 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 	if (cp) r = __syscall_cp(sys, a, b, c, d, e, f);
 	else r = __syscall(sys, a, b, c, d, e, f);
 	if (r != -ENOSYS) return r;
-#ifdef SYS_socketcall
+#if defined(SYS_socketcall) && defined(__linux__)
 	if (cp) r = __syscall_cp(SYS_socketcall, sock, ((long[6]){a, b, c, d, e, f}));
 	else r = __syscall(SYS_socketcall, sock, ((long[6]){a, b, c, d, e, f}));
 #endif
@@ -82,6 +74,8 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 	__scc(a), __scc(b), __scc(c), __scc(d), __scc(e), __scc(f))
 #define __socketcall_cp(nm, a, b, c, d, e, f) __alt_socketcall(SYS_##nm, __SC_##nm, 1, \
 	__scc(a), __scc(b), __scc(c), __scc(d), __scc(e), __scc(f))
+
+#if defined(__linux__)
 
 /* fixup legacy 16-bit junk */
 
@@ -262,10 +256,8 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define SYS_clock_settime SYS_clock_settime64
 #endif
 
-#if defined(__linux__)
 #ifndef SYS_clock_adjtime
 #define SYS_clock_adjtime SYS_clock_adjtime64
-#endif
 #endif
 
 #ifndef SYS_clock_getres
@@ -322,10 +314,8 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define SYS_rt_sigtimedwait SYS_rt_sigtimedwait_time64
 #endif
 
-#if defined(__linux__)
 #ifndef SYS_futex
 #define SYS_futex SYS_futex_time64
-#endif
 #endif
 
 #ifndef SYS_sched_rr_get_interval
@@ -397,13 +387,16 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define __sys_open_cp3(x,pn,fl,mo) __syscall_cp4(SYS_openat, AT_FDCWD, pn, (fl)|O_LARGEFILE, mo)
 #endif
 
+#endif // __linux__
+
 #define __sys_open(...) __SYSCALL_DISP(__sys_open,,__VA_ARGS__)
 #define sys_open(...) __syscall_ret(__sys_open(__VA_ARGS__))
 
 #define __sys_open_cp(...) __SYSCALL_DISP(__sys_open_cp,,__VA_ARGS__)
 #define sys_open_cp(...) __syscall_ret(__sys_open_cp(__VA_ARGS__))
 
-#ifdef SYS_pause
+#if !defined(__OpenBSD__)
+#if defined(SYS_pause) && defined(__linux__)
 #define __sys_pause() __syscall(SYS_pause)
 #define __sys_pause_cp() __syscall_cp(SYS_pause)
 #else
@@ -413,8 +406,9 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 
 #define sys_pause() __syscall_ret(__sys_pause())
 #define sys_pause_cp() __syscall_ret(__sys_pause_cp())
+#endif
 
-#ifdef SYS_wait4
+#if defined(SYS_wait4) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define __sys_wait4(a,b,c,d) __syscall(SYS_wait4,a,b,c,d)
 #define __sys_wait4_cp(a,b,c,d) __syscall_cp(SYS_wait4,a,b,c,d)
 #else
@@ -426,7 +420,9 @@ hidden long __emulate_wait4(int, int *, int, void *, int);
 #define sys_wait4(a,b,c,d) __syscall_ret(__sys_wait4(a,b,c,d))
 #define sys_wait4_cp(a,b,c,d) __syscall_ret(__sys_wait4_cp(a,b,c,d))
 
+#if defined(__linux__)
 hidden void __procfdname(char __buf[static 15+3*sizeof(int)], unsigned);
+#endif
 
 hidden void *__vdsosym(const char *, const char *);
 

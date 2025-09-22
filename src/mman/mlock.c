@@ -3,7 +3,7 @@
 
 int mlock(const void *addr, size_t len)
 {
-#ifdef SYS_mlock
+#if defined(SYS_mlock) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_mlock, addr, len);
 #else
 	return syscall(SYS_mlock2, addr, len, 0);

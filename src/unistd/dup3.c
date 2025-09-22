@@ -7,7 +7,7 @@
 int __dup3(int old, int new, int flags)
 {
 	int r;
-#ifdef SYS_dup2
+#if defined(SYS_dup2) && defined(__linux__)
 	if (old==new) return __syscall_ret(-EINVAL);
 	if (flags) {
 		while ((r=__syscall(SYS_dup3, old, new, flags))==-EBUSY);

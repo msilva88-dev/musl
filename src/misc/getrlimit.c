@@ -2,10 +2,15 @@
 #include <errno.h>
 #include "syscall.h"
 
+#if defined(__linux__)
 #define FIX(x) do{ if ((x)>=SYSCALL_RLIM_INFINITY) (x)=RLIM_INFINITY; }while(0)
+#endif
 
 int getrlimit(int resource, struct rlimit *rlim)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return __syscall(SYS_getrlimit, resource, rlim);
+#elif defined(__linux__)
 	int ret = syscall(SYS_prlimit64, 0, resource, 0, rlim);
 	if (!ret) {
 		FIX(rlim->rlim_cur);
@@ -24,5 +29,6 @@ int getrlimit(int resource, struct rlimit *rlim)
 	return 0;
 #else
 	return ret;
+#endif
 #endif
 }

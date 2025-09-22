@@ -1,16 +1,16 @@
-#if defined(__i386__) || defined(__x86_64__)
 #include <sys/sysarch.h>
+
+#if defined(__i386__)
+#define ARCH_IOPL I386_IOPL
+#define ARCH_IOPL_ARGS i386_iopl_args
+#elif defined(__x86_64__)
+#define ARCH_IOPL AMD64_IOPL
+#define ARCH_IOPL_ARGS amd64_iopl_args
+#endif
 
 int iopl(int level)
 {
-#ifdef __i386__
-	struct i386_iopl_args args;
+	struct ARCH_IOPL_ARGS args;
 	args.iopl = level;
-	return sysarch(I386_IOPL, &args);
-#else
-	struct amd64_iopl_args args;
-	args.iopl = level;
-	return sysarch(AMD64_IOPL, &args);
-#endif
+	return sysarch(ARCH_IOPL, &args);
 }
-#endif

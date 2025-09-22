@@ -9,7 +9,9 @@ int fchown(int fd, uid_t uid, gid_t gid)
 	if (ret != -EBADF || __syscall(SYS_fcntl, fd, F_GETFD) < 0)
 		return __syscall_ret(ret);
 
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return __syscall_ret(ret);
+#elif defined(__linux__)
 	char buf[15+3*sizeof(int)];
 	__procfdname(buf, fd);
 #ifdef SYS_chown

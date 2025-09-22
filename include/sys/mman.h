@@ -140,6 +140,12 @@ int madvise (void *, size_t, int);
 int mincore (void *, size_t, unsigned char *);
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(_BSD_SOURCE)
+void *mquery(void *, size_t, int, int, int, off_t);
+#endif
+#endif
+
 int shm_open (const char *, int, mode_t);
 int shm_unlink (const char *);
 

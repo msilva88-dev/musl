@@ -3,8 +3,10 @@
 #include "syscall.h"
 #include "libc.h"
 
+#if defined(__linux__)
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define FIX(x) do{ if ((x)>=SYSCALL_RLIM_INFINITY) (x)=RLIM_INFINITY; }while(0)
+#endif
 
 struct ctx {
 	unsigned long lim[2];
@@ -12,7 +14,7 @@ struct ctx {
 	int err;
 };
 
-#ifdef SYS_setrlimit
+#if defined(SYS_setrlimit) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 static void do_setrlimit(void *p)
 {
 	struct ctx *c = p;
@@ -23,6 +25,9 @@ static void do_setrlimit(void *p)
 
 int setrlimit(int resource, const struct rlimit *rlim)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return __syscall(SYS_setrlimit, resource, rlim);
+#elif defined(__linux__)
 	struct rlimit tmp;
 	if (SYSCALL_RLIM_INFINITY != RLIM_INFINITY) {
 		tmp = *rlim;
@@ -47,5 +52,6 @@ int setrlimit(int resource, const struct rlimit *rlim)
 	return 0;
 #else
 	return __syscall_ret(ret);
+#endif
 #endif
 }

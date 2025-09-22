@@ -4,7 +4,7 @@
 
 int access(const char *filename, int amode)
 {
-#ifdef SYS_access
+#if defined(SYS_access) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_access, filename, amode);
 #else
 	return syscall(SYS_faccessat, AT_FDCWD, filename, amode, 0);

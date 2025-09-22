@@ -44,7 +44,7 @@ void __init_libc(char **envp, char *pn)
 
 	struct pollfd pfd[3] = { {.fd=0}, {.fd=1}, {.fd=2} };
 	int r =
-#ifdef SYS_poll
+#if defined(SYS_poll) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	__syscall(SYS_poll, pfd, 3, 0);
 #else
 	__syscall(SYS_ppoll, pfd, 3, &(struct timespec){0}, 0, _NSIG/8);

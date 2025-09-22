@@ -9,7 +9,7 @@ ssize_t readlink(const char *restrict path, char *restrict buf, size_t bufsize)
 		buf = dummy;
 		bufsize = 1;
 	}
-#ifdef SYS_readlink
+#if defined(SYS_readlink) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	int r = __syscall(SYS_readlink, path, buf, bufsize);
 #else
 	int r = __syscall(SYS_readlinkat, AT_FDCWD, path, buf, bufsize);

@@ -15,7 +15,7 @@ FILE *tmpfile(void)
 		__randname(s+13);
 		fd = sys_open(s, O_RDWR|O_CREAT|O_EXCL, 0600);
 		if (fd >= 0) {
-#ifdef SYS_unlink
+#if defined(SYS_unlink) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			__syscall(SYS_unlink, s);
 #else
 			__syscall(SYS_unlinkat, AT_FDCWD, s, 0);

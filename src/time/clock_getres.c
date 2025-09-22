@@ -3,7 +3,7 @@
 
 int clock_getres(clockid_t clk, struct timespec *ts)
 {
-#ifdef SYS_clock_getres_time64
+#if defined(SYS_clock_getres_time64) && defined(__linux__)
 	/* On a 32-bit arch, use the old syscall if it exists. */
 	if (SYS_clock_getres != SYS_clock_getres_time64) {
 		long ts32[2];

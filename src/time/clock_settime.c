@@ -2,11 +2,13 @@
 #include <errno.h>
 #include "syscall.h"
 
+#if defined(__linux__)
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
+#endif
 
 int clock_settime(clockid_t clk, const struct timespec *ts)
 {
-#ifdef SYS_clock_settime64
+#if defined(SYS_clock_settime64) && defined(__linux__)
 	time_t s = ts->tv_sec;
 	long ns = ts->tv_nsec;
 	int r = -ENOSYS;

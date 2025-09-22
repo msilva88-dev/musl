@@ -32,7 +32,7 @@ pid_t _Fork(void)
 	sigset_t set;
 	__block_all_sigs(&set);
 	LOCK(__abort_lock);
-#ifdef SYS_fork
+#if defined(SYS_fork) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	ret = __syscall(SYS_fork);
 #else
 	ret = __syscall(SYS_clone, SIGCHLD, 0);

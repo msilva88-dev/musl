@@ -8,16 +8,20 @@
 static void dummy(void) { }
 weak_alias(dummy, __vm_wait);
 
+#if defined(__linux__)
 #define UNIT SYSCALL_MMAP2_UNIT
 #define OFF_MASK ((-0x2000ULL << (8*sizeof(syscall_arg_t)-1)) | (UNIT-1))
+#endif
 
 void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 {
+#if defined(__linux__)
 	long ret;
 	if (off & OFF_MASK) {
 		errno = EINVAL;
 		return MAP_FAILED;
 	}
+#endif
 	if (len >= PTRDIFF_MAX) {
 		errno = ENOMEM;
 		return MAP_FAILED;
@@ -25,6 +29,9 @@ void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 	if (flags & MAP_FIXED) {
 		__vm_wait();
 	}
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return __syscall(SYS_mmap, start, len, prot, flags, fd, 0L, off);
+#elif defined(__linux__)
 #ifdef SYS_mmap2
 	ret = __syscall(SYS_mmap2, start, len, prot, flags, fd, off/UNIT);
 #else
@@ -34,6 +41,7 @@ void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 	if (ret == -EPERM && !start && (flags&MAP_ANON) && !(flags&MAP_FIXED))
 		ret = -ENOMEM;
 	return (void *)__syscall_ret(ret);
+#endif
 }
 
 weak_alias(__mmap, mmap);

@@ -4,7 +4,7 @@
 #include "syscall.h"
 #include "atomic.h"
 
-#ifdef VDSO_CGT_SYM
+#if defined(VDSO_CGT_SYM) && defined(__linux__)
 
 static void *volatile vdso_func;
 
@@ -60,7 +60,7 @@ int __clock_gettime(clockid_t clk, struct timespec *ts)
 {
 	int r;
 
-#ifdef VDSO_CGT_SYM
+#if defined(VDSO_CGT_SYM) && defined(__linux__)
 	int (*f)(clockid_t, struct timespec *) =
 		(int (*)(clockid_t, struct timespec *))vdso_func;
 	if (f) {
@@ -75,7 +75,7 @@ int __clock_gettime(clockid_t clk, struct timespec *ts)
 	}
 #endif
 
-#ifdef SYS_clock_gettime64
+#if defined(SYS_clock_gettime64) && defined(__linux__)
 	r = -ENOSYS;
 	if (sizeof(time_t) > 4)
 		r = __syscall(SYS_clock_gettime64, clk, ts);

@@ -22,7 +22,7 @@ struct args {
 
 static int __sys_dup2(int old, int new)
 {
-#ifdef SYS_dup2
+#if defined(SYS_dup2) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return __syscall(SYS_dup2, old, new);
 #else
 	return __syscall(SYS_dup3, old, new, 0);

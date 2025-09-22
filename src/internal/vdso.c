@@ -62,7 +62,7 @@ void *__vdsosym(const char *vername, const char *name)
 	Elf_Symndx *hashtab = 0;
 	uint16_t *versym = 0;
 	Verdef *verdef = 0;
-	
+
 	for (i=0; dynv[i]; i+=2) {
 		void *p = (void *)(base + dynv[i+1]);
 		switch(dynv[i]) {
@@ -72,7 +72,7 @@ void *__vdsosym(const char *vername, const char *name)
 		case DT_VERSYM: versym = p; break;
 		case DT_VERDEF: verdef = p; break;
 		}
-	}	
+	}
 
 	if (!strings || !syms || !hashtab) return 0;
 	if (!verdef) versym = 0;

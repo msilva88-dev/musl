@@ -103,6 +103,7 @@ int nanosleep (const struct timespec *, struct timespec *);
 int clock_getres (clockid_t, struct timespec *);
 int clock_gettime (clockid_t, struct timespec *);
 int clock_settime (clockid_t, const struct timespec *);
+#if defined(__linux__)
 int clock_nanosleep (clockid_t, int, const struct timespec *, struct timespec *);
 int clock_getcpuclockid (pid_t, clockid_t *);
 
@@ -114,6 +115,7 @@ int timer_gettime (timer_t, struct itimerspec *);
 int timer_getoverrun (timer_t);
 
 extern char *tzname[2];
+#endif
 
 #endif
 

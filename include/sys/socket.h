@@ -53,7 +53,7 @@ struct cmsghdr {
 	int cmsg_type;
 };
 
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && defined(__linux__)
 struct ucred {
 	pid_t pid;
 	uid_t uid;

@@ -4,15 +4,17 @@
 #include <errno.h>
 #include "syscall.h"
 
+#if defined(__linux__)
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
 #define NS_SPECIAL(ns) ((ns)==UTIME_NOW || (ns)==UTIME_OMIT)
+#endif
 
 int utimensat(int fd, const char *path, const struct timespec times[2], int flags)
 {
 	int r;
 	if (times && times[0].tv_nsec==UTIME_NOW && times[1].tv_nsec==UTIME_NOW)
 		times = 0;
-#ifdef SYS_utimensat_time64
+#if defined(SYS_utimensat_time64) && defined(__linux__)
 	r = -ENOSYS;
 	time_t s0=0, s1=0;
 	long ns0=0, ns1=0;
@@ -35,7 +37,7 @@ int utimensat(int fd, const char *path, const struct timespec times[2], int flag
 	r = __syscall(SYS_utimensat, fd, path, times, flags);
 #endif
 
-#ifdef SYS_futimesat
+#if defined(SYS_futimesat) && defined(__linux__)
 	if (r != -ENOSYS || flags) return __syscall_ret(r);
 	long *tv=0, tmp[4];
 	if (times) {

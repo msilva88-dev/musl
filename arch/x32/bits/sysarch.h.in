@@ -1,0 +1,2 @@
+#define __NR_sysarch	0
+#define __NR_iopl	2

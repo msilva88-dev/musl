@@ -36,7 +36,7 @@ char *tempnam(const char *dir, const char *pfx)
 
 	for (try=0; try<MAXTRIES; try++) {
 		__randname(s+l-6);
-#ifdef SYS_readlink
+#if defined(SYS_readlink) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		r = __syscall(SYS_readlink, s, (char[1]){0}, 1);
 #else
 		r = __syscall(SYS_readlinkat, AT_FDCWD, s, (char[1]){0}, 1);

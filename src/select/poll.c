@@ -5,7 +5,7 @@
 
 int poll(struct pollfd *fds, nfds_t n, int timeout)
 {
-#if defiend(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_poll, fds, n, timeout);
 #elif defined(__linux__)
 #ifdef SYS_poll

@@ -32,13 +32,20 @@ struct sched_param {
 
 int    sched_get_priority_max(int);
 int    sched_get_priority_min(int);
+#if defined(__linux__)
 int    sched_getparam(pid_t, struct sched_param *);
 int    sched_getscheduler(pid_t);
 int    sched_rr_get_interval(pid_t, struct timespec *);
 int    sched_setparam(pid_t, const struct sched_param *);
 int    sched_setscheduler(pid_t, int, const struct sched_param *);
+#endif
 int     sched_yield(void);
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SCHED_FIFO 1
+#define SCHED_OTHER 2
+#define SCHED_RR 3
+#elif defined(__linux__)
 #define SCHED_OTHER 0
 #define SCHED_FIFO 1
 #define SCHED_RR 2
@@ -46,6 +53,7 @@ int     sched_yield(void);
 #define SCHED_IDLE 5
 #define SCHED_DEADLINE 6
 #define SCHED_RESET_ON_FORK 0x40000000
+#endif
 
 #ifdef _GNU_SOURCE
 #define CSIGNAL		0x000000ff
@@ -137,8 +145,10 @@ __CPU_op_func_S(XOR, ^)
 
 #endif
 
+#if defined(__linux__)
 #if _REDIR_TIME64
 __REDIR(sched_rr_get_interval, __sched_rr_get_interval_time64);
+#endif
 #endif
 
 #ifdef __cplusplus

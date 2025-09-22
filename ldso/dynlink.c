@@ -1099,7 +1099,7 @@ static void *dl_mmap(size_t n)
 {
 	void *p;
 	int prot = PROT_READ|PROT_WRITE, flags = MAP_ANONYMOUS|MAP_PRIVATE;
-#ifdef SYS_mmap2
+#if defined(SYS_mmap2) && defined(__linux__)
 	p = (void *)__syscall(SYS_mmap2, 0, n, prot, flags, -1, 0);
 #else
 	p = (void *)__syscall(SYS_mmap, 0, n, prot, flags, -1, 0);

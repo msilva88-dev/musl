@@ -67,6 +67,7 @@ static __inline long __syscall6(long long n, long long a1, long long a2, long lo
 	return ret;
 }
 
+#if defined(__linux__)
 #undef SYS_futimesat
 
 #define SYS_clock_gettime64 SYS_clock_gettime
@@ -91,3 +92,4 @@ static __inline long __syscall6(long long n, long long a1, long long a2, long lo
 #define SYS_wait4_time64 SYS_wait4
 
 #define IPC_64 0
+#endif

@@ -5,7 +5,7 @@
 static int __statfs(const char *path, struct statfs *buf)
 {
 	*buf = (struct statfs){0};
-#ifdef SYS_statfs64
+#if defined(SYS_statfs64) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_statfs64, path, sizeof *buf, buf);
 #else
 	return syscall(SYS_statfs, path, buf);
@@ -15,7 +15,7 @@ static int __statfs(const char *path, struct statfs *buf)
 static int __fstatfs(int fd, struct statfs *buf)
 {
 	*buf = (struct statfs){0};
-#ifdef SYS_fstatfs64
+#if defined(SYS_fstatfs64) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_fstatfs64, fd, sizeof *buf, buf);
 #else
 	return syscall(SYS_fstatfs, fd, buf);

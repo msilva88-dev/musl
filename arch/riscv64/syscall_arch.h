@@ -70,8 +70,10 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
 	__asm_syscall("r"(a7), "0"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5))
 }
 
+#if defined(__linux__)
 #define VDSO_USEFUL
 #define VDSO_CGT_SYM "__vdso_clock_gettime"
 #define VDSO_CGT_VER "LINUX_4.15"
 
 #define IPC_64 0
+#endif

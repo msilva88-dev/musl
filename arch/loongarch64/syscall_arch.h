@@ -130,8 +130,10 @@ static inline long __syscall7(long n, long a, long b, long c, long d, long e, lo
 	return a0;
 }
 
+#if defined(__linux__)
 #define VDSO_USEFUL
 #define VDSO_CGT_SYM "__vdso_clock_gettime"
 #define VDSO_CGT_VER "LINUX_5.10"
 
 #define IPC_64  0
+#endif

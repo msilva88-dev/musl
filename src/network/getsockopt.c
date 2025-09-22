@@ -5,11 +5,14 @@
 
 int getsockopt(int fd, int level, int optname, void *restrict optval, socklen_t *restrict optlen)
 {
+#if defined(__linux__)
 	long tv32[2];
 	struct timeval *tv;
+#endif
 
 	int r = __socketcall(getsockopt, fd, level, optname, optval, optlen, 0);
 
+#if defined(__linux__)
 	if (r==-ENOPROTOOPT) switch (level) {
 	case SOL_SOCKET:
 		switch (optname) {
@@ -37,5 +40,6 @@ int getsockopt(int fd, int level, int optname, void *restrict optval, socklen_t 
 			break;
 		}
 	}
+#endif
 	return __syscall_ret(r);
 }

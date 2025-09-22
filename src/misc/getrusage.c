@@ -5,6 +5,9 @@
 
 int getrusage(int who, struct rusage *ru)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return __syscall(SYS_getrusage, who, ru);
+#elif defined(__linux__)
 	int r;
 #ifdef SYS_getrusage_time64
 	long long kru64[18];
@@ -32,4 +35,5 @@ int getrusage(int who, struct rusage *ru)
 			{ .tv_sec = kru[2], .tv_usec = kru[3] };
 	}
 	return __syscall_ret(r);
+#endif
 }

@@ -6,7 +6,7 @@
 int dup2(int old, int new)
 {
 	int r;
-#ifdef SYS_dup2
+#if defined(SYS_dup2) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	while ((r=__syscall(SYS_dup2, old, new))==-EBUSY);
 #else
 	if (old==new) {
