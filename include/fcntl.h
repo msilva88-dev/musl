@@ -42,7 +42,11 @@ int posix_fallocate(int, off_t, off_t);
 #define O_EXEC     O_PATH
 #define O_TTY_INIT 0
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define O_ACCMODE 03
+#elif defined(__linux__)
 #define O_ACCMODE (03|O_SEARCH)
+#endif
 #define O_RDONLY  00
 #define O_WRONLY  01
 #define O_RDWR    02
@@ -53,17 +57,29 @@ int posix_fallocate(int, off_t, off_t);
 
 #define F_DUPFD_CLOEXEC 1030
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define F_RDLCK 1
+#define F_WRLCK 3
+#elif defined(__linux__)
 #define F_RDLCK 0
 #define F_WRLCK 1
+#endif
 #define F_UNLCK 2
 
 #define FD_CLOEXEC 1
 
 #define AT_FDCWD (-100)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define AT_SYMLINK_NOFOLLOW 0x2
+#define AT_REMOVEDIR 0x8
+#define AT_SYMLINK_FOLLOW 0x4
+#define AT_EACCESS 0x1
+#elif defined(__linux__)
 #define AT_SYMLINK_NOFOLLOW 0x100
 #define AT_REMOVEDIR 0x200
 #define AT_SYMLINK_FOLLOW 0x400
 #define AT_EACCESS 0x200
+#endif
 
 #define POSIX_FADV_NORMAL     0
 #define POSIX_FADV_RANDOM     1
