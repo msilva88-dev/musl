@@ -85,10 +85,13 @@ ARCH_INCLUDES = $(wildcard $(srcdir)/arch/$(ARCH)/bits/*.h)
 GENERIC_INCLUDES = $(wildcard $(srcdir)/arch/generic/bits/*.h)
 ifeq ($(UNAME_S),HyperbolaBSD)
 INCLUDES := $(COMMON_HEADERS) $(HBBSD_HEADERS)
+ARCH_SYSCALL_HEADER := $(srcdir)/arch/generic/bits/syscall.h.in
 else ifeq ($(UNAME_S),Linux)
 INCLUDES := $(COMMON_HEADERS) $(LINUX_HEADERS)
+ARCH_SYSCALL_HEADER := $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
 else ifeq ($(UNAME_S),OpenBSD)
 INCLUDES := $(COMMON_HEADERS) $(OBSD_HEADERS)
+ARCH_SYSCALL_HEADER := $(srcdir)/arch/generic/bits/syscall.h.in
 endif
 ALL_INCLUDES = $(sort $(INCLUDES:$(srcdir)/%=%) $(GENH:obj/%=%)
  $(ARCH_INCLUDES:$(srcdir)/arch/$(ARCH)/%=include/%) $(GENERIC_INCLUDES:$(srcdir)/arch/generic/%=include/%))
@@ -134,7 +137,7 @@ obj/include/bits/sysarch.h: $(srcdir)/arch/$(ARCH)/bits/sysarch.h.in
 	cp $< $@
 	sed -n -e s/__NR_/$(BSDARCH)_/p < $< >> $@
 
-obj/include/bits/syscall.h: $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
+obj/include/bits/syscall.h: $(ARCH_SYSCALL_HEADER)
 	cp $< $@
 	sed -n -e s/__NR_/SYS_/p < $< >> $@
 
