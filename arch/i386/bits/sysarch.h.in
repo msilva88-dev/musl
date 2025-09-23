@@ -1,7 +1,6 @@
-#define __NR_sysarch	0
-#define __NR_iopl	2
-#define __NR_vm86	5
-#define __NR_get_fsbase	6
-#define __NR_set_fsbase	7
-#define __NR_get_gsbase	8
-#define __NR_set_gsbase	9
+#define __NR_IOPL	2
+#define __NR_VM86	5
+#define __NR_GET_FSBASE	6
+#define __NR_SET_FSBASE	7
+#define __NR_GET_GSBASE	8
+#define __NR_SET_GSBASE	9

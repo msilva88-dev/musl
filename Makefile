@@ -17,7 +17,13 @@ includedir = $(prefix)/include
 libdir = $(prefix)/lib
 syslibdir = /lib
 
+UNAME_M := $(shell uname -m)
 UNAME_S := $(shell uname -s)
+
+BSDARCH := $(shell echo $(ARCH) | tr a-z A-Z)
+ifeq ($(ARCH_UPPER),X86_64)
+BSDARCH := AMD64
+endif
 
 MALLOC_DIR = mallocng
 SRC_DIRS = $(addprefix $(srcdir)/,src/* src/malloc/$(MALLOC_DIR) crt ldso $(COMPAT_SRC_DIRS))
@@ -37,6 +43,11 @@ CRT_OBJS = $(filter obj/crt/%,$(ALL_OBJS))
 AOBJS = $(LIBC_OBJS)
 LOBJS = $(LIBC_OBJS:.o=.lo)
 GENH = obj/include/bits/alltypes.h obj/include/bits/syscall.h
+ifeq ($(filter $(UNAME_S),HyperbolaBSD OpenBSD),$(UNAME_S))
+ifeq ($(filter $(UNAME_M),i386 x32 x86_64),$(UNAME_M))
+GENH += obj/include/bits/sysarch.h
+endif
+endif
 GENH_INT = obj/src/internal/version.h
 IMPH = $(addprefix $(srcdir)/, src/internal/stdio_impl.h src/internal/pthread_impl.h src/internal/locale_impl.h src/internal/libc.h)
 
@@ -66,7 +77,7 @@ COMMON_HEADERS += $(wildcard include/netinet/*.h)
 COMMON_HEADERS += $(wildcard include/netpacket/*.h)
 COMMON_HEADERS += $(wildcard include/scsi/*.h)
 COMMON_HEADERS += sys/mount.h sys/reboot.h sys/swap.h sys/syscall.h sys/wait.h
-HBBSD_HEADERS = sys/event.h
+HBBSD_HEADERS = sys/event.h sys/sysarch.h
 LINUX_HEADERS = sys/epoll.h sys/eventfd.h sys/fanotify.h sys/inotify.h sys/io.h sys/klog.h sys/membarrier.h
 LINUX_HEADERS += sys/personality.h sys/prctl.h sys/random.h sys/sysinfo.h sys/timex.h sys/xattr.h
 OBSD_HEADERS := $(HBBSD_HEADERS)
@@ -118,6 +129,10 @@ $(OBJ_DIRS):
 
 obj/include/bits/alltypes.h: $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in $(srcdir)/tools/mkalltypes.sed
 	sed -f $(srcdir)/tools/mkalltypes.sed $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in > $@
+
+obj/include/bits/sysarch.h: $(srcdir)/arch/$(ARCH)/bits/sysarch.h.in
+	cp $< $@
+	sed -n -e s/__NR_/$(BSDARCH)_/p < $< >> $@
 
 obj/include/bits/syscall.h: $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
 	cp $< $@

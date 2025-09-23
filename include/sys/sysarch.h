@@ -12,7 +12,11 @@ struct amd64_iopl_args {
 };
 
 #if defined(__i386__)
+int i386_get_fsbase(void **);
+int i386_get_gsbase(void **);
 int i386_iopl(int);
+int i386_set_fsbase(void *);
+int i386_set_gsbase(void *);
 #elif defined(__x86_64__)
 int amd64_iopl(int);
 #endif
