@@ -80,6 +80,7 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
 	int ret;
 	struct kstat kst;
 
+#elif defined(__linux__)
 	if (flag==AT_EMPTY_PATH && fd>=0 && !*path) {
 		ret = __syscall(SYS_fstat, fd, &kst);
 		if (ret==-EBADF && __syscall(SYS_fcntl, fd, F_GETFD)>=0) {
@@ -87,7 +88,7 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
 			if (ret==-EINVAL) {
 				char buf[15+3*sizeof(int)];
 				__procfdname(buf, fd);
-#if defined(SYS_stat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(SYS_stat)
 				ret = __syscall(SYS_stat, buf, &kst);
 #else
 				ret = __syscall(SYS_fstatat, AT_FDCWD, buf, &kst, 0);
@@ -95,6 +96,7 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
 			}
 		}
 	}
+#endif
 #if defined(SYS_lstat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	else if ((fd == AT_FDCWD || *path=='/') && flag==AT_SYMLINK_NOFOLLOW)
 		ret = __syscall(SYS_lstat, path, &kst);

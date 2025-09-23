@@ -116,6 +116,7 @@ int posix_fallocate(int, off_t, off_t);
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+#if defined(__linux__)
 #define AT_NO_AUTOMOUNT 0x800
 #define AT_EMPTY_PATH 0x1000
 #define AT_STATX_SYNC_TYPE 0x6000
@@ -123,6 +124,7 @@ int posix_fallocate(int, off_t, off_t);
 #define AT_STATX_FORCE_SYNC 0x2000
 #define AT_STATX_DONT_SYNC 0x4000
 #define AT_RECURSIVE 0x8000
+#endif
 
 #define FAPPEND O_APPEND
 #define FFSYNC O_SYNC
