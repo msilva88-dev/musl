@@ -5,12 +5,30 @@
 #define ARCH_SET_GSBASE I386_SET_GSBASE
 #endif
 
-int get_fsbase(void **base)
+#if defined(__OpenBSD__)
+static
+#endif
+int get_gsbase(void **base)
 {
 	return sysarch(ARCH_GET_GSBASE, base);
 }
 
-int set_fsbase(void *base)
+#if defined(__OpenBSD__)
+static
+#endif
+int set_gsbase(void *base)
 {
 	return sysarch(ARCH_SET_GSBASE, base);
 }
+
+#if defined(__i386__)
+int i386_get_gsbase(void **base)
+{
+	return get_gsbase(base);
+}
+
+int i386_set_gsbase(void *base)
+{
+	return set_gsbase(base);
+}
+#endif

@@ -12,12 +12,22 @@ struct amd64_iopl_args {
 };
 
 #if defined(__i386__)
+#if defined(__HyperbolaBSD__)
+int get_fsbase(void **);
+int get_gsbase(void **);
+int iopl(int);
+int set_fsbase(void *);
+int set_gsbase(void *);
+#endif
 int i386_get_fsbase(void **);
 int i386_get_gsbase(void **);
 int i386_iopl(int);
 int i386_set_fsbase(void *);
 int i386_set_gsbase(void *);
 #elif defined(__x86_64__)
+#if defined(__HyperbolaBSD__)
+int iopl(int);
+#endif
 int amd64_iopl(int);
 #endif
 
