@@ -3,7 +3,14 @@
 #include <errno.h>
 #include "syscall.h"
 
-int brk(void *end)
+extern char _end;
+static void *__curbrk = &_end, *__minbrk = &_end;
+
+int brk(void *addr)
 {
-	return __syscall_ret(-ENOMEM);
+    if (addr < __minbrk || syscall(SYS_break, addr) != 0)
+	return (errno = ENOMEM, -1);
+
+    __curbrk = addr;
+    return 0;
 }

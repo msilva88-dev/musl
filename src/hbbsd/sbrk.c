@@ -4,8 +4,15 @@
 #include <errno.h>
 #include "syscall.h"
 
-void *sbrk(intptr_t inc)
+extern char _end;
+static void *__curbrk = &_end;
+
+void *sbrk(int inc)
 {
-	if (inc) return (void *)__syscall_ret(-ENOMEM);
-	return (void *)__syscall(SYS_break, 0);
+	void *oldbrk = __curbrk;
+
+	if ((char *)oldbrk + inc < &_end || brk((char *)oldbrk + inc) != 0)
+		return (errno = ENOMEM, (void *)-1);
+
+	return __curbrk = (char *)oldbrk + inc, oldbrk;
 }
