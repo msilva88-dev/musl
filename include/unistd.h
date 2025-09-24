@@ -203,7 +203,9 @@ int setresgid(gid_t, gid_t, gid_t);
 int getresuid(uid_t *, uid_t *, uid_t *);
 int getresgid(gid_t *, gid_t *, gid_t *);
 char *get_current_dir_name(void);
+#if defined(__linux__)
 int syncfs(int);
+#endif
 int euidaccess(const char *, int);
 int eaccess(const char *, int);
 #if defined(__linux__)

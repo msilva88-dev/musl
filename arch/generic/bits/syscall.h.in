@@ -35,7 +35,7 @@
 #define __NR_access			33
 #define __NR_chflags			34
 #define __NR_fchflags			35
-#define __NR_sync			36
+#define __NR_sync			36 // __NR_syncfs
 #define __NR_msyscall			37
 #define __NR_stat			38 // stat35, t32_stat, __NR_statx
 #define __NR_getppid			39
@@ -94,7 +94,7 @@
 #define __NR_fcntl			92
 #define __NR_accept4			93
 #define __NR___thrsleep			94 // t32___thrsleep
-#define __NR_fsync			95
+#define __NR_fsync			95 // __NR_fdatasync
 #define __NR_setpriority		96
 #define __NR_socket			97
 #define __NR_connect			98
@@ -341,7 +341,6 @@
 #define __NR_sendfile			40
 #define __NR_clone			56
 #define __NR_uname			63
-#define __NR_fdatasync			75
 #define __NR_creat			85
 #define __NR_sysinfo			99
 #define __NR_times			100
@@ -475,7 +474,6 @@
 #define __NR_name_to_handle_at		303
 #define __NR_open_by_handle_at		304
 #define __NR_clock_adjtime		305
-#define __NR_syncfs			306
 #define __NR_sendmmsg			307
 #define __NR_setns			308
 #define __NR_getcpu			309
