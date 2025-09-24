@@ -47,7 +47,11 @@ static int start_tcp(struct pollfd *pfd, int family, const void *sa, socklen_t s
 	pfd->events = POLLOUT;
 	if (!setsockopt(fd, IPPROTO_TCP, TCP_FASTOPEN_CONNECT,
 	    &(int){1}, sizeof(int))) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		r = sendmsg(fd, &mh, MSG_NOSIGNAL);
+#elif defined(__linux__)
 		r = sendmsg(fd, &mh, MSG_FASTOPEN|MSG_NOSIGNAL);
+#endif
 		if (r == ql+2) pfd->events = POLLIN;
 		if (r >= 0) return r;
 		if (errno == EINPROGRESS) return 0;

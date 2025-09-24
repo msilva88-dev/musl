@@ -330,6 +330,17 @@ struct linger {
 #define MSG_OOB       0x0001
 #define MSG_PEEK      0x0002
 #define MSG_DONTROUTE 0x0004
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MSG_EOR       0x0008
+#define MSG_TRUNC     0x0010
+#define MSG_CTRUNC    0x0020
+#define MSG_WAITALL   0x0040
+#define MSG_DONTWAIT  0x0080
+#define MSG_BCAST     0x0100
+#define MSG_MCAST     0x0200
+#define MSG_NOSIGNAL  0x0400
+#define MSG_CMSG_CLOEXEC 0x00000800
+#elif defined(__linux__)
 #define MSG_CTRUNC    0x0008
 #define MSG_PROXY     0x0010
 #define MSG_TRUNC     0x0020
@@ -348,6 +359,7 @@ struct linger {
 #define MSG_ZEROCOPY  0x4000000
 #define MSG_FASTOPEN  0x20000000
 #define MSG_CMSG_CLOEXEC 0x40000000
+#endif
 
 #define __CMSG_LEN(cmsg) (((cmsg)->cmsg_len + sizeof(long) - 1) & ~(long)(sizeof(long) - 1))
 #define __CMSG_NEXT(cmsg) ((unsigned char *)(cmsg) + __CMSG_LEN(cmsg))
