@@ -11,6 +11,7 @@ int unmount(const char *special, int flags)
         return syscall(SYS_unmount, special, flags);
 }
 
+#if defined(__HyperbolaBSD__)
 int umount(const char *special)
 {
 	return syscall(SYS_unmount, special, 0);
@@ -20,3 +21,4 @@ int umount2(const char *special, int flags)
 {
 	return syscall(SYS_unmount, special, flags);
 }
+#endif
