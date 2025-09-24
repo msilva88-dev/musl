@@ -91,9 +91,14 @@ struct linger {
 #define SOCK_DCCP      6
 #define SOCK_PACKET    10
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SOCK_CLOEXEC   0100000
+#define SOCK_NONBLOCK  040000
+#elif defined(__linux__)
 #ifndef SOCK_CLOEXEC
 #define SOCK_CLOEXEC   02000000
 #define SOCK_NONBLOCK  04000
+#endif
 #endif
 
 #define PF_UNSPEC       0
