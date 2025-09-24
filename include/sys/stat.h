@@ -105,7 +105,29 @@ int lchmod(const char *, mode_t);
 #define S_IEXEC S_IXUSR
 #endif
 
-#if defined(__linux__)
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(_BSD_SOURCE)
+#define UF_SETTABLE 0xffff
+#define UF_NODUMP 0x1
+#define UF_IMMUTABLE 0x2
+#define UF_APPEND 0x4
+#define UF_OPAQUE 0x8
+#define SF_SETTABLE 0xffff0000
+#define SF_ARCHIVED 0x10000
+#define SF_IMMUTABLE 0x20000
+#define SF_APPEND 0x40000
+#if defined(__HyperbolaBSD__)
+#define STATX_ATTR_NODUMP UF_NODUMP
+#define STATX_ATTR_IMMUTABLE SF_IMMUTABLE
+#define STATX_ATTR_APPEND SF_APPEND
+#endif
+
+int chflags(const char *, unsigned int);
+int chflagsat(int, const char *, unsigned int, int);
+int fchflags(int, unsigned int);
+#endif
+#elif defined(__linux__)
 #if defined(_GNU_SOURCE)
 #define STATX_TYPE 1U
 #define STATX_MODE 2U
