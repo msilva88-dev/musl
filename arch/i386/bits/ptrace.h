@@ -9,3 +9,7 @@
 #define PT_SYSEMU PTRACE_SYSEMU
 #define PT_SYSEMU_SINGLESTEP PTRACE_SYSEMU_SINGLESTEP
 #define PT_STEPBLOCK PTRACE_SINGLEBLOCK
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define PT_GETXMMREGS 37
+#define PT_SETXMMREGS 38
+#endif

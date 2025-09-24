@@ -1,24 +1,7 @@
 #include <sys/ptrace.h>
-#include <stdarg.h>
-#include <unistd.h>
 #include "syscall.h"
 
-long ptrace(int req, ...)
+int ptrace(int req, pid_t pid, caddr_t addr, int data)
 {
-	va_list ap;
-	pid_t pid;
-	void *addr, *data;
-	long ret, result;
-
-	va_start(ap, req);
-	pid = va_arg(ap, pid_t);
-	addr = va_arg(ap, void *);
-	data = va_arg(ap, void *);
-	va_end(ap);
-
-	if (req-1U < 3) data = &result;
-	ret = syscall(SYS_ptrace, req, pid, addr, data);
-
-	if (ret < 0 || req-1U >= 3) return ret;
-	return result;
+	return syscall(SYS_ptrace, req, pid, addr, data);
 }
