@@ -189,8 +189,11 @@ extern int optreset;
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(_BSD_SOURCE)
+int getdtablecount(void);
 int pledge(const char *, const char *);
 int unveil(const char *, const char *);
+#endif
 #endif
 
 #ifdef _GNU_SOURCE
