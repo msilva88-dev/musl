@@ -1,3 +1,4 @@
+#if defined(__linux__)
 #define PTRACE_SINGLEBLOCK		12
 #define PTRACE_OLDSETOPTIONS		21
 #define PTRACE_SYSEMU			31
@@ -10,3 +11,4 @@
 #define PTRACE_TE_ABORT_RAND		0x5011
 
 #define PT_STEPBLOCK PTRACE_SINGLEBLOCK
+#endif
