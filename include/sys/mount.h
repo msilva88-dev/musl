@@ -47,9 +47,9 @@ extern "C" {
 #define MNT_UPDATE      (1<<16)
 #define MNT_DELEXPORT   (1<<17)
 #define MNT_RELOAD      (1<<18)
-#define MNT_FORCE       (1<<19)
+#define MNT_FORCE       (1<<19) // Mount and unmount flag
 #define MNT_STALLED     (1<<20)
-#define MNT_SWAPPABLE   (1<<21)
+#define MNT_SWAPPABLE   (1<<21) // Swap only
 #define MNT_WANTRDWR    (1<<25)
 #define MNT_SOFTDEP     (1<<26) // FFS/FFS2 only
 #define MNT_DOOMED      (1<<27)
