@@ -20,11 +20,13 @@ typedef enum {
 pid_t wait (int *);
 pid_t waitpid (pid_t, int *, int );
 
+#if defined(__linux__)
 #if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) \
  || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
  || defined(_BSD_SOURCE)
 #include <signal.h>
 int waitid (idtype_t, id_t, siginfo_t *, int);
+#endif
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
@@ -36,10 +38,14 @@ pid_t wait4 (pid_t, int *, int, struct rusage *);
 #define WNOHANG    1
 #define WUNTRACED  2
 
+#if defined(__linux__)
 #define WSTOPPED   2
 #define WEXITED    4
+#endif
 #define WCONTINUED 8
+#if defined(__linux__)
 #define WNOWAIT    0x1000000
+#endif
 
 #define __WNOTHREAD 0x20000000
 #define __WALL      0x40000000
