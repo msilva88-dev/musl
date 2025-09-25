@@ -27,6 +27,7 @@
 #include "fork_impl.h"
 #include "libc.h"
 #include "dynlink.h"
+#include "crypt_chacha.h"
 
 static size_t ldso_page_size;
 /* libc.h may have defined a macro for dynamic PAGE_SIZE already, but
@@ -741,6 +742,14 @@ static void *map_library(int fd, struct dso *dso)
 					ph->p_memsz < DEFAULT_STACK_MAX ?
 					ph->p_memsz : DEFAULT_STACK_MAX;
 			}
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		} else if (ph->p_type == PT_OPENBSD_RANDOMIZE) {
+			struct __buffer phrb = {
+				.data = (uint8_t *)(ph->p_vaddr & -PAGE_MASK),
+				.bytes = ph->p_memsz
+			};
+			__dso_arc4rb(&phrb);
+#endif
 		}
 		if (ph->p_type != PT_LOAD) continue;
 		nsegs++;
@@ -1535,6 +1544,14 @@ static void kernel_mapped_dso(struct dso *p)
 					ph->p_memsz < DEFAULT_STACK_MAX ?
 					ph->p_memsz : DEFAULT_STACK_MAX;
 			}
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		} else if (ph->p_type == PT_OPENBSD_RANDOMIZE) {
+			struct __buffer phrb = {
+				.data = (uint8_t *)(ph->p_vaddr & -PAGE_MASK),
+				.bytes = ph->p_memsz
+			};
+			__dso_arc4rb(&phrb);
+#endif
 		}
 		if (ph->p_type != PT_LOAD) continue;
 		if (ph->p_vaddr < min_addr)

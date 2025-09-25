@@ -32,6 +32,9 @@ typedef uint16_t Elf64_Section;
 typedef Elf32_Half Elf32_Versym;
 typedef Elf64_Half Elf64_Versym;
 
+typedef uint64_t Elf32_Lword;
+typedef uint64_t Elf64_Lword;
+
 #define EI_NIDENT (16)
 
 typedef struct {
@@ -106,13 +109,17 @@ typedef struct {
 #define ELFOSABI_NETBSD		2
 #define ELFOSABI_LINUX		3
 #define ELFOSABI_GNU		3
+#define ELFOSABI_HURD		4
+#define ELFOSABI_86OPEN		5
 #define ELFOSABI_SOLARIS	6
 #define ELFOSABI_AIX		7
+#define ELFOSABI_MONTEREY	7
 #define ELFOSABI_IRIX		8
 #define ELFOSABI_FREEBSD	9
 #define ELFOSABI_TRU64		10
 #define ELFOSABI_MODESTO	11
 #define ELFOSABI_OPENBSD	12
+#define ELFOSABI_HYPERBOLABSD	19
 #define ELFOSABI_ARM		97
 #define ELFOSABI_STANDALONE	255
 
@@ -141,10 +148,14 @@ typedef struct {
 #define EM_386		 3
 #define EM_68K		 4
 #define EM_88K		 5
+#define EM_486		 6
 #define EM_860		 7
 #define EM_MIPS		 8
 #define EM_S370		 9
 #define EM_MIPS_RS3_LE	10
+
+#define EM_MIPS_RS4_BE  10
+#define EM_SPARC64      11
 
 #define EM_PARISC	15
 #define EM_VPP500	17
@@ -181,6 +192,7 @@ typedef struct {
 #define EM_ST100	60
 #define EM_TINYJ	61
 #define EM_X86_64	62
+#define EM_AMD64	62
 #define EM_PDSP		63
 
 #define EM_FX66		66
@@ -381,6 +393,7 @@ typedef struct {
 #define SHT_REL		  9
 #define SHT_SHLIB	  10
 #define SHT_DYNSYM	  11
+#define SHT_NUM		  12
 #define SHT_INIT_ARRAY	  14
 #define SHT_FINI_ARRAY	  15
 #define SHT_PREINIT_ARRAY 16
@@ -389,6 +402,7 @@ typedef struct {
 #define SHT_RELR	  19
 #define	SHT_NUM		  20
 #define SHT_LOOS	  0x60000000
+#define SHT_SUNW_dof	  0x6ffffff4
 #define SHT_GNU_ATTRIBUTES 0x6ffffff5
 #define SHT_GNU_HASH	  0x6ffffff6
 #define SHT_GNU_LIBLIST	  0x6ffffff7
@@ -612,6 +626,12 @@ typedef struct {
 #define PT_GNU_STACK	0x6474e551
 #define PT_GNU_RELRO	0x6474e552
 #define PT_GNU_PROPERTY	0x6474e553
+#define PT_OPENBSD_MUTABLE	0x65a3dbe5
+#define PT_OPENBSD_RANDOMIZE	0x65a3dbe6
+#define PT_OPENBSD_WXNEEDED	0x65a3dbe7
+#define PT_OPENBSD_NOBTCFI	0x65a3dbe8
+#define PT_OPENBSD_SYSCALLS	0x65a3dbe9
+#define PT_OPENBSD_BOOTDATA	0x65a41be6
 #define PT_LOSUNW	0x6ffffffa
 #define PT_SUNWBSS	0x6ffffffa
 #define PT_SUNWSTACK	0x6ffffffb
@@ -627,6 +647,7 @@ typedef struct {
 #define PF_X		(1 << 0)
 #define PF_W		(1 << 1)
 #define PF_R		(1 << 2)
+#define PF_OPENBSD_MUTABLE	0x08000000
 #define PF_MASKOS	0x0ff00000
 #define PF_MASKPROC	0xf0000000
 
@@ -643,6 +664,22 @@ typedef struct {
 #define NT_GWINDOWS	7
 #define NT_ASRS		8
 #define NT_PSTATUS	10
+#define NT_OPENBSD_IDENT	1
+#define NT_OPENBSD_PROF		2
+#define NT_OPENBSD_PROCINFO	10
+#define NT_OPENBSD_AUXV		11
+#define NT_OPENBSD_REGS		20
+#define NT_OPENBSD_FPREGS	21
+#define NT_OPENBSD_XFPREGS	22
+#define NT_OPENBSD_WCOOKIE	23
+#define NT_OPENBSD_PACMASK	24
+#define NT_HYPERBOLABSD_IDENT		1
+#define NT_HYPERBOLABSD_PROCINFO	10
+#define NT_HYPERBOLABSD_AUXV		11
+#define NT_HYPERBOLABSD_REGS		20
+#define NT_HYPERBOLABSD_FPREGS		21
+#define NT_HYPERBOLABSD_XFPREGS		22
+#define NT_HYPERBOLABSD_WCOOKIE		23
 #define NT_PSINFO	13
 #define NT_PRCRED	14
 #define NT_UTSNAME	15
