@@ -27,11 +27,35 @@ extern "C" {
 
 #include <bits/alltypes.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+struct stat {
+	mode_t st_mode;
+	dev_t st_dev;
+	ino_t st_ino;
+	nlink_t st_nlink;
+	uid_t st_uid;
+	gid_t st_gid;
+	dev_t st_rdev;
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+	off_t st_size;
+	blkcnt_t st_blocks;
+	blksize_t st_blksize;
+	u_int32_t st_flags;
+	u_int32_t st_gen;
+	struct timespec __st_birthtim;
+};
+#elif defined(__linux__)
 #include <bits/stat.h>
+#endif
 
 #define st_atime st_atim.tv_sec
 #define st_mtime st_mtim.tv_sec
 #define st_ctime st_ctim.tv_sec
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __st_birthtime __st_birthtim.tv_sec
+#endif
 
 #define S_IFMT  0170000
 
@@ -60,6 +84,9 @@ extern "C" {
 #define S_ISUID 04000
 #define S_ISGID 02000
 #define S_ISVTX 01000
+#if defined(_BSD_SOURCE)
+#define S_ISTXT 01000
+#endif
 #define S_IRUSR 0400
 #define S_IWUSR 0200
 #define S_IXUSR 0100
@@ -72,6 +99,13 @@ extern "C" {
 #define S_IWOTH 0002
 #define S_IXOTH 0001
 #define S_IRWXO 0007
+
+#if defined(_BSD_SOURCE)
+#define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO)
+#define ALLPERMS (S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
+#define DEFFILEMODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
+#define S_BLKSIZE 512
+#endif
 #endif
 
 #define UTIME_NOW  0x3fffffff
