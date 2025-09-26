@@ -143,6 +143,7 @@ int mincore (void *, size_t, unsigned char *);
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #if defined(_BSD_SOURCE)
 void *mquery(void *, size_t, int, int, int, off_t);
+int msyscall(void *, size_t);
 #endif
 #endif
 
