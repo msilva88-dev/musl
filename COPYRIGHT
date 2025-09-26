@@ -142,6 +142,10 @@ originally written by Solar Designer and placed into the public
 domain. The code also comes with a fallback permissive license for use
 in jurisdictions that may not recognize the public domain.
 
+The implementation of ChaCha crypt (src/crypt/crypt_chacha.c) was
+originally written by D. J. Bernstein and placed into the public
+domain.
+
 The smoothsort implementation (src/stdlib/qsort.c) is Copyright © 2011
 Lynn Ochs and is licensed under an MIT-style license.
 
