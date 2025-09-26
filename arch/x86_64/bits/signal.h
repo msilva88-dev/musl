@@ -2,8 +2,13 @@
  || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MINSIGSTKSZ 12288
+#define SIGSTKSZ 28672
+#elif defined(__linux__)
 #define MINSIGSTKSZ 2048
 #define SIGSTKSZ 8192
+#endif
 #endif
 
 #ifdef _GNU_SOURCE
@@ -70,12 +75,30 @@ typedef struct _fpstate {
 	unsigned padding[24];
 } *fpregset_t;
 struct sigcontext {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	long sc_rdi, sc_rsi, sc_rdx, sc_rcx,
+	long sc_r8, sc_r9, sc_r10, sc_r11, sc_r12, sc_r13, sc_r14, sc_r15;
+        long sc_rbp, sc_rbx, sc_rax, sc_gs, sc_fs, sc_es, sc_ds, sc_trapno;
+        long sc_err, sc_rip, sc_cs, sc_rflags, sc_rsp, sc_ss;
+        struct fxsave64 {
+		uint16_t fx_fcw, fx_fsw;
+		uint8_t fx_ftw, fx_unused1;
+		uint16_t fx_fop;
+		uint64_t fx_rip, fx_rdp;
+		uint32_t fx_mxcsr, fx_mxcsr_mask;
+		uint64_t fx_st[8][2], fx_xmm[16][2];
+		uint8_t fx_unused3[96];
+	} __attribute__((__packed__)) *sc_fpstate;
+        int __sc_unused, sc_mask;
+        long sc_cookie;
+#elif defined(__linux__)
 	unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
 	unsigned long rdi, rsi, rbp, rbx, rdx, rax, rcx, rsp, rip, eflags;
 	unsigned short cs, gs, fs, __pad0;
 	unsigned long err, trapno, oldmask, cr2;
 	struct _fpstate *fpstate;
 	unsigned long __reserved1[8];
+#endif
 };
 typedef struct {
 	gregset_t gregs;
@@ -90,8 +113,13 @@ typedef struct {
 
 struct sigaltstack {
 	void *ss_sp;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	size_t ss_size;
+	int ss_flags;
+#elif defined(__linux__)
 	int ss_flags;
 	size_t ss_size;
+#endif
 };
 
 typedef struct __ucontext {
@@ -103,6 +131,15 @@ typedef struct __ucontext {
 	unsigned long __fpregs_mem[64];
 } ucontext_t;
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SA_NOCLDSTOP  8
+#define SA_NOCLDWAIT  0x00000020
+#define SA_SIGINFO    0x00000040
+#define SA_ONSTACK    1
+#define SA_RESTART    2
+#define SA_NODEFER    0x00000010
+#define SA_RESETHAND  4
+#elif defined(__linux__)
 #define SA_NOCLDSTOP  1
 #define SA_NOCLDWAIT  2
 #define SA_SIGINFO    4
@@ -111,6 +148,7 @@ typedef struct __ucontext {
 #define SA_NODEFER    0x40000000
 #define SA_RESETHAND  0x80000000
 #define SA_RESTORER   0x04000000
+#endif
 
 #endif
 
@@ -121,33 +159,67 @@ typedef struct __ucontext {
 #define SIGTRAP   5
 #define SIGABRT   6
 #define SIGIOT    SIGABRT
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIGEMT    7 // BSD
+#elif defined(__linux__)
 #define SIGBUS    7
+#endif
 #define SIGFPE    8
 #define SIGKILL   9
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIGBUS    10 // 7
+#elif defined(__linux__)
 #define SIGUSR1   10
+#endif
 #define SIGSEGV   11
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIGSYS    12 // 31
+#elif defined(__linux__)
 #define SIGUSR2   12
+#endif
 #define SIGPIPE   13
 #define SIGALRM   14
 #define SIGTERM   15
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIGURG    16 // 23
+#define SIGSTOP   17 // 19
+#define SIGTSTP   18 // 20
+#define SIGCONT   19 // 18
+#define SIGCHLD   20 // 17
+#elif defined(__linux__)
 #define SIGSTKFLT 16
 #define SIGCHLD   17
 #define SIGCONT   18
 #define SIGSTOP   19
 #define SIGTSTP   20
+#endif
 #define SIGTTIN   21
 #define SIGTTOU   22
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIGIO     23 // 29
+#elif defined(__linux__)
 #define SIGURG    23
+#endif
 #define SIGXCPU   24
 #define SIGXFSZ   25
 #define SIGVTALRM 26
 #define SIGPROF   27
 #define SIGWINCH  28
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIGINFO   29 // BSD
+#define SIGUSR1   30 // 10
+#define SIGUSR2   31 // 12
+#define SIGTHR    32 // BSD
+#elif defined(__linux__)
 #define SIGIO     29
-#define SIGPOLL   29
 #define SIGPWR    30
 #define SIGSYS    31
+#endif
+#define SIGPOLL   SIGIO
 #define SIGUNUSED SIGSYS
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _NSIG 33
+#elif defined(__linux__)
 #define _NSIG 65
-
+#endif

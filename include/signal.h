@@ -173,7 +173,9 @@ struct sigaction {
 	} __sa_handler;
 	sigset_t sa_mask;
 	int sa_flags;
+#if defined(__linux__)
 	void (*sa_restorer)(void);
+#endif
 };
 #define sa_handler   __sa_handler.sa_handler
 #define sa_sigaction __sa_handler.sa_sigaction
@@ -256,7 +258,11 @@ void (*sigset(int, void (*)(int)))(int);
 #define POLL_PRI 5
 #define POLL_HUP 6
 #define SS_ONSTACK    1
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SS_DISABLE    4
+#elif defined(__linux__)
 #define SS_DISABLE    2
+#endif
 #define SS_AUTODISARM (1U << 31)
 #define SS_FLAG_BITS SS_AUTODISARM
 #endif
@@ -283,6 +289,21 @@ int sigandset(sigset_t *, const sigset_t *, const sigset_t *);
 #define SIG_ERR  ((void (*)(int))-1)
 #define SIG_DFL  ((void (*)(int)) 0)
 #define SIG_IGN  ((void (*)(int)) 1)
+
+#if defined(_BSD_SOURCE) && defined(__OpenBSD__)
+/*
+ * Legacy BSD compat.
+ */
+struct  sigvec {
+	void (*sv_handler)(int);
+	int sv_mask;
+	int sv_flags;
+};
+#define SV_ONSTACK SA_ONSTACK
+#define SV_INTERRUPT SA_RESTART
+#define SV_RESETHAND SA_RESETHAND
+#define sv_onstack sv_flags
+#endif
 
 typedef int sig_atomic_t;
 
