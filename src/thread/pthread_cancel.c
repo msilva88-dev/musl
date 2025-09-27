@@ -69,7 +69,11 @@ static void cancel_handler(int sig, siginfo_t *si, void *ctx)
 		return;
 	}
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	__syscall(SYS_thrkill, self->tid, SIGCANCEL, NULL);
+#elif defined(__linux__)
 	__syscall(SYS_tkill, self->tid, SIGCANCEL);
+#endif
 }
 
 void __testcancel()

@@ -34,8 +34,13 @@ int __libc_sigaction(int sig, const struct sigaction *restrict sa, struct sigact
 			 * blocked) as part of the ucontext_t passed
 			 * to the signal handler. */
 			if (!libc.threaded && !unmask_done) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+				__syscall(SYS_sigprocmask, SIG_UNBLOCK,
+					SIGPT_SET);
+#elif defined(__linux__)
 				__syscall(SYS_rt_sigprocmask, SIG_UNBLOCK,
 					SIGPT_SET, 0, _NSIG/8);
+#endif
 				unmask_done = 1;
 			}
 

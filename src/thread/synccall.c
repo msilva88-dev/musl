@@ -79,7 +79,11 @@ void __synccall(void (*func)(void *), void *ctx)
 
 	for (td=self->next; td!=self; td=td->next) {
 		target_tid = td->tid;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		while ((r = -__syscall(SYS_thrkill, td->tid, SIGSYNCCALL, NULL)) == EAGAIN);
+#elif defined(__linux__)
 		while ((r = -__syscall(SYS_tkill, td->tid, SIGSYNCCALL)) == EAGAIN);
+#endif
 		if (r) {
 			/* If we failed to signal any thread, nop out the
 			 * callback to abort the synccall and just release

@@ -30,15 +30,27 @@ static const unsigned long app_mask[] = {
 
 void __block_all_sigs(void *set)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	sigprocmask(SIG_BLOCK, &all_mask, set);
+#elif defined(__linux__)
 	__syscall(SYS_rt_sigprocmask, SIG_BLOCK, &all_mask, set, _NSIG/8);
+#endif
 }
 
 void __block_app_sigs(void *set)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	sigprocmask(SIG_BLOCK, &app_mask, set);
+#elif defined(__linux__)
 	__syscall(SYS_rt_sigprocmask, SIG_BLOCK, &app_mask, set, _NSIG/8);
+#endif
 }
 
 void __restore_sigs(void *set)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	__syscall(SYS_sigprocmask, SIG_SETMASK, set);
+#elif defined(__linux__)
 	__syscall(SYS_rt_sigprocmask, SIG_SETMASK, set, 0, _NSIG/8);
+#endif
 }
