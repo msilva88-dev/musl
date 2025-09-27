@@ -9,11 +9,28 @@ extern "C" {
 #include <time.h>
 #include <stdint.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define ACCT_COMM 9
+#elif defined(__linux__)
 #define ACCT_COMM 16
+#endif
 
 typedef uint16_t comp_t;
 
 struct acct {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	char ac_comm[ACCT_COMM+1];
+	comp_t ac_utime;
+	comp_t ac_stime;
+	comp_t ac_etime;
+	time_t ac_btime;
+	uid_t ac_uid;
+	gid_t ac_gid;
+	uint16_t ac_mem;
+	comp_t ac_io;
+	dev_t ac_tty;
+	uint8_t ac_flag;
+#elif defined(__linux__)
 	char ac_flag;
 	uint16_t ac_uid;
 	uint16_t ac_gid;
@@ -31,9 +48,11 @@ struct acct {
 	uint32_t ac_exitcode;
 	char ac_comm[ACCT_COMM+1];
 	char ac_pad[10];
+#endif
 };
 
 
+#if defined(__linux__)
 struct acct_v3 {
 	char ac_flag;
 	char ac_version;
@@ -55,13 +74,25 @@ struct acct_v3 {
 	comp_t ac_swaps;
 	char ac_comm[ACCT_COMM];
 };
+#endif
 
 #define AFORK 1
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define AMAP 4
+#elif defined(__linux__)
 #define ASU 2
+#endif
 #define ACORE 8
 #define AXSIG 16
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define APLEDGE 32
+#define ATRAP 64
+#define AUNVEIL 128
+#define AHZ 64
+#elif defined(__linux__)
 #define ACCT_BYTEORDER (128*(__BYTE_ORDER==__BIG_ENDIAN))
 #define AHZ 100
+#endif
 
 int acct(const char *);
 
