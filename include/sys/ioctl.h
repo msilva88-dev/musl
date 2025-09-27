@@ -8,7 +8,11 @@ extern "C" {
 
 #include <bits/alltypes.h>
 #include <bits/ioctl.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <net/if.h>
+#endif
 
+#if defined(__linux__)
 #define N_TTY           0
 #define N_SLIP          1
 #define N_MOUSE         2
@@ -37,6 +41,7 @@ extern "C" {
 #define N_NCI           25
 #define N_SPEAKUP       26
 #define N_NULL          27
+#endif
 
 #define TIOCPKT_DATA       0
 #define TIOCPKT_FLUSHREAD  1
@@ -47,14 +52,35 @@ extern "C" {
 #define TIOCPKT_DOSTOP    32
 #define TIOCPKT_IOCTL     64
 
+#if defined(__linux__)
 #define TIOCSER_TEMT 1
+#endif
 
+#if defined(__linux__)
 #define SIOCADDRT          0x890B
 #define SIOCDELRT          0x890C
 #define SIOCRTMSG          0x890D
+#endif
 
+#if defined(__linux__)
 #define SIOCGIFNAME        0x8910
 #define SIOCSIFLINK        0x8911
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIOCGIFCONF        _IOWR(0x69, 36, struct ifconf)
+#define SIOCGIFFLAGS       _IOWR(0x69, 17, struct ifreq)
+#define SIOCSIFFLAGS       _IOW(0x69, 16, struct ifreq)
+#define SIOCGIFADDR        _IOWR(0x69, 33, struct ifreq)
+#define SIOCSIFADDR        _IOW(0x69, 12, struct ifreq)
+#define SIOCGIFDSTADDR     _IOWR(0x69, 34, struct ifreq)
+#define SIOCSIFDSTADDR     _IOW(0x69, 14, struct ifreq)
+#define SIOCGIFBRDADDR     _IOWR(0x69, 35, struct ifreq)
+#define SIOCSIFBRDADDR     _IOW(0x69, 19, struct ifreq)
+#define SIOCGIFNETMASK     _IOWR(0x69, 37, struct ifreq)
+#define SIOCSIFNETMASK     _IOW(0x69, 22, struct ifreq)
+#define SIOCGIFMETRIC      _IOWR(0x69, 23, struct ifreq)
+#define SIOCSIFMETRIC      _IOW(0x69, 24, struct ifreq)
+#elif defined(__linux__)
 #define SIOCGIFCONF        0x8912
 #define SIOCGIFFLAGS       0x8913
 #define SIOCSIFFLAGS       0x8914
@@ -68,10 +94,19 @@ extern "C" {
 #define SIOCSIFNETMASK     0x891c
 #define SIOCGIFMETRIC      0x891d
 #define SIOCSIFMETRIC      0x891e
+#endif
+#if defined(__linux__)
 #define SIOCGIFMEM         0x891f
 #define SIOCSIFMEM         0x8920
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SIOCGIFMTU         _IOWR(0x69, 126, struct ifreq)
+#define SIOCSIFMTU         _IOW(0x69, 127, struct ifreq)
+#elif defined(__linux__)
 #define SIOCGIFMTU         0x8921
 #define SIOCSIFMTU         0x8922
+#endif
+#if defined(__linux__)
 #define SIOCSIFNAME        0x8923
 #define SIOCSIFHWADDR      0x8924
 #define SIOCGIFENCAP       0x8925
@@ -88,7 +123,9 @@ extern "C" {
 #define SIOCDIFADDR        0x8936
 #define SIOCSIFHWBROADCAST 0x8937
 #define SIOCGIFCOUNT       0x8938
+#endif
 
+#if defined(__linux__)
 #define SIOCGIFBR          0x8940
 #define SIOCSIFBR          0x8941
 
@@ -111,6 +148,7 @@ extern "C" {
 
 #define SIOCDEVPRIVATE     0x89F0
 #define SIOCPROTOPRIVATE   0x89E0
+#endif
 
 int ioctl (int, int, ...);
 

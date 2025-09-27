@@ -1,14 +1,21 @@
+#if defined(__linux__)
 #undef NCCS
 #define NCCS 19
+#endif
 struct termios {
 	tcflag_t c_iflag;
 	tcflag_t c_oflag;
 	tcflag_t c_cflag;
 	tcflag_t c_lflag;
 	cc_t c_cc[NCCS];
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	int c_ispeed;
+	int c_ospeed;
+#elif defined(__linux__)
 	cc_t c_line;
 	speed_t __c_ispeed;
 	speed_t __c_ospeed;
+#endif
 };
 
 #define VINTR     0

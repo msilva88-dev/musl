@@ -16,7 +16,11 @@ typedef unsigned char cc_t;
 typedef unsigned int speed_t;
 typedef unsigned int tcflag_t;
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define NCCS 20
+#if defined(__linux__)
 #define NCCS 32
+#endif
 
 #include <bits/termios.h>
 

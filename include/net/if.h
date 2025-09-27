@@ -74,47 +74,87 @@ struct ifmap {
 #define IFNAMSIZ	IF_NAMESIZE
 
 struct ifreq {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	char ifr_name[IFNAMSIZ];
+#elif defined(__linux__)
 	union {
 		char ifrn_name[IFNAMSIZ];
 	} ifr_ifrn;
+#endif
 	union {
 		struct sockaddr ifru_addr;
 		struct sockaddr ifru_dstaddr;
 		struct sockaddr ifru_broadaddr;
+#if defined(__linux__)
 		struct sockaddr ifru_netmask;
 		struct sockaddr ifru_hwaddr;
+#endif
 		short int ifru_flags;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+                int ifru_metric;
+                int64_t ifru_vnetid;
+                uint64_t ifru_media;
+#elif defined(__linux__)
 		int ifru_ivalue;
 		int ifru_mtu;
 		struct ifmap ifru_map;
 		char ifru_slave[IFNAMSIZ];
 		char ifru_newname[IFNAMSIZ];
+#endif
 		char *ifru_data;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+                unsigned int ifru_index;
+#endif
 	} ifr_ifru;
 };
 
+#if defined(__linux__)
 #define ifr_name	ifr_ifrn.ifrn_name
 #define ifr_hwaddr	ifr_ifru.ifru_hwaddr
+#endif
 #define ifr_addr	ifr_ifru.ifru_addr
 #define ifr_dstaddr	ifr_ifru.ifru_dstaddr
 #define ifr_broadaddr	ifr_ifru.ifru_broadaddr
+#if defined(__linux__)
 #define ifr_netmask	ifr_ifru.ifru_netmask
+#endif
 #define ifr_flags	ifr_ifru.ifru_flags
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define ifr_metric	ifr_ifru.ifru_metric
+#define ifr_mtu		ifr_ifru.ifru_metric
+#elif defined(__linux__)
 #define ifr_metric	ifr_ifru.ifru_ivalue
 #define ifr_mtu		ifr_ifru.ifru_mtu
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define ifr_hardmtu	ifr_ifru.ifru_metric
+#define ifr_media	ifr_ifru.ifru_media
+#define ifr_rdomainid	ifr_ifru.ifru_metric
+#define ifr_vnetid	ifr_ifru.ifru_vnetid
+#define ifr_ttl		ifr_ifru.ifru_metric
+#define ifr_df		ifr_ifru.ifru_metric
+#elif defined(__linux__)
 #define ifr_map		ifr_ifru.ifru_map
 #define ifr_slave	ifr_ifru.ifru_slave
+#endif
 #define ifr_data	ifr_ifru.ifru_data
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define ifr_index	ifr_ifru.ifru_index
+#define ifr_llprio	ifr_ifru.ifru_metric
+#define ifr_hdrprio	ifr_ifru.ifru_metric
+#define ifr_pwe3	ifr_ifru.ifru_metric
+#elif defined(__linux__)
 #define ifr_ifindex	ifr_ifru.ifru_ivalue
 #define ifr_bandwidth	ifr_ifru.ifru_ivalue
 #define ifr_qlen	ifr_ifru.ifru_ivalue
 #define ifr_newname	ifr_ifru.ifru_newname
+#endif
 #define _IOT_ifreq	_IOT(_IOTS(char),IFNAMSIZ,_IOTS(char),16,0,0)
 #define _IOT_ifreq_short _IOT(_IOTS(char),IFNAMSIZ,_IOTS(short),1,0,0)
 #define _IOT_ifreq_int	_IOT(_IOTS(char),IFNAMSIZ,_IOTS(int),1,0,0)
 
 struct ifconf {
-	int ifc_len;		
+	int ifc_len;
 	union {
 		char *ifcu_buf;
 		struct ifreq *ifcu_req;
