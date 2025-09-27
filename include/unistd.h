@@ -125,6 +125,11 @@ int setegid(gid_t);
 
 char *getlogin(void);
 int getlogin_r(char *, size_t);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+int setlogin(const char *);
+#endif
+#endif
 int gethostname(char *, size_t);
 char *ctermid(char *);
 
