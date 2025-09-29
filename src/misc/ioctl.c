@@ -1,5 +1,6 @@
 #include <sys/ioctl.h>
 #include <stdarg.h>
+#if defined(__linux__)
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
@@ -7,8 +8,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <endian.h>
+#endif
 #include "syscall.h"
 
+#if defined(__linux__)
 #define alignof(t) offsetof(struct { char c; t x; }, x)
 
 #define W 1
@@ -124,6 +127,7 @@ static void convert_ioctl_struct(const struct ioctl_compat_map *map, char *old, 
 	if (dir==W) memcpy(old+old_offset, new+new_offset, old_size-old_offset);
 	else memcpy(new+new_offset, old+old_offset, old_size-old_offset);
 }
+#endif
 
 int ioctl(int fd, int req, ...)
 {
@@ -133,6 +137,7 @@ int ioctl(int fd, int req, ...)
 	arg = va_arg(ap, void *);
 	va_end(ap);
 	int r = __syscall(SYS_ioctl, fd, req, arg);
+#if defined(__linux__)
 	if (SIOCGSTAMP != SIOCGSTAMP_OLD && req && r==-ENOTTY) {
 		for (int i=0; i<sizeof compat_map/sizeof *compat_map; i++) {
 			if (compat_map[i].new_req != req) continue;
@@ -147,5 +152,6 @@ int ioctl(int fd, int req, ...)
 			break;
 		}
 	}
+#endif
 	return __syscall_ret(r);
 }

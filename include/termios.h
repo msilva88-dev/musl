@@ -22,6 +22,13 @@ typedef unsigned int tcflag_t;
 #define NCCS 32
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if __BSD_VISIBLE
+#define _POSIX_VDISABLE 0xff
+#define CCEQ(v, c) ((c) == (v) ? (v) != _POSIX_VDISABLE : 0)
+#endif
+#endif
+
 #include <bits/termios.h>
 
 speed_t cfgetospeed (const struct termios *);
