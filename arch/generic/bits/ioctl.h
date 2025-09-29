@@ -71,6 +71,7 @@
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define TIOCSTART	_IO(0x74, 110)
 #define TIOCSTOP	_IO(0x74, 111)
+#define TIOCEXT		_IOW(0x74, 96, int)
 #endif
 #if defined(__linux__)
 #define TIOCSTI		0x5412
@@ -82,6 +83,10 @@
 #define TIOCMBIS	_IOW(0x74, 108, int)
 #define TIOCMBIC	_IOW(0x74, 107, int)
 #define TIOCMSET	_IOW(0x74, 109, int)
+#if defined(__OpenBSD__)
+#define TIOCMODG	TIOCMGET
+#define TIOCMODS	TIOCMSET
+#endif
 #elif defined(__linux__)
 #define TIOCGWINSZ	0x5413
 #define TIOCSWINSZ	0x5414
@@ -90,7 +95,9 @@
 #define TIOCMBIC	0x5417
 #define TIOCMSET	0x5418
 #endif
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCUCNTL	_IOW(0x74, 102, int)
+#elif defined(__linux__)
 #define TIOCGSOFTCAR	0x5419
 #define TIOCSSOFTCAR	0x541A
 #endif
@@ -125,7 +132,11 @@
 #define TIOCSETD	0x5423
 #define TIOCGETD	0x5424
 #endif
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCCHKVERAUTH	_IO(0x74, 30)
+#define TIOCCLRVERAUTH	_IO(0x74, 29)
+#define TIOCSETVERAUTH	_IOW(0x74, 28, int)
+#elif defined(__linux__)
 #define TCSBRKP		0x5425
 #endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
@@ -137,7 +148,13 @@
 #define TIOCCBRK	0x5428
 #define TIOCGSID	0x5429
 #endif
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCCDTR	_IO(0x74, 120)
+#define TIOCSDTR	_IO(0x74, 121)
+#define TIOCUCNTL_SBRK	(TIOCSBRK & 0377)
+#define TIOCUCNTL_CBRK	(TIOCCBRK & 0377)
+#define UIOCCMD(n)	_IO(0x75, n)
+#elif defined(__linux__)
 #define TIOCGRS485	0x542E
 #define TIOCSRS485	0x542F
 #define TIOCGPTN	0x80045430
@@ -153,7 +170,13 @@
 #elif defined(__linux__)
 #define TIOCSIG		0x40045436
 #endif
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCDRAIN	_IO(0x74, 94)
+#define TIOCGFLAGS	_IOR(0x74, 93, int)
+#define TIOCSFLAGS	_IOW(0x74, 92, int)
+#define TIOCGTSTAMP	_IOR(0x74, 91, struct timeval)
+#define TIOCSTSTAMP	_IOW(0x74, 90, struct tstamps)
+#elif defined(__linux__)
 #define TIOCVHANGUP	0x5437
 #define TIOCGPKT	0x80045438
 #define TIOCGPTLCK	0x80045439

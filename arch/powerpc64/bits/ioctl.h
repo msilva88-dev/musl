@@ -86,6 +86,9 @@
 #endif
 #define TIOCSTART	_IO('t', 110)
 #define TIOCSTOP	_IO('t', 111)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCEXT		_IOW('t', 96, int)
+#endif
 
 #define TIOCOUTQ	_IOR('t', 115, int)
 
@@ -114,6 +117,10 @@
 #define TIOCMBIS	_IOW('t', 108, int)
 #define TIOCMBIC	_IOW('t', 107, int)
 #define TIOCMSET	_IOW('t', 109, int)
+#if defined(__OpenBSD__)
+#define TIOCMODG	TIOCMGET
+#define TIOCMODS	TIOCMSET
+#endif
 #elif defined(__linux__)
 #define TIOCMGET	0x5415
 #define TIOCMBIS	0x5416
@@ -137,7 +144,9 @@
 #define TIOCM_LOOP	0x8000
 #endif
 
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCUCNTL	_IOW('t', 102, int)
+#elif defined(__linux__)
 #define TIOCGSOFTCAR	0x5419
 #define TIOCSSOFTCAR	0x541A
 #define TIOCLINUX	0x541C
@@ -166,7 +175,11 @@
 #define TIOCSETD	0x5423
 #define TIOCGETD	0x5424
 #endif
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCCHKVERAUTH	_IO('t', 30)
+#define TIOCCLRVERAUTH	_IO('t', 29)
+#define TIOCSETVERAUTH	_IOW('t', 28, int)
+#elif defined(__linux__)
 #define TCSBRKP		0x5425
 #endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
@@ -178,7 +191,13 @@
 #define TIOCCBRK	0x5428
 #define TIOCGSID	0x5429
 #endif
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCCDTR	_IO('t', 120)
+#define TIOCSDTR	_IO('t', 121)
+#define TIOCUCNTL_SBRK	(TIOCSBRK & 0377)
+#define TIOCUCNTL_CBRK	(TIOCCBRK & 0377)
+#define UIOCCMD(n)	_IO('u', n)
+#elif defined(__linux__)
 #define TIOCGRS485	0x542e
 #define TIOCSRS485	0x542f
 #define TIOCGPTN	_IOR('T',0x30, unsigned int)
@@ -190,7 +209,13 @@
 #elif defined(__linux__)
 #define TIOCSIG		_IOW('T',0x36, int)
 #endif
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCDRAIN	_IO('t', 94)
+#define TIOCGFLAGS	_IOR('t', 93, int)
+#define TIOCSFLAGS	_IOW('t', 92, int)
+#define TIOCGTSTAMP	_IOR('t', 91, struct timeval)
+#define TIOCSTSTAMP	_IOW('t', 90, struct tstamps)
+#elif defined(__linux__)
 #define TIOCVHANGUP	0x5437
 #define TIOCGPKT	_IOR('T', 0x38, int)
 #define TIOCGPTLCK	_IOR('T', 0x39, int)

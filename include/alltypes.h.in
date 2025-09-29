@@ -82,6 +82,9 @@ TYPEDEF struct __sigset_t { unsigned long __bits[128/sizeof(long)]; } sigset_t;
 STRUCT iovec { void *iov_base; size_t iov_len; };
 
 STRUCT winsize { unsigned short ws_row, ws_col, ws_xpixel, ws_ypixel; };
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+STRUCT tstamps { int ts_set, ts_clr; };
+#endif
 
 TYPEDEF unsigned socklen_t;
 TYPEDEF unsigned short sa_family_t;

@@ -52,8 +52,27 @@ extern "C" {
 #define TIOCPKT_DOSTOP    32
 #define TIOCPKT_IOCTL     64
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIOCFLAG_SOFTCAR   1
+#define TIOCFLAG_CLOCAL    2
+#define TIOCFLAG_CRTSCTS   4
+#define TIOCFLAG_MDMBUF    8
+#define TIOCFLAG_PPS      16
+#endif
+
 #if defined(__linux__)
 #define TIOCSER_TEMT 1
+#endif
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TTYDISC    0
+#define TABLDISC   3
+#define SLIPDISC   4
+#define PPPDISC    5
+#define STRIPDISC  6
+#define NMEADISC   7
+#define MSTSDISC   8
+#define ENDRUNDISC 9
 #endif
 
 #if defined(__linux__)
