@@ -109,6 +109,11 @@ int rand_r (unsigned *);
 
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+char *devname(dev_t, mode_t);
+#endif
+#endif
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
  || defined(_BSD_SOURCE)

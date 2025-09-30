@@ -56,7 +56,9 @@ long           telldir(DIR *);
 #define DT_REG 8
 #define DT_LNK 10
 #define DT_SOCK 12
+#if defined(__linux__)
 #define DT_WHT 14
+#endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 #define IFTODT(x) ((x)>>12 & 017)
