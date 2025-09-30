@@ -34,7 +34,6 @@
 #define TCSETA		TIOCSETA
 #define TCSETAW		TIOCSETAW
 #define TCSETAF		TIOCSETAF
-#define TCSBRK		_IO(0x74, 123)
 #endif
 #elif defined(__linux__)
 #define TCGETS		0x5401
@@ -45,9 +44,9 @@
 #define TCSETA		0x5406
 #define TCSETAW		0x5407
 #define TCSETAF		0x5408
-#define TCSBRK		0x5409
 #endif
 #if defined(__linux__)
+#define TCSBRK		0x5409
 #define TCXONC		0x540A
 #endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)

@@ -64,12 +64,8 @@
 #define TCSETAF		_IOW('t', 28, char[20])
 #endif
 
-#if defined(__HyperbolaBSD__)
-#define TCSBRK		_IO('t', 123)
-#elif defined(__linux__)
-#define TCSBRK		_IO('t', 29)
-#endif
 #if defined(__linux__)
+#define TCSBRK		_IO('t', 29)
 #define TCXONC		_IO('t', 30)
 #endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
