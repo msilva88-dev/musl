@@ -20,18 +20,16 @@
 #define _IOR(a,b,c) _IOC(_IOC_READ,(a),(b),sizeof(c))
 #define _IOWR(a,b,c) _IOC(_IOC_READ|_IOC_WRITE,(a),(b),sizeof(c))
 
-#if defined(__linux__)
-#define TCGETS		0x5401
-#define TCSETS		0x5402
-#define TCSETSW		0x5403
-#define TCSETSF		0x5404
-#endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define TIOCGETA	_IOR(0x74, 19, struct termios)
 #define TIOCSETA	_IOW(0x74, 20, struct termios)
 #define TIOCSETAW	_IOW(0x74, 21, struct termios)
 #define TIOCSETAF	_IOW(0x74, 22, struct termios)
 #if defined(__HyperbolaBSD__)
+#define TCGETS		TIOCGETA
+#define TCSETS		TIOCSETA
+#define TCSETSW		TIOCSETAW
+#define TCSETSF		TIOCSETAF
 #define TCGETA		TIOCGETA
 #define TCSETA		TIOCSETA
 #define TCSETAW		TIOCSETAW
@@ -39,6 +37,10 @@
 #define TCSBRK		_IO(0x74, 123)
 #endif
 #elif defined(__linux__)
+#define TCGETS		0x5401
+#define TCSETS		0x5402
+#define TCSETSW		0x5403
+#define TCSETSF		0x5404
 #define TCGETA		0x5405
 #define TCSETA		0x5406
 #define TCSETAW		0x5407

@@ -48,6 +48,10 @@
 #define TIOCSETAW	_IOW('t', 21, struct termios)
 #define TIOCSETAF	_IOW('t', 22, struct termios)
 #if defined(__HyperbolaBSD__)
+#define TCGETS		TIOCGETA
+#define TCSETS		TIOCSETA
+#define TCSETSW		TIOCSETAW
+#define TCSETSF		TIOCSETAF
 #define TCGETA		TIOCGETA
 #define TCSETA		TIOCSETA
 #define TCSETAW		TIOCSETAW
