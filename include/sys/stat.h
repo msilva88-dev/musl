@@ -27,28 +27,7 @@ extern "C" {
 
 #include <bits/alltypes.h>
 
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-struct stat {
-	mode_t st_mode;
-	dev_t st_dev;
-	ino_t st_ino;
-	nlink_t st_nlink;
-	uid_t st_uid;
-	gid_t st_gid;
-	dev_t st_rdev;
-	struct timespec st_atim;
-	struct timespec st_mtim;
-	struct timespec st_ctim;
-	off_t st_size;
-	blkcnt_t st_blocks;
-	blksize_t st_blksize;
-	u_int32_t st_flags;
-	u_int32_t st_gen;
-	struct timespec __st_birthtim;
-};
-#elif defined(__linux__)
 #include <bits/stat.h>
-#endif
 
 #define st_atime st_atim.tv_sec
 #define st_mtime st_mtim.tv_sec
