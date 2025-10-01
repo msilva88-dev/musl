@@ -1,7 +1,7 @@
 #include <sys/reboot.h>
 #include "syscall.h"
 
-int reboot(int opt)
+int reboot(int type)
 {
-	return syscall(SYS_reboot, opt);
+	return syscall(SYS_reboot, type);
 }
