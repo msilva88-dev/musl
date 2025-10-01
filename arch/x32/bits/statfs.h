@@ -1,10 +1,10 @@
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__)
 #define MFSNAMELEN 16
 #define MNAMELEN 90
 #endif
 
 struct statfs {
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__)
 	uint32_t f_flags, f_bsize, f_iosize;
 	uint64_t f_blocks, f_bfree;
 	int64_t f_bavail;
@@ -17,7 +17,7 @@ struct statfs {
 	fsfilcnt_t f_files, f_ffree;
 #endif
 	fsid_t f_fsid;
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__)
 	uint32_t f_namemax;
 	uid_t f_owner;
 	uint64_t f_ctime;
