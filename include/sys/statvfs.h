@@ -15,6 +15,9 @@ struct statvfs {
 	unsigned long f_bsize, f_frsize;
 	fsblkcnt_t f_blocks, f_bfree, f_bavail;
 	fsfilcnt_t f_files, f_ffree, f_favail;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	unsigned long f_fsid;
+#elif defined(__linux__)
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	unsigned long f_fsid;
 	unsigned :8*(2*sizeof(int)-sizeof(long));
@@ -22,9 +25,12 @@ struct statvfs {
 	unsigned :8*(2*sizeof(int)-sizeof(long));
 	unsigned long f_fsid;
 #endif
+#endif
 	unsigned long f_flag, f_namemax;
+#if defined(__linux__)
 	unsigned int f_type;
 	int __reserved[5];
+#endif
 };
 
 int statvfs (const char *__restrict, struct statvfs *__restrict);
@@ -32,6 +38,7 @@ int fstatvfs (int, struct statvfs *);
 
 #define ST_RDONLY 1
 #define ST_NOSUID 2
+#if defined(__linux__)
 #define ST_NODEV  4
 #define ST_NOEXEC 8
 #define ST_SYNCHRONOUS 16
@@ -42,6 +49,7 @@ int fstatvfs (int, struct statvfs *);
 #define ST_NOATIME     1024
 #define ST_NODIRATIME  2048
 #define ST_RELATIME    4096
+#endif
 
 #if defined(_LARGEFILE64_SOURCE)
 #define statvfs64 statvfs
