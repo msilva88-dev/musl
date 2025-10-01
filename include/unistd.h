@@ -197,6 +197,7 @@ extern int optreset;
 #if defined(_BSD_SOURCE)
 int getdtablecount(void);
 int pledge(const char *, const char *);
+int revoke(const char *);
 int unveil(const char *, const char *);
 #endif
 #endif

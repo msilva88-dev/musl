@@ -1,5 +1,5 @@
 #define _BSD_SOURCE
-#include <sys/namei.h>
+#include <unistd.h>
 #include "syscall.h"
 
 int unveil(const char *path, const char *permissions)
