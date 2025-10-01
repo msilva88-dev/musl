@@ -6,8 +6,8 @@ extern "C" {
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#include <sys/ucred.h>
-#if defined(__linux)
+#include <sys/statfs.h>
+#if defined(__linux__)
 #include <sys/ioctl.h>
 #endif
 
@@ -35,14 +35,14 @@ extern "C" {
 #define MNT_NODEV       16
 #define MNT_NOPERM      32 // FFS/FFS2 only
 #define MNT_ASYNC       64
-#define MNT_EXRDONLY    128
-#define MNT_EXPORTED    256
-#define MNT_DEFEXPORTED 512
-#define MNT_EXPORTANON  1024
+#define MNT_EXRDONLY    128 // exported mount
+#define MNT_EXPORTED    256 // exported mount
+#define MNT_DEFEXPORTED 512 // exported mount
+#define MNT_EXPORTANON  1024 // exported mount
 #define MNT_WXALLOWED   2048 // FFS/FFS2 only
-#define MNT_LOCAL       4096
-#define MNT_QUOTA       8192
-#define MNT_ROOTFS      16384
+#define MNT_LOCAL       4096 // internal only
+#define MNT_QUOTA       8192 // internal only
+#define MNT_ROOTFS      16384 // internal only
 #define MNT_NOATIME     32768
 #define MNT_UPDATE      (1<<16)
 #define MNT_DELEXPORT   (1<<17)

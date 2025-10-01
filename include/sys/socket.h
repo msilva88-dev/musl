@@ -23,6 +23,9 @@ struct msghdr {
 	void *msg_name;
 	socklen_t msg_namelen;
 	struct iovec *msg_iov;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	unsigned int msg_iovlen;
+#elif defined(__linux__)
 #if __LONG_MAX > 0x7fffffff && __BYTE_ORDER == __BIG_ENDIAN
 	int __pad1;
 #endif
@@ -30,12 +33,13 @@ struct msghdr {
 #if __LONG_MAX > 0x7fffffff && __BYTE_ORDER == __LITTLE_ENDIAN
 	int __pad1;
 #endif
+#endif
 	void *msg_control;
-#if __LONG_MAX > 0x7fffffff && __BYTE_ORDER == __BIG_ENDIAN
+#if __LONG_MAX > 0x7fffffff && __BYTE_ORDER == __BIG_ENDIAN && defined(__linux__)
 	int __pad2;
 #endif
 	socklen_t msg_controllen;
-#if __LONG_MAX > 0x7fffffff && __BYTE_ORDER == __LITTLE_ENDIAN
+#if __LONG_MAX > 0x7fffffff && __BYTE_ORDER == __LITTLE_ENDIAN && defined(__linux__)
 	int __pad2;
 #endif
 	int msg_flags;
@@ -52,6 +56,12 @@ struct cmsghdr {
 	int cmsg_level;
 	int cmsg_type;
 };
+
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/ucred.h>
+#elif defined(__OpenBSD__)
+#include <sys/ucred.h>
+#endif
 
 #if defined(_GNU_SOURCE) && defined(__linux__)
 struct ucred {
@@ -384,6 +394,9 @@ struct linger {
 #define SCM_CREDENTIALS 0x02
 
 struct sockaddr {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	uint8_t sa_len;
+#endif
 	sa_family_t sa_family;
 	char sa_data[14];
 };

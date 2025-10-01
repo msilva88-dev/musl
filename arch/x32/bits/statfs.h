@@ -1,9 +1,32 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MFSNAMELEN 16
+#define MNAMELEN 90
+#endif
+
 struct statfs {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	uint32_t f_flags, f_bsize, f_iosize;
+	uint64_t f_blocks, f_bfree;
+	int64_t f_bavail;
+	uint64_t f_files, f_ffree;
+	int64_t f_favail;
+	uint64_t f_syncwrites, f_syncreads, f_asyncwrites, f_asyncreads;
+#elif defined(__linux__)
 	unsigned long f_type, __pad0, f_bsize, __pad1;
 	fsblkcnt_t f_blocks, f_bfree, f_bavail;
 	fsfilcnt_t f_files, f_ffree;
+#endif
 	fsid_t f_fsid;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	uint32_t f_namemax;
+	uid_t f_owner;
+	uint64_t f_ctime;
+	char f_fstypename[MFSNAMELEN], f_mntonname[MNAMELEN]
+	char f_mntfromname[MNAMELEN], f_mntfromspec[MNAMELEN];
+	union mount_info mount_info;
+#elif defined(__linux__)
 	unsigned long f_namelen, __pad2, f_frsize, __pad3;
 	unsigned long f_flags, __pad4;
 	unsigned long long f_spare[4];
+#endif
 };

@@ -141,6 +141,14 @@ The implementation of devname without BSD db (src/bsd/devname.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of getmntinfo (src/bsd/getmntinfo.c) is
+Copyright © 1989, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of mount_info (include/sys/mount_info.h) is
+Copyright © 1989, 1991, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of blowfish crypt (src/crypt/crypt_blowfish.c) was
 originally written by Solar Designer and placed into the public
 domain. The code also comes with a fallback permissive license for use
