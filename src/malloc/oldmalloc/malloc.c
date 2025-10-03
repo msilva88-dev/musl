@@ -385,7 +385,35 @@ void *realloc(void *p, size_t n)
 		}
 		newlen = (newlen + PAGE_SIZE-1) & -PAGE_SIZE;
 		if (oldlen == newlen) return p;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		size_t oldlen_pages = (oldlen+PAGE_SIZE-1) & ~(PAGE_SIZE-1);
+		size_t newlen_pages = (newlen+PAGE_SIZE-1) & ~(PAGE_SIZE-1);
+
+		if (newlen_pages <= oldlen_pages) {
+			if (newlen_pages < oldlen_pages) {
+				munmap(base + newlen_pages, oldlen_pages - newlen_pages);
+			}
+		} else {
+			char *adj = mmap(
+				base + oldlen_pages,
+				newlen_pages - oldlen_pages,
+				PROT_READ | PROT_WRITE,
+				MAP_ANON | MAP_PRIVATE,
+				-1,
+				0
+			);
+
+			if (adj == MAP_FAILED || adj != base+oldlen_pages) {
+				char *newblock = malloc(newlen_pages);
+				if (!newblock) return 0;
+				memcpy(newblock, base, oldlen);
+				munmap(base, oldlen_pages);
+				base = newblock;
+			}
+		}
+#elif defined(__linux__)
 		base = __mremap(base, oldlen, newlen, MREMAP_MAYMOVE);
+#endif
 		if (base == (void *)-1)
 			goto copy_realloc;
 		self = (void *)(base + extra);

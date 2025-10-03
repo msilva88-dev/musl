@@ -16,8 +16,27 @@ int pthread_getattr_np(pthread_t t, pthread_attr_t *a)
 		size_t l = PAGE_SIZE;
 		p += -(uintptr_t)p & PAGE_SIZE-1;
 		a->_a_stackaddr = (uintptr_t)p;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		while (1) {
+			void *adj = mmap(
+				p-l-PAGE_SIZE,
+				2*PAGE_SIZE,
+				PROT_READ | PROT_WRITE,
+				MAP_ANON | MAP_PRIVATE | MAP_FIXED,
+				-1,
+				0
+			);
+
+			if (adj == MAP_FAILED && errno == ENOMEM) {
+				l += PAGE_SIZE;
+			} else {
+				break;
+			}
+		}
+#elif defined(__linux__)
 		while (mremap(p-l-PAGE_SIZE, PAGE_SIZE, 2*PAGE_SIZE, 0)==MAP_FAILED && errno==ENOMEM)
 			l += PAGE_SIZE;
+#endif
 		a->_a_stacksize = l;
 	}
 	return 0;

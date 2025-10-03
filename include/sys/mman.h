@@ -20,24 +20,64 @@ extern "C" {
 
 #define MAP_SHARED     0x01
 #define MAP_PRIVATE    0x02
+#if defined(__linux__)
 #define MAP_SHARED_VALIDATE 0x03
 #define MAP_TYPE       0x0f
+#endif
 #define MAP_FIXED      0x10
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MAP_ANON       0x1000
+#elif defined(__linux__)
 #define MAP_ANON       0x20
+#endif
 #define MAP_ANONYMOUS  MAP_ANON
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MAP_NORESERVE  0
+#elif defined(__linux__)
 #define MAP_NORESERVE  0x4000
+#endif
+#if defined(__linux__)
 #define MAP_GROWSDOWN  0x0100
 #define MAP_DENYWRITE  0x0800
 #define MAP_EXECUTABLE 0x1000
 #define MAP_LOCKED     0x2000
 #define MAP_POPULATE   0x8000
 #define MAP_NONBLOCK   0x10000
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MAP_STACK      0x4000
+#elif defined(__linux__)
 #define MAP_STACK      0x20000
+#endif
+#if defined(__linux__)
 #define MAP_HUGETLB    0x40000
 #define MAP_SYNC       0x80000
 #define MAP_FIXED_NOREPLACE 0x100000
+#endif
 #define MAP_FILE       0
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __MAP_NOREPLACE 0x0800
+#define __MAP_NOFAULT  0x2000
+#define MAP_CONCEAL    0x8000
+#define MAP_FLAGMASK   0xfff7
+#endif
+#if defined(__OpenBSD__)
+#define MAP_COPY       0x0002
+#define MAP_HASSEMAPHORE 0
+#define MAP_INHERIT    0
+#define MAP_NOEXTEND   0
+#define MAP_RENAME     0
+#define MAP_TRYFIXED   0
+#endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MAP_INHERIT_SHARE 0
+#define MAP_INHERIT_COPY  1
+#define MAP_INHERIT_NONE  2
+#define MAP_INHERIT_ZERO  3
+#endif
+
+#if defined(__linux__)
 #define MAP_HUGE_SHIFT 26
 #define MAP_HUGE_MASK  0x3f
 #define MAP_HUGE_16KB  (14 << 26)
@@ -53,21 +93,31 @@ extern "C" {
 #define MAP_HUGE_1GB   (30 << 26)
 #define MAP_HUGE_2GB   (31 << 26)
 #define MAP_HUGE_16GB  (34U << 26)
+#endif
 
 #define PROT_NONE      0
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
+#if defined(__linux__)
 #define PROT_GROWSDOWN 0x01000000
 #define PROT_GROWSUP   0x02000000
+#endif
 
 #define MS_ASYNC       1
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MS_SYNC        2
+#define MS_INVALIDATE  4
+#elif defined(__linux__)
 #define MS_INVALIDATE  2
 #define MS_SYNC        4
+#endif
 
 #define MCL_CURRENT    1
 #define MCL_FUTURE     2
+#if defined(__linux__)
 #define MCL_ONFAULT    4
+#endif
 
 #define POSIX_MADV_NORMAL     0
 #define POSIX_MADV_RANDOM     1
@@ -81,7 +131,15 @@ extern "C" {
 #define MADV_SEQUENTIAL  2
 #define MADV_WILLNEED    3
 #define MADV_DONTNEED    4
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MADV_SPACEAVAIL  5
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MADV_FREE        6
+#elif defined(__linux__)
 #define MADV_FREE        8
+#endif
+#if defined(__linux__)
 #define MADV_REMOVE      9
 #define MADV_DONTFORK    10
 #define MADV_DOFORK      11
@@ -98,8 +156,9 @@ extern "C" {
 #define MADV_HWPOISON    100
 #define MADV_SOFT_OFFLINE 101
 #endif
+#endif
 
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && defined(__linux__)
 #define MREMAP_MAYMOVE 1
 #define MREMAP_FIXED 2
 #define MREMAP_DONTUNMAP 4
@@ -111,7 +170,9 @@ extern "C" {
 #define MFD_HUGETLB 0x0004U
 #endif
 
+#if defined(__linux__)
 #include <bits/mman.h>
+#endif
 
 void *mmap (void *, size_t, int, int, int, off_t);
 int munmap (void *, size_t);
@@ -126,22 +187,23 @@ int munlock (const void *, size_t);
 int mlockall (int);
 int munlockall (void);
 
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && defined(__linux__)
 void *mremap (void *, size_t, size_t, int, ...);
 int remap_file_pages (void *, size_t, int, size_t, int);
-#if defined(__linux__)
 int memfd_create (const char *, unsigned);
 int mlock2 (const void *, size_t, unsigned);
-#endif
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 int madvise (void *, size_t, int);
+#if defined(__linux__)
 int mincore (void *, size_t, unsigned char *);
+#endif
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #if defined(_BSD_SOURCE)
+int minherit(void *, size_t, int);
 void *mquery(void *, size_t, int, int, int, off_t);
 int msyscall(void *, size_t);
 #endif
@@ -149,6 +211,12 @@ int msyscall(void *, size_t);
 
 int shm_open (const char *, int, mode_t);
 int shm_unlink (const char *);
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(_BSD_SOURCE)
+int shm_mkstemp(char *);
+#endif
+#endif
 
 #if defined(_LARGEFILE64_SOURCE)
 #define mmap64 mmap
