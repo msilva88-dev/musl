@@ -1,4 +1,6 @@
+#if defined(__linux__)
 #define _REDIR_TIME64 1
+#endif
 #define _Addr int
 #define _Int64 long long
 #define _Reg int
