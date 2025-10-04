@@ -8,6 +8,7 @@ int posix_madvise(void *addr, size_t len, int advice)
 
 	switch (advice) {
 	case MADV_DONTNEED:
+	case POSIX_MADV_DONTNEED:
 #if defined(__linux__)
 		break;
 #endif
@@ -15,6 +16,10 @@ int posix_madvise(void *addr, size_t len, int advice)
 	case MADV_RANDOM:
 	case MADV_SEQUENTIAL:
 	case MADV_WILLNEED:
+        case POSIX_MADV_NORMAL:
+        case POSIX_MADV_RANDOM:
+        case POSIX_MADV_SEQUENTIAL:
+        case POSIX_MADV_WILLNEED:
 		ret = __syscall(SYS_madvise, addr, len, advice);
 		if (ret < 0) return errno;
 		break;
