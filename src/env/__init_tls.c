@@ -148,13 +148,20 @@ static void static_init_tls(size_t *aux)
 		+ MIN_TLS_ALIGN-1 & -MIN_TLS_ALIGN;
 
 	if (libc.tls_size > sizeof builtin_tls) {
-#if !defined(SYS_mmap2) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		mem = (void *)__syscall(
+			SYS_mmap,
+			0, libc.tls_size, PROT_READ|PROT_WRITE,
+			MAP_ANONYMOUS|MAP_PRIVATE, -1, 0L, 0);
+#elif defined(__linux__)
+#ifndef SYS_mmap2
 #define SYS_mmap2 SYS_mmap
 #endif
 		mem = (void *)__syscall(
 			SYS_mmap2,
 			0, libc.tls_size, PROT_READ|PROT_WRITE,
 			MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+#endif
 		/* -4095...-1 cast to void * will crash on dereference anyway,
 		 * so don't bloat the init code checking for error codes and
 		 * explicitly calling a_crash(). */
