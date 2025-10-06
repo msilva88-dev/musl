@@ -48,7 +48,11 @@ struct tm {
 	int tm_yday;
 	int tm_isdst;
 	long __tm_gmtoff;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	char *__tm_zone;
+#elif defined(__linux__)
 	const char *__tm_zone;
+#endif
 };
 
 clock_t clock (void);
@@ -61,6 +65,10 @@ struct tm *localtime (const time_t *);
 char *asctime (const struct tm *);
 char *ctime (const time_t *);
 int timespec_get(struct timespec *, int);
+
+#if defined(__OpenBSD__) && (_POSIX_VERSION < 200112L || defined(_BSD_SOURCE))
+#define CLK_TCK 100
+#endif
 
 #define CLOCKS_PER_SEC 1000000L
 
@@ -85,18 +93,39 @@ struct itimerspec {
 };
 
 #define CLOCK_REALTIME           0
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define CLOCK_MONOTONIC          3
+#elif defined(__linux__)
 #define CLOCK_MONOTONIC          1
+#endif
 #define CLOCK_PROCESS_CPUTIME_ID 2
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define CLOCK_THREAD_CPUTIME_ID  4
+#elif defined(__linux__)
 #define CLOCK_THREAD_CPUTIME_ID  3
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define CLOCK_UPTIME             5
+#elif defined(__linux__)
 #define CLOCK_MONOTONIC_RAW      4
 #define CLOCK_REALTIME_COARSE    5
 #define CLOCK_MONOTONIC_COARSE   6
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define CLOCK_BOOTTIME           6
+#elif defined(__linux__)
 #define CLOCK_BOOTTIME           7
+#endif
+#if defined(__linux__)
 #define CLOCK_REALTIME_ALARM     8
 #define CLOCK_BOOTTIME_ALARM     9
 #define CLOCK_SGI_CYCLE         10
 #define CLOCK_TAI               11
+#endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define TIMER_RELTIME 0
+#endif
 #define TIMER_ABSTIME 1
 
 int nanosleep (const struct timespec *, struct timespec *);

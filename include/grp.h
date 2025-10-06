@@ -35,15 +35,29 @@ void           endgrent(void);
 void           setgrent(void);
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+int setgroupent(int);
+int gid_from_group(const char *, gid_t *);
+const char *group_from_gid(gid_t, int);
+#endif
+#endif
+
+#if defined(__linux__)
 #ifdef _GNU_SOURCE
 struct group  *fgetgrent(FILE *);
 int putgrent(const struct group *, FILE *);
 #endif
+#endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+int setgroups(int, const gid_t *);
+#elif defined(__linux__)
 int getgrouplist(const char *, gid_t, gid_t *, int *);
 int setgroups(size_t, const gid_t *);
 int initgroups(const char *, gid_t);
+#endif
 #endif
 
 #ifdef __cplusplus

@@ -37,11 +37,19 @@ TYPEDEF unsigned _Int64 fsfilcnt_t;
 TYPEDEF unsigned wint_t;
 TYPEDEF unsigned long wctype_t;
 
+#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+TYPEDEF int timer_t;
+#elif defined(__linux__)
 TYPEDEF void * timer_t;
+#endif
 TYPEDEF int clockid_t;
 TYPEDEF long clock_t;
 STRUCT timeval { time_t tv_sec; suseconds_t tv_usec; };
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+STRUCT timespec { time_t tv_sec; long tv_nsec; };
+#elif defined(__linux__)
 STRUCT timespec { time_t tv_sec; int :8*(sizeof(time_t)-sizeof(long))*(__BYTE_ORDER==4321); long tv_nsec; int :8*(sizeof(time_t)-sizeof(long))*(__BYTE_ORDER!=4321); };
+#endif
 
 TYPEDEF int pid_t;
 TYPEDEF unsigned id_t;
