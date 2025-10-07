@@ -1907,8 +1907,6 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	 * symbolically as a barrier against moving the address
 	 * load across the above relocation processing. */
 	struct symdef dls2b_def = find_sym(&ldso, "__dls2b", 0);
-	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls2b_def.sym-ldso.syms])(sp, auxv);
-	else ((stage3_func)laddr(&ldso, dls2b_def.sym->st_value))(sp, auxv);
 	/*
 #if ULONG_MAX == 0xffffffff
 	typedef Elf32_Addr Addr;
@@ -1923,14 +1921,21 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	} buf = {
 		.param.kb_size = sizeof(Addr);
 		//.newval = sr.obj->obj_base + sr.sym->st_value;
-		.newval = (Addr)dls2b_def.dso->funcdescs.addr? + dls2b_def.sym->st_value;
+		//.newval = (Addr)dls2b_def.dso->dynv? + dls2b_def.sym->st_value;
 	};
-	//if (sr.obj->traced != 0 && _dl_trace_plt(sr.obj, symn)) return;
+	//if (sr.obj->traced != 0 && _dl_trace_plt(sr.obj, symn)) goto stage_func;
 	//buf.param.kb_addr = (Word *)(object->obj_base + rel->r_offset);
-	buf.param.kb_addr = (Word *)(??? + ???);
+	//buf.param.kb_addr = (Word *)(ldso.dynv? + ???);
+#if defined(__HyperbolaBSD__)
+	int64_t cookie __attribute__((section(".hyperbolabsd.randomdata"), visibility("hidden")));
+#elif defined(__OpenBSD__)
 	int64_t cookie __attribute__((section(".openbsd.randomdata"), visibility("hidden")));
+#endif
 	__syscall(SYS_kbind, cookie, &buf, sizeof(buf));
+//stage_func:
 	*/
+	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls2b_def.sym-ldso.syms])(sp, auxv);
+	else ((stage3_func)laddr(&ldso, dls2b_def.sym->st_value))(sp, auxv);
 }
 
 /* Stage 2b sets up a valid thread pointer, which requires relocations
