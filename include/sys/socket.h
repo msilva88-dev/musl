@@ -17,7 +17,9 @@ extern "C" {
 
 #include <bits/alltypes.h>
 
+#if defined(__linux__)
 #include <bits/socket.h>
+#endif
 
 struct msghdr {
 	void *msg_name;
@@ -90,7 +92,7 @@ struct linger {
 #define SHUT_WR 1
 #define SHUT_RDWR 2
 
-#ifndef SOCK_STREAM
+#if !defined(SOCK_STREAM) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define SOCK_STREAM    1
 #define SOCK_DGRAM     2
 #endif
