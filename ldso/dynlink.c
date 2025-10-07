@@ -1029,7 +1029,6 @@ static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 			return 0;
 		buf[l] = 0;
 		origin = buf;
-#endif
 	} else {
 		origin = p->name;
 	}
@@ -1868,6 +1867,9 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 		ldso.base = laddr(&ldso, 0);
 	} else {
 		ldso.base = base;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		__syscall(SYS_kbind, NULL, 0, 0L);
+#endif
 	}
 	Ehdr *ehdr = __ehdr_start ? (void *)__ehdr_start : (void *)ldso.base;
 	ldso.name = ldso.shortname = "libc.so";
@@ -1907,6 +1909,28 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	struct symdef dls2b_def = find_sym(&ldso, "__dls2b", 0);
 	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls2b_def.sym-ldso.syms])(sp, auxv);
 	else ((stage3_func)laddr(&ldso, dls2b_def.sym->st_value))(sp, auxv);
+	/*
+#if ULONG_MAX == 0xffffffff
+	typedef Elf32_Addr Addr;
+	typedef Elf32_Word Word;
+#else
+	typedef Elf64_Addr Addr;
+	typedef Elf64_Word Word;
+#endif
+	struct {
+		struct __kbind param;
+		Addr newval;
+	} buf = {
+		.param.kb_size = sizeof(Addr);
+		//.newval = sr.obj->obj_base + sr.sym->st_value;
+		.newval = (Addr)dls2b_def.dso->funcdescs.addr? + dls2b_def.sym->st_value;
+	};
+	//if (sr.obj->traced != 0 && _dl_trace_plt(sr.obj, symn)) return;
+	//buf.param.kb_addr = (Word *)(object->obj_base + rel->r_offset);
+	buf.param.kb_addr = (Word *)(??? + ???);
+	int64_t cookie __attribute__((section(".openbsd.randomdata"), visibility("hidden")));
+	__syscall(SYS_kbind, cookie, &buf, sizeof(buf));
+	*/
 }
 
 /* Stage 2b sets up a valid thread pointer, which requires relocations
@@ -2232,7 +2256,14 @@ static void prepare_lazy(struct dso *p)
 	decode_vec(p->dynv, dyn, DYN_CNT);
 	search_vec(p->dynv, &flags1, DT_FLAGS_1);
 	if (dyn[DT_BIND_NOW] || (dyn[DT_FLAGS] & DF_BIND_NOW) || (flags1 & DF_1_NOW))
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	{
+		__syscall(SYS_kbind, NULL, 0, 0L);
 		return;
+	}
+#elif defined(__linux__)
+		return;
+#endif
 	n = dyn[DT_RELSZ]/2 + dyn[DT_RELASZ]/3 + dyn[DT_PLTRELSZ]/2 + 1;
 	if (NEED_MIPS_GOT_RELOCS) {
 		size_t j=0; search_vec(p->dynv, &j, DT_MIPS_GOTSYM);

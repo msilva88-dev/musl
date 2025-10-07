@@ -1,6 +1,10 @@
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #include <bits/alltypes.h>
 #include <bits/termios.h>
+
+#define __NEED_struct_timeval
+#define __NEED_struct_tstamps
+#define __NEED_struct_winsize
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)

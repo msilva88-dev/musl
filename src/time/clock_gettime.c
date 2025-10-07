@@ -97,7 +97,7 @@ int __clock_gettime(clockid_t clk, struct timespec *ts)
 	return __syscall_ret(r);
 #else
 	r = __syscall(SYS_clock_gettime, clk, ts);
-#ifdef SYS_gettimeofday
+#if defined(SYS_gettimeofday) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	if (r == -ENOSYS) {
 		if (clk == CLOCK_REALTIME) {
 			__syscall(SYS_gettimeofday, ts, 0);

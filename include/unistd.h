@@ -14,8 +14,10 @@ extern "C" {
 #define SEEK_SET 0
 #define SEEK_CUR 1
 #define SEEK_END 2
+#if defined(__linux__)
 #define SEEK_DATA 3
 #define SEEK_HOLE 4
+#endif
 
 #if __cplusplus >= 201103L
 #define NULL nullptr
@@ -198,8 +200,15 @@ extern int optreset;
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#if defined(_BSD_SOURCE)
+#ifdef _BSD_SOURCE
+#define __NEED_struct___kbind
+#define __NEED_struct___tfork
+#define KBIND_BLOCK_MAX 2
+#define KBIND_DATA_MAX 24
+pid_t __tfork(const struct __tfork *, size_t);
+pid_t __tfork_thread(const struct __tfork *, size_t, void (*)(void *), void *);
 int getdtablecount(void);
+int kbind(const struct __kbind *, size_t, int64_t);
 int pledge(const char *, const char *);
 int revoke(const char *);
 int unveil(const char *, const char *);
@@ -266,7 +275,11 @@ pid_t gettid(void);
 #define _POSIX_SAVED_IDS        1
 #define _POSIX_SHELL            1
 #define _POSIX_SPAWN            _POSIX_VERSION
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _POSIX_VDISABLE         255
+#elif defined(__linux__)
 #define _POSIX_VDISABLE         0
+#endif
 
 #define _POSIX_THREADS          _POSIX_VERSION
 #define _POSIX_THREAD_PROCESS_SHARED _POSIX_VERSION
@@ -299,6 +312,20 @@ pid_t gettid(void);
 
 
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _PC_LINK_MAX	1
+#define _PC_MAX_CANON	2
+#define _PC_MAX_INPUT	3
+#define _PC_NAME_MAX	4
+#define _PC_PATH_MAX	5
+#define _PC_PIPE_BUF	6
+#define _PC_CHOWN_RESTRICTED	7
+#define _PC_NO_TRUNC	8
+#define _PC_VDISABLE	9
+#define _PC_SYNC_IO	20
+#define _PC_ASYNC_IO	12
+#define _PC_PRIO_IO	14
+#elif defined(__linux__)
 #define _PC_LINK_MAX	0
 #define _PC_MAX_CANON	1
 #define _PC_MAX_INPUT	2
@@ -311,15 +338,32 @@ pid_t gettid(void);
 #define _PC_SYNC_IO	9
 #define _PC_ASYNC_IO	10
 #define _PC_PRIO_IO	11
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _PC_TIMESTAMP_RESOLUTION	21
+#elif defined(__linux__)
 #define _PC_SOCK_MAXBUF	12
+#endif
 #define _PC_FILESIZEBITS	13
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _PC_REC_INCR_XFER_SIZE	15
+#define _PC_REC_MAX_XFER_SIZE	16
+#define _PC_REC_MIN_XFER_SIZE	17
+#define _PC_REC_XFER_ALIGN	18
+#define _PC_ALLOC_SIZE_MIN	11
+#elif defined(__linux__)
 #define _PC_REC_INCR_XFER_SIZE	14
 #define _PC_REC_MAX_XFER_SIZE	15
 #define _PC_REC_MIN_XFER_SIZE	16
 #define _PC_REC_XFER_ALIGN	17
 #define _PC_ALLOC_SIZE_MIN	18
+#endif
 #define _PC_SYMLINK_MAX	19
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _PC_2_SYMLINKS	10
+#elif defined(__linux__)
 #define _PC_2_SYMLINKS	20
+#endif
 
 #define _SC_ARG_MAX	0
 #define _SC_CHILD_MAX	1
@@ -466,12 +510,23 @@ pid_t gettid(void);
 #define _SC_MINSIGSTKSZ	249
 #define _SC_SIGSTKSZ	250
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _CS_PATH	1
+#define _CS_POSIX_V6_WIDTH_RESTRICTED_ENVS	14
+#elif defined(__linux__)
 #define _CS_PATH	0
 #define _CS_POSIX_V6_WIDTH_RESTRICTED_ENVS	1
+#endif
+#if defined(__linux__)
 #define _CS_GNU_LIBC_VERSION	2
 #define _CS_GNU_LIBPTHREAD_VERSION	3
 #define _CS_POSIX_V5_WIDTH_RESTRICTED_ENVS	4
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _CS_POSIX_V7_WIDTH_RESTRICTED_ENVS	30
+#elif defined(__linux__)
 #define _CS_POSIX_V7_WIDTH_RESTRICTED_ENVS	5
+#endif
 
 #define _CS_POSIX_V6_ILP32_OFF32_CFLAGS	1116
 #define _CS_POSIX_V6_ILP32_OFF32_LDFLAGS	1117
