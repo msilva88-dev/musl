@@ -4,5 +4,5 @@
 
 int sysarch(int op, void *parms)
 {
-        return syscall(SYS_sysarch, op, parms);
+	return syscall(SYS_sysarch, op, parms);
 }

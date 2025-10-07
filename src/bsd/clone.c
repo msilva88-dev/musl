@@ -278,7 +278,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			}
 		}
 
-		pid = syscall(SYS___tfork, &param, sizeof(param));
+		pid = __syscall(SYS___tfork, &param, sizeof(param));
 	/* If CLONE_VM without thread flags are requested */
 	} else if ((flags & CLONE_VM) && (flags & CLONE_VFORK)) {
 		shmem = mmap(
@@ -361,10 +361,10 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			&& (flags & CLONE_CHILD_SETTID)
 		) {
 			*ctid = 0;
-			syscall(SYS_futex, ctid, FUTEX_WAKE, 1, NULL, NULL);
+			__syscall(SYS_futex, ctid, FUTEX_WAKE, 1, NULL, NULL);
 		}
 
-		syscall(SYS___threxit, ret);
+		__syscall(SYS___threxit, ret);
 	} else {
 		if (!(flags & SIGCHLD)) {
 			sigaction(SIGCHLD, &saold, NULL);
