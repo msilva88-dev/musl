@@ -163,6 +163,19 @@ int stime(const time_t *);
 time_t timegm(struct tm *);
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+int __thrsleep(
+        const volatile void *,
+        clockid_t,
+        const struct timespec *,
+        void *,
+        const int *
+);
+int __thrwakeup(const volatile void *, int);
+#endif
+#endif
+
 #if _REDIR_TIME64
 __REDIR(time, __time64);
 __REDIR(difftime, __difftime64);
