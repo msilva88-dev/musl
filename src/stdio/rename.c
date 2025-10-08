@@ -4,7 +4,7 @@
 
 int rename(const char *old, const char *new)
 {
-#if defined(SYS_rename)
+#if defined(SYS_rename) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_rename, old, new);
 #elif defined(SYS_renameat)
 	return syscall(SYS_renameat, AT_FDCWD, old, AT_FDCWD, new);
