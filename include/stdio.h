@@ -170,7 +170,9 @@ char *ctermid(char *);
 #define RENAME_EXCHANGE  (1 << 1)
 #define RENAME_WHITEOUT  (1 << 2)
 
+#if defined(__linux__)
 int renameat2(int, const char *, int, const char *, unsigned);
+#endif
 #endif
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
