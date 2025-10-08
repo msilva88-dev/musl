@@ -7,7 +7,9 @@ extern "C" {
 
 #include <features.h>
 
+#if defined(__linux__)
 #include <bits/poll.h>
+#endif
 
 #define POLLIN     0x001
 #define POLLPRI    0x002
@@ -18,21 +20,14 @@ extern "C" {
 #define POLLRDNORM 0x040
 #define POLLRDBAND 0x080
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#ifdef POLLWRNORM
-#undef POLLWRNORM
 #define POLLWRNORM POLLOUT
-#ifdef POLLWRBAND
-#undef POLLWRBAND
 #define POLLWRBAND 0x100
-#endif
 #define INFTIM   (-0x001)
-#elif defined(__linux__)
-#ifndef POLLWRNORM
+#elif !defined(POLLWRNORM) && defined(__linux__)
 #define POLLWRNORM 0x100
 #define POLLWRBAND 0x200
 #endif
-#endif
-#ifndef POLLMSG
+#if !defined(POLLMSG) && defined(__linux__)
 #define POLLMSG    0x400
 #define POLLRDHUP  0x2000
 #endif
