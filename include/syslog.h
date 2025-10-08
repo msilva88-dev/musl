@@ -18,7 +18,9 @@ extern "C" {
 
 #define LOG_PRIMASK 7
 #define LOG_PRI(p) ((p)&LOG_PRIMASK)
+#if defined(__linux__)
 #define	LOG_MAKEPRI(f, p) ((f)|(p))
+#endif
 
 #define LOG_MASK(p) (1<<(p))
 #define LOG_UPTO(p) ((1<<((p)+1))-1)
@@ -90,6 +92,33 @@ typedef struct {
 	{ "local2", LOG_LOCAL2 }, { "local3", LOG_LOCAL3 }, \
 	{ "local4", LOG_LOCAL4 }, { "local5", LOG_LOCAL5 }, \
 	{ "local6", LOG_LOCAL6 }, { "local7", LOG_LOCAL7 }, { 0, -1 } })
+#endif
+#endif
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+#include <bits/ioctl.h>
+#define LIOCSFD _IOW('l', 127, int)
+#define LOG_MAXLINE 8192
+
+struct syslog_data {
+	int log_stat;
+	const char *log_tag;
+	int log_fac;
+	int log_mask;
+};
+#define SYSLOG_DATA_INIT (struct syslog_data){ \
+	.log_stat = 0, \
+	.log_tag = NULL, \
+	.log_fac = LOG_USER, \
+	.log_mask = 0xff \
+};
+
+void closelog_r(struct syslog_data *);
+void openlog_r(const char *, int, int, struct syslog_data *);
+int setlogmask_r(int, struct syslog_data *);
+void syslog_r(int, struct syslog_data *, const char *, ...);
+void vsyslog_r(int, struct syslog_data *, const char *, va_list);
 #endif
 #endif
 
