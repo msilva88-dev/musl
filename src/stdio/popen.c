@@ -23,7 +23,7 @@ FILE *popen(const char *cmd, const char *mode)
 		errno = EINVAL;
 		return 0;
 	}
-	
+
 	if (pipe2(p, O_CLOEXEC)) return NULL;
 	f = fdopen(p[op], mode);
 	if (!f) {
