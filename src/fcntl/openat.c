@@ -18,5 +18,9 @@ int openat(int fd, const char *filename, int flags, ...)
 		va_end(ap);
 	}
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall_cp(SYS_openat, fd, filename, flags, mode);
+#elif defined(__linux__)
 	return syscall_cp(SYS_openat, fd, filename, flags|O_LARGEFILE, mode);
+#endif
 }

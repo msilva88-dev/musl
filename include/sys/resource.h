@@ -47,7 +47,7 @@ struct rusage {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define ru_first ru_ixrss
 #define ru_last ru_nivcsw
-#if defined(__linux__)
+#elif defined(__linux__)
 	/* room for more... */
 	long    __reserved[16];
 #endif
