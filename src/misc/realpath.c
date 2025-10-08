@@ -1,20 +1,34 @@
+#if defined(__linux__)
 #include <stdlib.h>
+#endif
 #include <limits.h>
+#if defined(__linux__)
 #include <errno.h>
 #include <unistd.h>
+#endif
 #include <string.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#endif
 
+#if defined(__linux__)
 static size_t slash_len(const char *s)
 {
 	const char *s0 = s;
 	while (*s == '/') s++;
 	return s-s0;
 }
+#endif
 
 char *realpath(const char *restrict filename, char *restrict resolved)
 {
+#if defined(__linux__)
 	char stack[PATH_MAX+1];
+#endif
 	char output[PATH_MAX];
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (!syscall(SYS___realpath, filename, output)) return NULL;
+#elif defined(__linux__)
 	size_t p, q, l, l0, cnt=0, nup=0;
 	int check_dir=0;
 
@@ -146,11 +160,18 @@ skip_readlink:
 		memcpy(output, stack, l);
 		q = l + q-p;
 	}
+#endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (resolved) return strlcpy(resolved, output, PATH_MAX);
+#elif defined(__linux__)
 	if (resolved) return memcpy(resolved, output, q+1);
+#endif
 	else return strdup(output);
 
+#if defined(__linux__)
 toolong:
 	errno = ENAMETOOLONG;
 	return 0;
+#endif
 }
