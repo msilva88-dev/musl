@@ -100,17 +100,17 @@ struct linger {
 #define SOCK_RAW       3
 #define SOCK_RDM       4
 #define SOCK_SEQPACKET 5
+#if defined(__linux__)
 #define SOCK_DCCP      6
 #define SOCK_PACKET    10
+#endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define SOCK_CLOEXEC   0100000
 #define SOCK_NONBLOCK  040000
-#elif defined(__linux__)
-#ifndef SOCK_CLOEXEC
+#elif !defined(SOCK_CLOEXEC) && defined(__linux__)
 #define SOCK_CLOEXEC   02000000
 #define SOCK_NONBLOCK  04000
-#endif
 #endif
 
 #define PF_UNSPEC       0
@@ -213,7 +213,35 @@ struct linger {
 #define AF_XDP          PF_XDP
 #define AF_MAX          PF_MAX
 
-#ifndef SO_DEBUG
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SO_DEBUG        1
+#define SO_ACCEPTCONN   2
+#define SO_REUSEADDR    4
+#define SO_KEEPALIVE    8
+#define SO_DONTROUTE    16
+#define SO_BROADCAST    32
+#define SO_USELOOPBACK  64 // bsd-only
+#define SO_LINGER       128
+#define SO_OOBINLINE    256
+#define SO_REUSEPORT    512
+// SO_TIMESTAMP is defined bellow
+#define SO_BINDANY      2048 // bsd-only
+#define SO_ZEROIZE      4096 // bsd-only
+#define SO_SNDBUF       SO_BINDANY+1
+#define SO_RCVBUF       SO_BINDANY+2
+#define SO_SNDLOWAT     SO_BINDANY+3
+#define SO_RCVLOWAT     SO_BINDANY+4
+// SO_SNDTIMEO is defined bellow
+// SO_RCVTIMEO is defined bellow
+#define SO_ERROR        SO_BINDANY+7
+#define SO_TYPE         SO_BINDANY+8
+#define SO_NETPROC      SO_BINDANY+SO_BROADCAST // bsd-only
+#define SO_RTABLE       SO_BINDANY+SO_BROADCAST+1 // bsd-only
+#define SO_PEERCRED     SO_BINDANY+SO_BROADCAST+2
+#define SO_SPLICE       SO_BINDANY+SO_BROADCAST+3 // bsd-only
+#define SO_DOMAIN       SO_BINDANY+SO_BROADCAST+4
+#define SO_PROTOCOL     SO_BINDANY+SO_BROADCAST+5
+#if !defined(SO_DEBUG) && defined(__linux__)
 #define SO_DEBUG        1
 #define SO_REUSEADDR    2
 #define SO_TYPE         3
@@ -224,24 +252,27 @@ struct linger {
 #define SO_RCVBUF       8
 #define SO_KEEPALIVE    9
 #define SO_OOBINLINE    10
-#define SO_NO_CHECK     11
-#define SO_PRIORITY     12
+#define SO_NO_CHECK     11 // linux-only
+#define SO_PRIORITY     12 // linux-only
 #define SO_LINGER       13
-#define SO_BSDCOMPAT    14
+#define SO_BSDCOMPAT    14 // linux-only
 #define SO_REUSEPORT    15
-#define SO_PASSCRED     16
+#define SO_PASSCRED     16 // linux-only
 #define SO_PEERCRED     17
 #define SO_RCVLOWAT     18
 #define SO_SNDLOWAT     19
 #define SO_ACCEPTCONN   30
-#define SO_PEERSEC      31
-#define SO_SNDBUFFORCE  32
-#define SO_RCVBUFFORCE  33
+#define SO_PEERSEC      31 // linux-only
+#define SO_SNDBUFFORCE  32 // linux-only
+#define SO_RCVBUFFORCE  33 // linux-only
 #define SO_PROTOCOL     38
 #define SO_DOMAIN       39
 #endif
 
-#ifndef SO_RCVTIMEO
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SO_RCVTIMEO     SO_BINDANY+6
+#define SO_SNDTIMEO     SO_BINDANY+5
+#if !defined(SO_RCVTIMEO) && defined(__linux__)
 #if __LONG_MAX == 0x7fffffff
 #define SO_RCVTIMEO     66
 #define SO_SNDTIMEO     67
@@ -251,30 +282,45 @@ struct linger {
 #endif
 #endif
 
-#ifndef SO_TIMESTAMP
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SO_TIMESTAMP    1024
+#if !defined(SO_TIMESTAMP) && defined(__linux__)
 #if __LONG_MAX == 0x7fffffff
 #define SO_TIMESTAMP    63
-#define SO_TIMESTAMPNS  64
-#define SO_TIMESTAMPING 65
+#define SO_TIMESTAMPNS  64 // linux-only
+#define SO_TIMESTAMPING 65 // linux-only
 #else
 #define SO_TIMESTAMP    29
-#define SO_TIMESTAMPNS  35
-#define SO_TIMESTAMPING 37
+#define SO_TIMESTAMPNS  35 // linux-only
+#define SO_TIMESTAMPING 37 // linux-only
 #endif
 #endif
 
+#if defined(__linux__)
 #define SO_SECURITY_AUTHENTICATION              22
 #define SO_SECURITY_ENCRYPTION_TRANSPORT        23
 #define SO_SECURITY_ENCRYPTION_NETWORK          24
+#endif
 
+#if defined(__linux__)
 #define SO_BINDTODEVICE 25
+#endif
 
+#if defined(__linux__)
 #define SO_ATTACH_FILTER        26
 #define SO_DETACH_FILTER        27
 #define SO_GET_FILTER           SO_ATTACH_FILTER
+#endif
 
+#if defined(__linux__)
 #define SO_PEERNAME             28
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SCM_TIMESTAMP           4
+#elif defined(__linux__)
 #define SCM_TIMESTAMP           SO_TIMESTAMP
+#endif
+#if defined(__linux__)
 #define SO_PASSSEC              34
 #define SCM_TIMESTAMPNS         SO_TIMESTAMPNS
 #define SO_MARK                 36
@@ -308,15 +354,21 @@ struct linger {
 #define SO_DETACH_REUSEPORT_BPF 68
 #define SO_PREFER_BUSY_POLL     69
 #define SO_BUSY_POLL_BUDGET     70
+#endif
 
-#ifndef SOL_SOCKET
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SOL_SOCKET      0xffff
+#elif !defined(SOL_SOCKET) && defined(__linux__)
 #define SOL_SOCKET      1
 #endif
 
+#if defined(__linux__)
 #define SOL_IP          0
 #define SOL_IPV6        41
 #define SOL_ICMPV6      58
+#endif
 
+#if defined(__linux__)
 #define SOL_RAW         255
 #define SOL_DECNET      261
 #define SOL_X25         262
@@ -341,6 +393,7 @@ struct linger {
 #define SOL_KCM         281
 #define SOL_TLS         282
 #define SOL_XDP         283
+#endif
 
 #define SOMAXCONN       128
 
@@ -393,7 +446,9 @@ struct linger {
 #define CMSG_LEN(len)   (CMSG_ALIGN (sizeof (struct cmsghdr)) + (len))
 
 #define SCM_RIGHTS      0x01
+#if defined(__linux__)
 #define SCM_CREDENTIALS 0x02
+#endif
 
 struct sockaddr {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
