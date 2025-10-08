@@ -15,7 +15,9 @@ extern "C" {
 #endif
 
 #include <bits/alltypes.h>
+#if defined(__linux__)
 #include <bits/resource.h>
+#endif
 
 typedef unsigned long long rlim_t;
 
@@ -42,9 +44,23 @@ struct rusage {
 	long	ru_nsignals;
 	long	ru_nvcsw;
 	long	ru_nivcsw;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define ru_first ru_ixrss
+#define ru_last ru_nivcsw
+#if defined(__linux__)
 	/* room for more... */
 	long    __reserved[16];
+#endif
 };
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+struct loadavg {
+        fixpt_t ldavg[3];
+        long fscale;
+};
+#endif
+#endif
 
 int getrlimit (int, struct rlimit *);
 int setrlimit (int, const struct rlimit *);
@@ -71,7 +87,11 @@ int prlimit(pid_t, int, const struct rlimit *, struct rlimit *);
 #define RUSAGE_CHILDREN (-1)
 #define RUSAGE_THREAD   1
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define RLIM_INFINITY (((rlim_t)1 << 63) - 1)
+#elif defined(__linux__)
 #define RLIM_INFINITY (~0ULL)
+#endif
 #define RLIM_SAVED_CUR RLIM_INFINITY
 #define RLIM_SAVED_MAX RLIM_INFINITY
 
@@ -80,22 +100,37 @@ int prlimit(pid_t, int, const struct rlimit *, struct rlimit *);
 #define RLIMIT_DATA    2
 #define RLIMIT_STACK   3
 #define RLIMIT_CORE    4
-#ifndef RLIMIT_RSS
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define RLIMIT_RSS     5
+#define RLIMIT_MEMLOCK 6
+#define RLIMIT_NPROC   7
+#define RLIMIT_NOFILE  8
+#elif !defined(RLIMIT_RSS) && defined(__linux__)
 #define RLIMIT_RSS     5
 #define RLIMIT_NPROC   6
 #define RLIMIT_NOFILE  7
 #define RLIMIT_MEMLOCK 8
 #define RLIMIT_AS      9
 #endif
+#if defined(__linux__)
 #define RLIMIT_LOCKS   10
 #define RLIMIT_SIGPENDING 11
 #define RLIMIT_MSGQUEUE 12
 #define RLIMIT_NICE    13
 #define RLIMIT_RTPRIO  14
 #define RLIMIT_RTTIME  15
+#endif
+#if defined(__HyperbolaBSD__)
+#define RLIMIT_NLIMITS 9
+#elif defined(__linux__)
 #define RLIMIT_NLIMITS 16
+#endif
 
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define RLIM_NLIMITS RLIMIT_NLIMITS
+#elif defined(__OpenBSD__)
+#define RLIM_NLIMITS 9
+#endif
 
 #if defined(_LARGEFILE64_SOURCE)
 #define RLIM64_INFINITY RLIM_INFINITY
