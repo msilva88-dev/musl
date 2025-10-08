@@ -15,6 +15,11 @@ ssize_t pwritev(int fd, const struct iovec *iov, int count, off_t ofs)
 #endif
 	if (fcntl(fd, F_GETFL) & O_APPEND)
 		return __syscall_ret(-EOPNOTSUPP);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall_cp(SYS_pwritev, fd, iov, count,
+		0, ofs);
+#elif defined(__linux__)
 	return syscall_cp(SYS_pwritev, fd, iov, count,
 		(long)(ofs), (long)(ofs>>32));
+#endif
 }

@@ -237,7 +237,6 @@ pid_t getthrid(void);
 pid_t gettid(void);
 #endif
 
-#if defined(__linux__)
 #if defined(_LARGEFILE64_SOURCE)
 #define lseek64 lseek
 #define pread64 pread
@@ -246,7 +245,6 @@ pid_t gettid(void);
 #define ftruncate64 ftruncate
 #define lockf64 lockf
 #define off64_t off_t
-#endif
 #endif
 
 #define POSIX_CLOSE_RESTART     0

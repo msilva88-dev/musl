@@ -5,6 +5,11 @@
 
 ssize_t preadv(int fd, const struct iovec *iov, int count, off_t ofs)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall_cp(SYS_preadv, fd, iov, count,
+		0, ofs);
+#elif defined(__linux__)
 	return syscall_cp(SYS_preadv, fd, iov, count,
 		(long)(ofs), (long)(ofs>>32));
+#endif
 }
