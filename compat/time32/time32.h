@@ -26,13 +26,9 @@ struct itimerspec32 {
 };
 
 int __adjtime32() __asm__("adjtime");
-#if defined(__linux__)
 int __adjtimex_time32() __asm__("adjtimex");
-#endif
 int __aio_suspend_time32() __asm__("aio_suspend");
-#if defined(__linux__)
 int __clock_adjtime32() __asm__("clock_adjtime");
-#endif
 int __clock_getres_time32() __asm__("clock_getres");
 int __clock_gettime32() __asm__("clock_gettime");
 int __clock_nanosleep_time32() __asm__("clock_nanosleep");
