@@ -21,12 +21,22 @@ extern "C" {
 
 #include <bits/fcntl.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <sys/file.h>
+#endif
+
 struct flock {
+#if defined(__linux__)
 	short l_type;
 	short l_whence;
+#endif
 	off_t l_start;
 	off_t l_len;
 	pid_t l_pid;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	short l_type;
+	short l_whence;
+#endif
 };
 
 int creat(const char *, mode_t);

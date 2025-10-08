@@ -9,9 +9,11 @@ extern "C" {
 #define LOCK_NB	4
 #define LOCK_UN	8
 
+#if defined(__linux__)
 #define L_SET 0
 #define L_INCR 1
 #define L_XTND 2
+#endif
 
 int flock(int, int);
 
