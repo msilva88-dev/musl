@@ -45,6 +45,10 @@ struct pollfd {
 	short revents;
 };
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+typedef struct pollfd pollfd_t;
+#endif
+
 int poll (struct pollfd *, nfds_t, int);
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
@@ -55,11 +59,9 @@ int poll (struct pollfd *, nfds_t, int);
 int ppoll(struct pollfd *, nfds_t, const struct timespec *, const sigset_t *);
 #endif
 
-#if defined(__linux__)
 #if _REDIR_TIME64
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 __REDIR(ppoll, __ppoll_time64);
-#endif
 #endif
 #endif
 

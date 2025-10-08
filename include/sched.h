@@ -145,10 +145,8 @@ __CPU_op_func_S(XOR, ^)
 
 #endif
 
-#if defined(__linux__)
 #if _REDIR_TIME64
 __REDIR(sched_rr_get_interval, __sched_rr_get_interval_time64);
-#endif
 #endif
 
 #ifdef __cplusplus
