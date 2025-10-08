@@ -6,5 +6,9 @@ __restore:
 .hidden __restore_rt
 .type __restore_rt,%function
 __restore_rt:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	mov x8,#103 // SYS_sigreturn
+#elif defined(__linux__)
 	mov x8,#139 // SYS_rt_sigreturn
+#endif
 	svc 0

@@ -6,5 +6,9 @@
 .type   __restore,@function
 __restore_rt:
 __restore:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	li.w	$a7, 103
+#elif defined(__linux__)
 	li.w    $a7, 139
+#endif
 	syscall 0
