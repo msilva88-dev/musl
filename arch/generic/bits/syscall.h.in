@@ -111,7 +111,7 @@
 #define __NR_ppoll			109
 #define __NR_pselect			110 // __NR_pselect6
 #define __NR_sigsuspend			111 // __NR_rt_sigsuspend
-#define __NR_sendsyslog			112
+#define __NR_sendsyslog			112 // __NR_syslog
 /* 113 is unused */
 #define __NR_unveil			114
 #define __NR___realpath			115
@@ -344,7 +344,6 @@
 #define __NR_creat			85
 #define __NR_sysinfo			99
 #define __NR_times			100
-#define __NR_syslog			103
 #define __NR_setfsuid			122
 #define __NR_setfsgid			123
 #define __NR_capget			125
