@@ -38,8 +38,13 @@ int posix_fadvise(int, off_t, off_t, int);
 int posix_fallocate(int, off_t, off_t);
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define O_SEARCH   0
+#define O_EXEC     0
+#elif defined(__linux__)
 #define O_SEARCH   O_PATH
 #define O_EXEC     O_PATH
+#endif
 #define O_TTY_INIT 0
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)

@@ -9,11 +9,19 @@ DIR *fdopendir(int fd)
 {
 	DIR *dir;
 	struct stat st;
+	int flags = fcntl(fd, F_GETFL);
 
-	if (fstat(fd, &st) < 0) {
+	if (fstat(fd, &st) < 0 || flags == -1) {
 		return 0;
 	}
-	if (fcntl(fd, F_GETFL) & O_PATH) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (
+		(flags & O_ACCMODE) != O_RDONLY
+		&& (flags & O_ACCMODE) != O_RDWR
+	) {
+#elif defined(__linux__)
+	if (flags & O_PATH) {
+#endif
 		errno = EBADF;
 		return 0;
 	}
