@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include "syscall.h"
 
-int nfssvc(int flags, void *argp);
+int nfssvc(int flags, void *argp)
 {
-        return syscall(SYS_nfssvc, argp);
+        return syscall(SYS_nfssvc, flags, argp);
 }

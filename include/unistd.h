@@ -38,6 +38,10 @@ extern "C" {
 
 #include <bits/alltypes.h>
 
+#if defined(__HyperbolaBSD__)
+#include <sys/quota.h>
+#endif
+
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
 #if defined(__HyperbolaBSD__)
@@ -194,6 +198,9 @@ int setdomainname(const char *, size_t);
 int setgroups(int, const gid_t *);
 #elif defined(__linux__)
 int setgroups(size_t, const gid_t *);
+#endif
+#if defined(__OpenBSD__)
+int quotactl(const char *, int, int, char *);
 #endif
 char *getpass(const char *);
 int daemon(int, int);
