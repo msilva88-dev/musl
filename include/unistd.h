@@ -38,6 +38,15 @@ extern "C" {
 
 #include <bits/alltypes.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/nfs/nfs.h>
+#elif defined(__OpenBSD__)
+#include <nfs/nfs.h>
+#endif
+#endif
+
 int pipe(int [2]);
 int pipe2(int [2], int);
 int close(int);
@@ -209,6 +218,7 @@ pid_t __tfork(const struct __tfork *, size_t);
 pid_t __tfork_thread(const struct __tfork *, size_t, void (*)(void *), void *);
 int getdtablecount(void);
 int kbind(const struct __kbind *, size_t, int64_t);
+int nfssvc(int, void *);
 int pledge(const char *, const char *);
 int revoke(const char *);
 int unveil(const char *, const char *);
