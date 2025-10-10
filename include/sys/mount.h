@@ -7,7 +7,7 @@ extern "C" {
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #include <sys/statfs.h>
-#if defined(__linux__)
+#elif defined(__linux__)
 #include <sys/ioctl.h>
 #endif
 

@@ -23,6 +23,22 @@ int fstatfs (int, struct statfs *);
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
+#define MAXFIDSZ 16
+struct fid {
+        unsigned short fid_len;
+        unsigned short fid_reserved;
+        char fid_data[MAXFIDSZ];
+};
+
+typedef struct fhandle {
+	fsid_t fh_fsid;
+	struct fid fh_fid;
+} fhandle_t;
+
+int fhopen(const fhandle_t *, int);
+int fhstat(const fhandle_t *, struct stat *);
+int fhstatfs(const fhandle_t *, struct statfs *);
+int getfh(const char *, fhandle_t *);
 int getfsstat(struct statfs *, size_t, int);
 int getmntinfo(struct statfs **, int);
 #endif
