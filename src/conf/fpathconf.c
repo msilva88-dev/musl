@@ -1,9 +1,16 @@
 #include <unistd.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#elif defined(__linux__)
 #include <limits.h>
 #include <errno.h>
+#endif
 
 long fpathconf(int fd, int name)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+        return __syscall(SYS_fpathconf, fd, name);
+#elif defined(__linux__)
 	static const short values[] = {
 		[_PC_LINK_MAX] = _POSIX_LINK_MAX,
 		[_PC_MAX_CANON] = _POSIX_MAX_CANON,
@@ -32,4 +39,5 @@ long fpathconf(int fd, int name)
 		return -1;
 	}
 	return values[name];
+#endif
 }
