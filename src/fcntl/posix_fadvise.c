@@ -22,15 +22,14 @@ int posix_fadvise(int fd, off_t base, off_t len, int advice)
 		__SYSCALL_LL_E(len), advice);
 #endif
 #elif defined(__HyperbolaBSD__)
+	base = __SYSCALL_LL_E(base);
+	len  = __SYSCALL_LL_E(len);
+
 	if (len == 0) {
 		struct stat st;
-		if (fstat(fd, &st) < 0) {
-			return errno;
-		}
+		if (fstat(fd, &st) < 0) return errno;
 
-		if (base >= st.st_size) {
-			return 0;
-		}
+		if (base >= st.st_size) return 0;
 
 		len = st.st_size - base;
 	} else if (len <= 0) {
@@ -65,14 +64,10 @@ int posix_fadvise(int fd, off_t base, off_t len, int advice)
 	}
 
 	long pagesize = sysconf(_SC_PAGESIZE);
-	if (pagesize <= 0) {
-		pagesize = 4096;
-	}
+	if (pagesize <= 0) pagesize = 4096;
 
 	off_t end = base + len;
-	if (end < base) {
-		return EOVERFLOW;
-	}
+	if (end < base) return EOVERFLOW;
 
 	off_t aligned_base = base & ~(pagesize - 1);
 	size_t aligned_len = end - aligned_base;
@@ -85,10 +80,8 @@ int posix_fadvise(int fd, off_t base, off_t len, int advice)
 		fd,
 		aligned_base
 	);
-	if (addr == MAP_FAILED) {
-		// mmap failed: POSIX mandates we return errno
-		return errno;
-	}
+	// mmap failed: POSIX mandates we return errno
+	if (addr == MAP_FAILED) return errno;
 
 	int ret = madvise(addr, aligned_len, madvise_flag);
 	munmap(addr, aligned_len);
