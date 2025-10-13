@@ -6,7 +6,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/auxv.h>
+#if defined(__linux__)
 #include "syscall.h"
+#endif
 #include "atomic.h"
 #include "pthread_impl.h"
 #include "aio_impl.h"
@@ -193,6 +195,9 @@ static void cleanup(void *ctx)
 	__aio_unref_queue(q);
 
 	if (sev.sigev_notify == SIGEV_SIGNAL) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		sigqueue(getpid(), sev.sigev_signo, sev.sigev_value);
+#elif defined(__linux__)
 		siginfo_t si = {
 			.si_signo = sev.sigev_signo,
 			.si_value = sev.sigev_value,
@@ -201,6 +206,7 @@ static void cleanup(void *ctx)
 			.si_uid = getuid()
 		};
 		__syscall(SYS_rt_sigqueueinfo, si.si_pid, si.si_signo, &si);
+#endif
 	}
 	if (sev.sigev_notify == SIGEV_THREAD) {
 		a_store(&__pthread_self()->cancel, 0);

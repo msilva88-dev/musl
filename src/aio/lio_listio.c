@@ -39,6 +39,9 @@ static int lio_wait(struct lio_state *st)
 
 static void notify_signal(struct sigevent *sev)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	sigqueue(getpid(), sev.sigev_signo, sev.sigev_value);
+#elif defined(__linux__)
 	siginfo_t si = {
 		.si_signo = sev->sigev_signo,
 		.si_value = sev->sigev_value,
@@ -47,6 +50,7 @@ static void notify_signal(struct sigevent *sev)
 		.si_uid = getuid()
 	};
 	__syscall(SYS_rt_sigqueueinfo, si.si_pid, si.si_signo, &si);
+#endif
 }
 
 static void *wait_thread(void *p)
