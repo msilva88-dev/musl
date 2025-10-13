@@ -3,10 +3,8 @@
 #include "syscall.h"
 #include "libc.h"
 
-#if defined(__linux__)
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define FIX(x) do{ if ((x)>=SYSCALL_RLIM_INFINITY) (x)=RLIM_INFINITY; }while(0)
-#endif
 
 struct ctx {
 	unsigned long lim[2];
@@ -25,9 +23,6 @@ static void do_setrlimit(void *p)
 
 int setrlimit(int resource, const struct rlimit *rlim)
 {
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	return __syscall(SYS_setrlimit, resource, rlim);
-#elif defined(__linux__)
 	struct rlimit tmp;
 	if (SYSCALL_RLIM_INFINITY != RLIM_INFINITY) {
 		tmp = *rlim;
@@ -35,10 +30,13 @@ int setrlimit(int resource, const struct rlimit *rlim)
 		FIX(tmp.rlim_max);
 		rlim = &tmp;
 	}
+#if defined(__linux__)
 	int ret = __syscall(SYS_prlimit64, 0, resource, rlim, 0);
-#ifdef SYS_setrlimit
+#endif
+#if defined(SYS_setrlimit) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__linux__)
 	if (ret != -ENOSYS) return __syscall_ret(ret);
-
+#endif
 	struct ctx c = {
 		.lim[0] = MIN(rlim->rlim_cur, MIN(-1UL, SYSCALL_RLIM_INFINITY)),
 		.lim[1] = MIN(rlim->rlim_max, MIN(-1UL, SYSCALL_RLIM_INFINITY)),
@@ -52,6 +50,5 @@ int setrlimit(int resource, const struct rlimit *rlim)
 	return 0;
 #else
 	return __syscall_ret(ret);
-#endif
 #endif
 }

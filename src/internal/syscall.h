@@ -6,7 +6,9 @@
 #include <sys/syscall.h>
 #include "syscall_arch.h"
 
-#ifndef SYSCALL_RLIM_INFINITY
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SYSCALL_RLIM_INFINITY (((rlim_t)1 << 63) - 1)
+#if !defined(SYSCALL_RLIM_INFINITY) && defined(__linux__)
 #define SYSCALL_RLIM_INFINITY (~0ULL)
 #endif
 

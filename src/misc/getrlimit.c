@@ -2,24 +2,23 @@
 #include <errno.h>
 #include "syscall.h"
 
-#if defined(__linux__)
 #define FIX(x) do{ if ((x)>=SYSCALL_RLIM_INFINITY) (x)=RLIM_INFINITY; }while(0)
-#endif
 
 int getrlimit(int resource, struct rlimit *rlim)
 {
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	return __syscall(SYS_getrlimit, resource, rlim);
-#elif defined(__linux__)
+#if defined(__linux__)
 	int ret = syscall(SYS_prlimit64, 0, resource, 0, rlim);
 	if (!ret) {
 		FIX(rlim->rlim_cur);
 		FIX(rlim->rlim_max);
 	}
-#ifdef SYS_getrlimit
+#endif
+#if defined(SYS_getrlimit) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	unsigned long k_rlim[2];
+#if defined(__linux__)
 	if (!ret || errno != ENOSYS)
 		return ret;
+#endif
 	if (syscall(SYS_getrlimit, resource, k_rlim) < 0)
 		return -1;
 	rlim->rlim_cur = k_rlim[0] == -1UL ? RLIM_INFINITY : k_rlim[0];
@@ -29,6 +28,5 @@ int getrlimit(int resource, struct rlimit *rlim)
 	return 0;
 #else
 	return ret;
-#endif
 #endif
 }
