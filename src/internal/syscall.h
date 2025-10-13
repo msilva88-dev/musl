@@ -397,7 +397,6 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define __sys_open_cp(...) __SYSCALL_DISP(__sys_open_cp,,__VA_ARGS__)
 #define sys_open_cp(...) __syscall_ret(__sys_open_cp(__VA_ARGS__))
 
-#if !defined(__OpenBSD__)
 #if defined(SYS_pause) && defined(__linux__)
 #define __sys_pause() __syscall(SYS_pause)
 #define __sys_pause_cp() __syscall_cp(SYS_pause)
@@ -408,7 +407,6 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 
 #define sys_pause() __syscall_ret(__sys_pause())
 #define sys_pause_cp() __syscall_ret(__sys_pause_cp())
-#endif
 
 #if defined(SYS_wait4) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define __sys_wait4(a,b,c,d) __syscall(SYS_wait4,a,b,c,d)
