@@ -357,14 +357,23 @@ static struct symdef get_lfs64(const char *name)
 	const char *p;
 	static const char lfs64_list[] =
 		"aio_cancel\0aio_error\0aio_fsync\0aio_read\0aio_return\0"
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 		"aio_suspend\0aio_write\0alphasort\0creat\0fallocate\0"
+#elif defined(__OpenBSD__)
+		"aio_suspend\0aio_write\0alphasort\0creat\0"
+#endif
 		"fgetpos\0fopen\0freopen\0fseeko\0fsetpos\0fstat\0"
 		"fstatat\0fstatfs\0fstatvfs\0ftello\0ftruncate\0ftw\0"
 		"getdents\0getrlimit\0glob\0globfree\0lio_listio\0"
 		"lockf\0lseek\0lstat\0mkostemp\0mkostemps\0mkstemp\0"
 		"mkstemps\0mmap\0nftw\0open\0openat\0posix_fadvise\0"
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		"posix_fallocate\0pread\0preadv\0pwrite\0"
+		"pwritev\0readdir\0scandir\0setrlimit\0"
+#elif defined(__linux__)
 		"posix_fallocate\0pread\0preadv\0prlimit\0pwrite\0"
 		"pwritev\0readdir\0scandir\0sendfile\0setrlimit\0"
+#endif
 		"stat\0statfs\0statvfs\0tmpfile\0truncate\0versionsort\0"
 		"__fxstat\0__fxstatat\0__lxstat\0__xstat\0";
 	if (!strcmp(name, "readdir64_r"))
@@ -1422,7 +1431,7 @@ static void extend_bfs_deps(struct dso *p)
 		struct dso *dep = p->deps[i];
 		for (j=cnt=0; j<dep->ndeps_direct; j++)
 			if (!dep->deps[j]->mark) cnt++;
-		tmp = no_realloc ? 
+		tmp = no_realloc ?
 			malloc(sizeof(*tmp) * (ndeps_all+cnt+1)) :
 			realloc(p->deps, sizeof(*tmp) * (ndeps_all+cnt+1));
 		if (!tmp) {
@@ -1691,7 +1700,7 @@ static void do_init_fini(struct dso **queue)
 		if (p->ctor_visitor || p->constructed)
 			continue;
 		p->ctor_visitor = self;
-		
+
 		decode_vec(p->dynv, dyn, DYN_CNT);
 		if (dyn[0] & ((1<<DT_FINI) | (1<<DT_FINI_ARRAY))) {
 			p->fini_next = fini_head;
@@ -1841,7 +1850,7 @@ static void install_new_tls(void)
  * following stage 2 and stage 3 functions via primitive symbolic lookup
  * since it does not have access to their addresses to begin with. */
 
-/* Stage 2 of the dynamic linker is called after relative relocations 
+/* Stage 2 of the dynamic linker is called after relative relocations
  * have been processed. It can make function calls to static functions
  * and access string literals and static data, but cannot use extern
  * symbols. Its job is to perform symbolic relocations on the dynamic
