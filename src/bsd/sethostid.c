@@ -1,4 +1,9 @@
+#define _BSD_SOURCE
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/sysctl.h>
+#elif defined(__OpenBSD__)
 #include <sys/sysctl.h>
+#endif
 #include <unistd.h>
 
 int
