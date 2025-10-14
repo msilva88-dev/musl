@@ -1,15 +1,19 @@
 #define _BSD_SOURCE
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/sysctl.h>
+#elif defined(__OpenBSD__)
 #include <sys/sysctl.h>
+#endif
 #include "syscall.h"
 
 int sysctl(
 	const int *name,
-	u_int namelen,
-	void *old,
+	unsigned int namelen,
+	void *oldp,
 	size_t *oldlenp,
-	void *new,
+	void *newp,
 	size_t newlen
 )
 {
-	return syscall(SYS_sysctl, name, namelen, old, oldlenp, new, newlen);
+	return syscall(SYS_sysctl, name, namelen, oldp, oldlenp, newp, newlen);
 }
