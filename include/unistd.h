@@ -228,6 +228,7 @@ int kbind(const struct __kbind *, size_t, int64_t);
 int nfssvc(int, void *);
 int pledge(const char *, const char *);
 int revoke(const char *);
+int sethostid(long);
 int unveil(const char *, const char *);
 #endif
 #endif
