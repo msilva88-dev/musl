@@ -87,6 +87,10 @@ TYPEDEF uint32_t sigset_t;
 TYPEDEF struct __sigset_t { unsigned long __bits[128/sizeof(long)]; } sigset_t;
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+TYPEDEF uint32_t fixpt_t
+#endif
+
 STRUCT iovec { void *iov_base; size_t iov_len; };
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)

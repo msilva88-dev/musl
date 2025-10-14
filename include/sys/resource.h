@@ -55,6 +55,7 @@ struct rusage {
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
+#define __NEED_fixpt_t
 struct loadavg {
         fixpt_t ldavg[3];
         long fscale;
