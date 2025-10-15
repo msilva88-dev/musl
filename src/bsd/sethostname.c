@@ -1,15 +1,13 @@
 #define _GNU_SOURCE
-#include <sys/types.h>
+#include <unistd.h>
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/sysctl.h>
+#elif defined(__OpenBSD__)
 #include <sys/sysctl.h>
-#include <errno.h>
+#endif
 
 int sethostname(const char *name, size_t len)
 {
-	int mib[2] = { CTL_KERN, KERN_HOSTNAME };
-
-	if (sysctl(mib, 2, NULL, 0, name, len) < 0) {
-		return -errno;
-	}
-
-	return 0;
+	int r = sysctl((int[]){ CTL_KERN, KERN_HOSTNAME }, 2, NULL, NULL, name, len);
+	return (r == -1) ? return -1 : 0;
 }
