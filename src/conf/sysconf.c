@@ -17,8 +17,10 @@
 #include <stdio.h>
 #endif
 #include <signal.h>
+#if defined(__linux__)
 #include <sys/sysinfo.h>
 #include <sys/auxv.h>
+#endif
 #include "syscall.h"
 #include "libc.h"
 
