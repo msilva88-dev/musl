@@ -39,10 +39,10 @@ int sigtimedwait(const sigset_t *restrict mask, siginfo_t *restrict si, const st
 {
 	int ret;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-        sigset_t ssp = *mask;
+	sigset_t ss = *mask;
 
-	sigdelset(&ssp, SIGTHR);
-	do ret = do_sigtimedwait(&ssp, si, timeout);
+	sigdelset(&ss, SIGTHR);
+	do ret = do_sigtimedwait(&ss, si, timeout);
 #elif defined(__linux__)
 	do ret = do_sigtimedwait(mask, si, timeout);
 #endif

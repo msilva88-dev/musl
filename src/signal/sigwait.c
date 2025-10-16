@@ -8,11 +8,11 @@ int sigwait(const sigset_t *restrict mask, int *restrict sig)
 {
 	siginfo_t si;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	sigset_t s = *mask;
+	sigset_t ss = *mask;
 
-	sigdelset(&s, SIGTHR);
+	sigdelset(&ss, SIGTHR);
 	for (;;) {
-		si.si_signo = syscall_cp(SYS___thrsigdivert, s, NULL, NULL);
+		si.si_signo = syscall_cp(SYS___thrsigdivert, ss, NULL, NULL);
 		if (si.si_signo == -1 && errno == EINTR) continue;
 		break;
 	}
