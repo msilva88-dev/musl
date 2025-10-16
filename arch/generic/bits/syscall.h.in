@@ -201,7 +201,7 @@
 #define __NR_lseek			199
 #define __NR_truncate			200 // otruncate
 #define __NR_ftruncate			201 // oftruncate
-#define __NR_sysctl			202 // __NR__sysctl
+#define __NR_sysctl			202 // __NR__sysctl, __NR_setdomainname, __NR_sethostname
 #define __NR_mlock			203 // __NR_mlock2
 #define __NR_munlock			204
 /* 205 is unused */
@@ -368,8 +368,6 @@
 #define __NR_prctl			157
 #define __NR_arch_prctl			158
 #define __NR_adjtimex			159
-#define __NR_sethostname		170
-#define __NR_setdomainname		171
 #define __NR_ioperm			173
 #define __NR_create_module		174
 #define __NR_init_module		175

@@ -9,7 +9,7 @@
 
 int getpagesize(void)
 {
-
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	if (!PAGE_SIZE) {
 		int r = sysctl(
 			(int[]){ CTL_HW, HW_PAGESIZE },
@@ -21,6 +21,7 @@ int getpagesize(void)
 		);
 		if (r == -1) return -1;
 	}
+#endif
 
 	return PAGE_SIZE;
 }
