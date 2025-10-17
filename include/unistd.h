@@ -223,6 +223,7 @@ extern int optreset;
 #define KBIND_DATA_MAX 24
 pid_t __tfork(const struct __tfork *, size_t);
 pid_t __tfork_thread(const struct __tfork *, size_t, void (*)(void *), void *);
+int closefrom(int);
 int getdtablecount(void);
 int kbind(const struct __kbind *, size_t, int64_t);
 int nfssvc(int, void *);
