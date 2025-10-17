@@ -187,7 +187,9 @@ unsigned ualarm(unsigned, unsigned);
 int brk(void *);
 void *sbrk(intptr_t);
 pid_t vfork(void);
+#if defined(__linux__)
 int vhangup(void);
+#endif
 int chroot(const char *);
 int getpagesize(void);
 int getdtablesize(void);
