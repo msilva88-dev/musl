@@ -11,12 +11,20 @@
 
 int pselect(int n, fd_set *restrict rfds, fd_set *restrict wfds, fd_set *restrict efds, const struct timespec *restrict ts, const sigset_t *restrict mask)
 {
+#if defined(__linux__)
 	syscall_arg_t data[2] = { (uintptr_t)mask, _NSIG/8 };
+#endif
 	time_t s = ts ? ts->tv_sec : 0;
 	long ns = ts ? ts->tv_nsec : 0;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	sigset_t ss;
+	if (sigmask && sigismember(mask, SIGTHR)) {
+		ss = *mask;
+		sigdelset(&ss, SIGTHR);
+		mask = &ss;
+	}
 	return syscall_cp(SYS_pselect, n, rfds, wfds, efds,
-		ts ? ((long[]){s, ns}) : 0, mask);
+		ts, mask);
 #elif defined(__linux__)
 #ifdef SYS_pselect6_time64
 	int r = -ENOSYS;
