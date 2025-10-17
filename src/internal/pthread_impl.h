@@ -34,6 +34,7 @@ struct pthread {
 	/* Part 2 -- implementation details, non-ABI. */
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	char name[32];
+	struct pthread_attr attr;
 #endif
 	int tid;
 	int errno_val;
@@ -69,6 +70,15 @@ struct pthread {
 	uintptr_t *dtv;
 #endif
 };
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+struct stack {
+	void *sp;
+	size_t len;
+};
+#define PTHREAD_MAX_PRIORITY 31
+#define PTHREAD_MIN_PRIORITY 0
+#endif
 
 enum {
 	DT_EXITED = 0,

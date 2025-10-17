@@ -18,6 +18,7 @@ extern "C" {
 
 struct sched_param {
 	int sched_priority;
+#if defined(__linux__)
 	int __reserved1;
 #if _REDIR_TIME64
 	long __reserved2[4];
@@ -28,6 +29,7 @@ struct sched_param {
 	} __reserved2[2];
 #endif
 	int __reserved3;
+#endif
 };
 
 int    sched_get_priority_max(int);
@@ -94,8 +96,10 @@ void (free)(void *);
 typedef struct cpu_set_t { unsigned long __bits[128/sizeof(long)]; } cpu_set_t;
 int __sched_cpucount(size_t, const cpu_set_t *);
 int sched_getcpu(void);
+#if defined(__linux__)
 int sched_getaffinity(pid_t, size_t, cpu_set_t *);
 int sched_setaffinity(pid_t, size_t, const cpu_set_t *);
+#endif
 
 #define __CPU_op_S(i, size, set, op) ( (i)/8U >= (size) ? 0 : \
 	(((unsigned long *)(set))[(i)/8/sizeof(long)] op (1UL<<((i)%(8*sizeof(long))))) )

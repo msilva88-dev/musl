@@ -348,6 +348,10 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->robust_list.head = &new->robust_list.head;
 	new->canary = self->canary;
 	new->sysinfo = self->sysinfo;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	new->attr._a_policy = SCHED_OTHER;
+	new->attr._a_prio = 0;
+#endif
 
 	/* Setup argument structure for the new thread on its stack.
 	 * It's safe to access from the caller only until the thread
@@ -383,11 +387,22 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		ret = -EAGAIN;
 	} else if (attr._a_sched) {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-		struct sched_param param;
-		param.sched_priority = attr._a_prio;
-		int policy = attr._a_policy;
-
-		ret = pthread_setschedparam(pthread_self(), policy, &param);
+		switch (attr._a_policy) {
+		case SCHED_FIFO:
+		case SCHED_OTHER:
+		case SCHED_RR:
+			if (attr._a_prio <= PTHREAD_MAX_PRIORITY && attr._a_prio >= PTHREAD_MIN_PRIORITY) {
+				ret = 0;
+				new->attr._a_policy = attr._a_policy;
+				new->attr._a_prio = attr._a_prio;
+			} else {
+				ret = EINVAL;
+			}
+			break;
+		default:
+			ret = EINVAL;
+			break;
+		}
 #elif defined(__linux__)
 		ret = __syscall(SYS_sched_setscheduler,
 			new->tid, attr._a_policy, &attr._a_prio);

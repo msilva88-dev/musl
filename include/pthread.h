@@ -217,8 +217,10 @@ void _pthread_cleanup_pop(struct __ptcb *, int);
 
 #ifdef _GNU_SOURCE
 struct cpu_set_t;
+#if defined(__linux__)
 int pthread_getaffinity_np(pthread_t, size_t, struct cpu_set_t *);
 int pthread_setaffinity_np(pthread_t, size_t, const struct cpu_set_t *);
+#endif
 int pthread_getattr_np(pthread_t, pthread_attr_t *);
 int pthread_setname_np(pthread_t, const char *);
 int pthread_getname_np(pthread_t, char *, size_t);
