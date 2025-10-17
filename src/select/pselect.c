@@ -13,9 +13,9 @@ int pselect(int n, fd_set *restrict rfds, fd_set *restrict wfds, fd_set *restric
 {
 #if defined(__linux__)
 	syscall_arg_t data[2] = { (uintptr_t)mask, _NSIG/8 };
-#endif
 	time_t s = ts ? ts->tv_sec : 0;
 	long ns = ts ? ts->tv_nsec : 0;
+#endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	sigset_t ss;
 	if (mask && sigismember(mask, SIGTHR)) {
