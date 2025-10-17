@@ -6,7 +6,7 @@ int sigsuspend(const sigset_t *mask)
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	sigset_t ss;
 
-	if (sigismember(mask, SIGTHR)) {
+	if (mask && sigismember(mask, SIGTHR)) {
 		ss = *mask;
 		sigdelset(&ss, SIGTHR);
 		mask = &ss;

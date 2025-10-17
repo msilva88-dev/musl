@@ -12,6 +12,12 @@
 int ppoll(struct pollfd *fds, nfds_t n, const struct timespec *to, const sigset_t *mask)
 {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	sigset_t ss;
+	if (mask && sigismember(mask, SIGTHR)) {
+		ss = *mask;
+		sigdelset(&ss, SIGTHR);
+		mask = &ss;
+	}
 	return syscall_cp(SYS_ppoll, fds, n, to, mask);
 #elif defined(__linux__)
 	time_t s = to ? to->tv_sec : 0;

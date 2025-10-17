@@ -18,7 +18,7 @@ int pselect(int n, fd_set *restrict rfds, fd_set *restrict wfds, fd_set *restric
 	long ns = ts ? ts->tv_nsec : 0;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	sigset_t ss;
-	if (sigmask && sigismember(mask, SIGTHR)) {
+	if (mask && sigismember(mask, SIGTHR)) {
 		ss = *mask;
 		sigdelset(&ss, SIGTHR);
 		mask = &ss;
