@@ -20,7 +20,7 @@ int getentropy(void *buffer, size_t len)
 
 	while (len) {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-		ret = syscall(getentropy, pos, len);
+		ret = syscall(SYS_getentropy, pos, len);
 #elif defined(__linux__)
 		ret = getrandom(pos, len, 0);
 #endif
