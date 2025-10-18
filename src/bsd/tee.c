@@ -1,54 +1,49 @@
 #define _GNU_SOURCE
+#include <sys/uio.h>
 #include <errno.h>
-#include <stddef.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
 
 // tee_wrapper
 
-ssize_t tee(
-	int src,
-	int dest,
-	size_t len,
-	unsigned flags __attribute__((unused))
-)
+ssize_t tee(int src, int dest, size_t len, unsigned flags)
 {
-	(void)flags;
-	char buf[4096];
-	ssize_t n, w, total = 0, written = 0;
+	flags &= ~SPLICE_F_GIFT;
 
+	static int pipefd[] = { -1, -1 };
+	if (pipefd[0] == -1) {
+		if (pipe(pipefd) < 0) return -1;
+	}
+
+	ssize_t total = 0;
 	while (total < (ssize_t)len) {
-		n = read(
-			src,
-			buf,
-			(len - total > sizeof(buf))
-			? sizeof(buf) : len - total
-		);
+		ssize_t n;
+		struct iovec iov = { .iov_base = NULL, .iov_len = len - total };
+		do {
+			n = vmsplice(src, &iov, 1, flags);
+		} while (n < 0 && errno == EINTR);
 
-		if (n <= 0) {
-			if (errno == EINTR) {
-				continue; // Retry
-			}
-
+		if (n < 0) {
+			if ((flags & SPLICE_F_NONBLOCK) && errno == EAGAIN) break;
 			return -1;
-		} else if (n == 0) {
-			break; // EOF
 		}
+		if (n == 0) break;
 
+		ssize_t written = 0;
 		while (written < n) {
-			w = write(dest, buf + written, n - written);
+			ssize_t m;
+			do {
+				m = splice(pipefd[0], NULL, dest, NULL, n - written, flags);
+			} while (m < 0 && errno == EINTR);
 
-			if (w < 0) {
-				if (errno == EINTR) {
-					continue; // Retry
-				}
-
+			if (m < 0) {
+				if ((flags & SPLICE_F_NONBLOCK) && errno == EAGAIN) break;
 				return -1;
 			}
-
-			written += w;
+			written += m;
 		}
-
-		total += n;
+		total += m;
 	}
 
 	return total;
