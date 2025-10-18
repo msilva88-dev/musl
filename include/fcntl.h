@@ -199,6 +199,7 @@ int lockf(int, int, off_t);
 #define F_OWNER_PID 1
 #define F_OWNER_PGRP 2
 #define F_OWNER_GID 2
+#if defined(__linux__)
 struct file_handle {
 	unsigned handle_bytes;
 	int handle_type;
@@ -208,28 +209,35 @@ struct f_owner_ex {
 	int type;
 	pid_t pid;
 };
+#endif
 #define FALLOC_FL_KEEP_SIZE 1
 #define FALLOC_FL_PUNCH_HOLE 2
+#if defined(__linux__)
 #define MAX_HANDLE_SZ 128
 #define SYNC_FILE_RANGE_WAIT_BEFORE 1
 #define SYNC_FILE_RANGE_WRITE 2
 #define SYNC_FILE_RANGE_WAIT_AFTER 4
+#endif
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define SPLICE_F_MOVE 1
 #define SPLICE_F_NONBLOCK 2
 #define SPLICE_F_MORE 4
 #define SPLICE_F_GIFT 8
+#endif
 #if defined(__HyperbolaBSD__)
 int fallocate(int, off_t, off_t);
 #elif defined(__linux__)
 int fallocate(int, int, off_t, off_t);
 int name_to_handle_at(int, const char *, struct file_handle *, int *, int);
 int open_by_handle_at(int, struct file_handle *, int);
-#endif
 ssize_t readahead(int, off_t, size_t);
 int sync_file_range(int, off_t, off_t, unsigned);
+#endif
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 ssize_t vmsplice(int, const struct iovec *, size_t, unsigned);
 ssize_t splice(int, off_t *, int, off_t *, size_t, unsigned);
 ssize_t tee(int, int, size_t, unsigned);
+#endif
 #define loff_t off_t
 #endif
 
