@@ -34,7 +34,7 @@ int posix_fallocate(int fd, off_t base, off_t len)
 
 		if (lseek(fd, st.st_size, SEEK_SET) == (off_t)-1) return errno;
 
-		unsigned char buf[4096];
+		unsigned char buf[PAGE_SIZE];
 		explicit_bzero(buf, sizeof(buf));
 		off_t to_fill = base - st.st_size;
 
