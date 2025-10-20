@@ -85,8 +85,10 @@ int     sched_yield(void);
 #define CLONE_NEWNET	0x40000000
 #define CLONE_IO	0x80000000
 int clone (int (*)(void *), void *, int, void *, ...);
+#if defined(__linux__)
 int unshare(int);
 int setns(int, int);
+#endif
 
 int (memcmp)(const void *, const void *, size_t);
 void *(memset)(void *, int, size_t);
