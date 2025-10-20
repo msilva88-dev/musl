@@ -29,7 +29,9 @@ struct timezone {
 	int tz_dsttime;
 };
 int futimes(int, const struct timeval [2]);
+#if defined(__linux__)
 int futimesat(int, const char *, const struct timeval [2]);
+#endif
 int lutimes(const char *, const struct timeval [2]);
 int settimeofday(const struct timeval *, const struct timezone *);
 int adjtime (const struct timeval *, struct timeval *);
