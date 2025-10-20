@@ -56,7 +56,7 @@ int semctl(int, int, int, ...);
 int semget(key_t, int, int);
 int semop(int, struct sembuf *, size_t);
 
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && !defined(__OpenBSD__)
 int semtimedop(int, struct sembuf *, size_t, const struct timespec *);
 #endif
 
