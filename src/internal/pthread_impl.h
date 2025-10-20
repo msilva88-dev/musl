@@ -51,11 +51,13 @@ struct pthread {
 	void *result;
 	struct __ptcb *cancelbuf;
 	void **tsd;
+#if defined(__linux__)
 	struct {
 		volatile void *volatile head;
 		long off;
 		volatile void *volatile pending;
 	} robust_list;
+#endif
 	int h_errno_val;
 	volatile int timer_id;
 	locale_t locale;

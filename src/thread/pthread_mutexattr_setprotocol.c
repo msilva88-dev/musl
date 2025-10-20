@@ -1,7 +1,9 @@
 #include "pthread_impl.h"
 #include "syscall.h"
 
+#if defined(__linux__)
 static volatile int check_pi_result = -1;
+#endif
 
 int pthread_mutexattr_setprotocol(pthread_mutexattr_t *a, int protocol)
 {

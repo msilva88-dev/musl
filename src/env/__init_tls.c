@@ -38,7 +38,9 @@ int __init_tp(void *p)
 	td->detach_state = DT_JOINABLE;
 	td->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
 	td->locale = &libc.global_locale;
+#if defined(__linux__)
 	td->robust_list.head = &td->robust_list.head;
+#endif
 	td->sysinfo = __sysinfo;
 	td->next = td->prev = td;
 	return 0;

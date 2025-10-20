@@ -170,13 +170,17 @@ int pthread_mutexattr_destroy(pthread_mutexattr_t *);
 int pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *__restrict, int *__restrict);
 int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict, int *__restrict);
 int pthread_mutexattr_getpshared(const pthread_mutexattr_t *__restrict, int *__restrict);
+#if defined(__linux__)
 int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict, int *__restrict);
+#endif
 int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict, int *__restrict);
 int pthread_mutexattr_init(pthread_mutexattr_t *);
 int pthread_mutexattr_setprioceiling(pthread_mutexattr_t *, int);
 int pthread_mutexattr_setprotocol(pthread_mutexattr_t *, int);
 int pthread_mutexattr_setpshared(pthread_mutexattr_t *, int);
+#if defined(__linux__)
 int pthread_mutexattr_setrobust(pthread_mutexattr_t *, int);
+#endif
 int pthread_mutexattr_settype(pthread_mutexattr_t *, int);
 
 int pthread_condattr_init(pthread_condattr_t *);

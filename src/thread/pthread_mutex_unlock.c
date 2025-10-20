@@ -21,14 +21,18 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 		if ((type&4) && (old&0x40000000))
 			new = 0x7fffffff;
 		if (!priv) {
+#if defined(__linux__)
 			self->robust_list.pending = &m->_m_next;
+#endif
 			__vm_lock();
 		}
 		volatile void *prev = m->_m_prev;
 		volatile void *next = m->_m_next;
 		*(volatile void *volatile *)prev = next;
-		if (next != &self->robust_list.head) *(volatile void *volatile *)
-			((char *)next - sizeof(void *)) = prev;
+#if defined(__linux__)
+		if (next != &self->robust_list.head)
+			*(volatile void *volatile *)((char *)next - sizeof(void *)) = prev;
+#endif
 	}
 #if defined(__linux__)
 	if (type&8) {
@@ -45,7 +49,9 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 		cont = a_swap(&m->_m_lock, new);
 	}
 	if (type != PTHREAD_MUTEX_NORMAL && !priv) {
+#if defined(__linux__)
 		self->robust_list.pending = 0;
+#endif
 		__vm_unlock();
 	}
 	if (waiters || cont<0)

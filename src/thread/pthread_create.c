@@ -122,14 +122,14 @@ _Noreturn void __pthread_exit(void *result)
 	self->tid = 0;
 	UNLOCK(self->killlock);
 
+#if defined(__linux__)
 	/* Process robust list in userspace to handle non-pshared mutexes
 	 * and the detached thread case where the robust list head will
 	 * be invalid when the kernel would process it. */
 	__vm_lock();
 	volatile void *volatile *rp;
 	while ((rp=self->robust_list.head) && rp != &self->robust_list.head) {
-		pthread_mutex_t *m = (void *)((char *)rp
-			- offsetof(pthread_mutex_t, _m_next));
+		pthread_mutex_t *m = (void *)((char *)rp - offsetof(pthread_mutex_t, _m_next));
 		int waiters = m->_m_waiters;
 		int priv = (m->_m_type & 128) ^ 128;
 		self->robust_list.pending = rp;
@@ -140,6 +140,7 @@ _Noreturn void __pthread_exit(void *result)
 			__wake(&m->_m_lock, 1, priv);
 	}
 	__vm_unlock();
+#endif
 
 	__do_orphaned_stdio_locks();
 	__dl_thread_cleanup();
@@ -345,7 +346,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	} else {
 		new->detach_state = DT_JOINABLE;
 	}
+#if defined(__linux__)
 	new->robust_list.head = &new->robust_list.head;
+#endif
 	new->canary = self->canary;
 	new->sysinfo = self->sysinfo;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)

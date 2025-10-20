@@ -25,17 +25,23 @@ int __pthread_mutex_trylock_owner(pthread_mutex_t *m)
 	if (own || (old && !(type & 4))) return EBUSY;
 
 	if (type & 128) {
+#if defined(__linux__)
 		if (!self->robust_list.off) {
 			self->robust_list.off = (char*)&m->_m_lock-(char *)&m->_m_next;
 			__syscall(SYS_set_robust_list, &self->robust_list, 3*sizeof(long));
 		}
+#endif
 		if (m->_m_waiters) tid |= 0x80000000;
+#if defined(__linux__)
 		self->robust_list.pending = &m->_m_next;
+#endif
 	}
 	tid |= old & 0x40000000;
 
 	if (a_cas(&m->_m_lock, old, tid) != old) {
+#if defined(__linux__)
 		self->robust_list.pending = 0;
+#endif
 		if ((type&12)==12 && m->_m_waiters) return ENOTRECOVERABLE;
 		return EBUSY;
 	}
@@ -48,7 +54,6 @@ success:
 		self->robust_list.pending = 0;
 		return (type&4) ? ENOTRECOVERABLE : EBUSY;
 	}
-#endif
 
 	volatile void *next = self->robust_list.head;
 	m->_m_next = next;
@@ -57,6 +62,7 @@ success:
 		((char *)next - sizeof(void *)) = &m->_m_next;
 	self->robust_list.head = &m->_m_next;
 	self->robust_list.pending = 0;
+#endif
 
 	if (old) {
 		m->_m_count = 0;

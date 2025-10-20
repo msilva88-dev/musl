@@ -79,11 +79,13 @@ int pthread_mutexattr_getpshared(const pthread_mutexattr_t *restrict a, int *res
 	return 0;
 }
 
+#if defined(__linux__)
 int pthread_mutexattr_getrobust(const pthread_mutexattr_t *restrict a, int *restrict robust)
 {
 	*robust = a->__attr / 4U % 2;
 	return 0;
 }
+#endif
 
 int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict a, int *restrict type)
 {

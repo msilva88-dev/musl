@@ -15,8 +15,10 @@ void __post_Fork(int ret)
 	if (!ret) {
 		pthread_t self = __pthread_self();
 		self->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
+#if defined(__linux__)
 		self->robust_list.off = 0;
 		self->robust_list.pending = 0;
+#endif
 		self->next = self->prev = self;
 		__thread_list_lock = 0;
 		libc.threads_minus_1 = 0;
