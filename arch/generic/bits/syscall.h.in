@@ -26,12 +26,12 @@
 #define __NR_getuid			24
 #define __NR_geteuid			25
 #define __NR_ptrace			26
-#define __NR_recvmsg			27
-#define __NR_sendmsg			28
-#define __NR_recvfrom			29 // orecvfrom
-#define __NR_accept			30
-#define __NR_getpeername		31
-#define __NR_getsockname		32
+#define __NR_recvmsg			27 // __NR_socketcall
+#define __NR_sendmsg			28 // __NR_socketcall
+#define __NR_recvfrom			29 // orecvfrom, __NR_socketcall
+#define __NR_accept			30 // __NR_socketcall
+#define __NR_getpeername		31 // __NR_socketcall
+#define __NR_getsockname		32 // __NR_socketcall
 #define __NR_access			33
 #define __NR_chflags			34
 #define __NR_fchflags			35
@@ -92,20 +92,20 @@
 #define __NR_dup2			90
 #define __NR_nanosleep			91 // t32_nanosleep
 #define __NR_fcntl			92
-#define __NR_accept4			93
+#define __NR_accept4			93 // __NR_socketcall
 #define __NR___thrsleep			94 // t32___thrsleep
 #define __NR_fsync			95 // __NR_fdatasync
 #define __NR_setpriority		96
-#define __NR_socket			97
-#define __NR_connect			98
+#define __NR_socket			97 // __NR_socketcall
+#define __NR_connect			98 // __NR_socketcall
 #define __NR_getdents			99 // __NR_getdents64
 #define __NR_getpriority		100
 #define __NR_pipe2			101
 #define __NR_dup3			102
 #define __NR_sigreturn			103 // __NR_rt_sigreturn
-#define __NR_bind			104
-#define __NR_setsockopt			105
-#define __NR_listen			106
+#define __NR_bind			104 // __NR_socketcall
+#define __NR_setsockopt			105 // __NR_socketcall
+#define __NR_listen			106 // __NR_socketcall
 #define __NR_chflagsat			107
 #define __NR_pledge			108
 #define __NR_ppoll			109
@@ -117,7 +117,7 @@
 #define __NR___realpath			115
 /* 116 (t32_gettimeofday) is replaced by 67 (gettimeofday) */
 /* 117 (t32_getrusage) is replaced by 19 (getrusage) */
-#define __NR_getsockopt			118
+#define __NR_getsockopt			118 // __NR_socketcall
 #define __NR_thrkill			119 // __NR_tkill, __NR_tgkill
 #define __NR_readv			120
 #define __NR_writev			121
@@ -132,9 +132,9 @@
 /* 130 (oftruncate) is replaced by 201 (ftruncate) */
 #define __NR_flock			131
 #define __NR_mkfifo			132
-#define __NR_sendto			133
-#define __NR_shutdown			134
-#define __NR_socketpair			135
+#define __NR_sendto			133 // __NR_socketcall
+#define __NR_shutdown			134 // __NR_socketcall
+#define __NR_socketpair			135 // __NR_socketcall
 #define __NR_mkdir			136
 #define __NR_rmdir			137
 /* 138 (t32_utimes) is replaced by 76 (utimes) */
@@ -220,16 +220,16 @@
 /* 218 is unused */
 /* 219 is unused */
 /* 220 is unused */
-#define __NR_semget			221
+#define __NR_semget			221 // __NR_ipc
 /* 222 (semop35) is replaced by 290 (semop) */
 /* 223 (semconfig35) is removed */
 /* 224 is unused */
-#define __NR_msgget			225
-#define __NR_msgsnd			226
-#define __NR_msgrcv			227
-#define __NR_shmat			228
+#define __NR_msgget			225 // __NR_ipc
+#define __NR_msgsnd			226 // __NR_ipc
+#define __NR_msgrcv			227 // __NR_ipc
+#define __NR_shmat			228 // __NR_ipc
 /* 229 is unused */
-#define __NR_shmdt			230
+#define __NR_shmdt			230 // __NR_ipc
 /* 231 (shmget35) is replaced by 289 (shmget) */
 /* 232 (t32_clock_gettime) is replaced by 87 (clock_gettime) */
 /* 233 (t32_clock_settime) is replaced by 88 (clock_settime) */
@@ -268,7 +268,7 @@
 /* 266 is unused */
 #define __NR_preadv			267 // __NR_preadv2
 #define __NR_pwritev			268 // __NR_pwritev2
-#define __NR_kqueue			269
+#define __NR_kqueue			269 // __NR_epoll_{create,create1,ctl,ctl_old,pwait,pwait2,wait,wait_old}
 /* 270 (t32_kevent) is replaced by 72 (kevent) */
 #define __NR_mlockall			271
 #define __NR_munlockall			272
@@ -288,15 +288,15 @@
 #define __NR_mquery			286 // omquery
 #define __NR_closefrom			287
 #define __NR_sigaltstack		288
-#define __NR_shmget			289 // shmget35
-#define __NR_semop			290 // semop35
+#define __NR_shmget			289 // shmget35, __NR_ipc
+#define __NR_semop			290 // semop35, __NR_ipc
 /* 291 (t32_stat) is replaced by 38 (stat) */
 /* 292 (t32_fstat) is replaced by 53 (fstat) */
 /* 293 (t32_lstat) is replaced by 40 (lstat) */
 #define __NR_fhstat			294
-#define __NR___semctl			295 // semctl35, __NR_semctl
-#define __NR_shmctl			296 // shmctl35
-#define __NR_msgctl			297 // msgctl35
+#define __NR___semctl			295 // semctl35, __NR_semctl, __NR_ipc
+#define __NR_shmctl			296 // shmctl35, __NR_ipc
+#define __NR_msgctl			297 // msgctl35, __NR_ipc
 #define __NR_sched_yield		298
 #define __NR_getthrid			299 // __NR_gettid
 /* 300 (t32___thrsleep) is replaced by 94 (__thrsleep) */
@@ -342,7 +342,6 @@
 #define __NR_clone			56
 #define __NR_creat			85
 #define __NR_times			100
-#define __NR_socketcall			102
 #define __NR_setfsuid			122
 #define __NR_setfsgid			123
 #define __NR_capget			125
@@ -402,9 +401,6 @@
 #define __NR_io_cancel			210
 #define __NR_get_thread_area		211
 #define __NR_lookup_dcookie		212
-#define __NR_epoll_create		213
-#define __NR_epoll_ctl_old		214
-#define __NR_epoll_wait_old		215
 #define __NR_remap_file_pages		216
 #define __NR_set_tid_address		218
 #define __NR_restart_syscall		219
@@ -417,8 +413,6 @@
 #define __NR_timer_delete		226
 #define __NR_clock_nanosleep		230
 #define __NR_exit_group			231
-#define __NR_epoll_wait			232
-#define __NR_epoll_ctl			233
 #define __NR_vserver			236
 #define __NR_mbind			237
 #define __NR_set_mempolicy		238
@@ -449,7 +443,6 @@
 #define __NR_sync_file_range		277
 #define __NR_vmsplice			278
 #define __NR_move_pages			279
-#define __NR_epoll_pwait		281
 #define __NR_signalfd			282
 #define __NR_timerfd_create		283
 #define __NR_eventfd			284
@@ -458,7 +451,6 @@
 #define __NR_timerfd_gettime		287
 #define __NR_signalfd4			289
 #define __NR_eventfd2			290
-#define __NR_epoll_create1		291
 #define __NR_inotify_init1		294
 #define __NR_rt_tgsigqueueinfo		297
 #define __NR_perf_event_open		298
@@ -507,7 +499,6 @@
 #define __NR_close_range		436
 #define __NR_pidfd_getfd		438
 #define __NR_process_madvise		440
-#define __NR_epoll_pwait2		441
 #define __NR_mount_setattr		442
 #define __NR_landlock_create_ruleset	444
 #define __NR_landlock_add_rule		445
