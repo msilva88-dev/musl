@@ -28,5 +28,9 @@ ssize_t sendmsg(int fd, const struct msghdr *msg, int flags)
 		}
 	}
 #endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall_cp(SYS_sendmsg, fd, msg, flags);
+#elif defined(__linux__)
 	return socketcall_cp(sendmsg, fd, msg, flags, 0, 0, 0);
+#endif
 }

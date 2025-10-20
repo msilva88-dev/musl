@@ -342,6 +342,7 @@
 #define __NR_clone			56
 #define __NR_creat			85
 #define __NR_times			100
+#define __NR_socketcall			102
 #define __NR_setfsuid			122
 #define __NR_setfsgid			123
 #define __NR_capget			125

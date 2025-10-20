@@ -10,15 +10,15 @@
 
 int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
 {
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall(SYS_setsockopt, fd, level, optname, optval, optlen);
+#elif defined(__linux__)
 	const struct timeval *tv;
 	time_t s;
 	suseconds_t us;
-#endif
 
 	int r = __socketcall(setsockopt, fd, level, optname, optval, optlen, 0);
 
-#if defined(__linux__)
 	if (r==-ENOPROTOOPT) switch (level) {
 	case SOL_SOCKET:
 		switch (optname) {
@@ -47,6 +47,6 @@ int setsockopt(int fd, int level, int optname, const void *optval, socklen_t opt
 			break;
 		}
 	}
-#endif
 	return __syscall_ret(r);
+#endif
 }

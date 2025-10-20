@@ -59,7 +59,11 @@ ssize_t recvmsg(int fd, struct msghdr *msg, int flags)
 		msg = &h;
 	}
 #endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	r = syscall_cp(SYS_recvmsg, fd, msg, flags);
+#elif defined(__linux__)
 	r = socketcall_cp(recvmsg, fd, msg, flags, 0, 0, 0);
+#endif
 	if (r >= 0) __convert_scm_timestamps(msg, orig_controllen);
 #if LONG_MAX > INT_MAX
 	if (orig) *orig = h;
