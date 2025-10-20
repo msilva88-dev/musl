@@ -44,7 +44,7 @@ int semctl(int id, int num, int cmd, ...)
 		arg.buf = &tmp;
 	}
 #endif
-#ifndef SYS_ipc
+#if !defined(SYS_ipc) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	int r = __syscall(SYS_semctl, id, num, IPC_CMD(cmd), arg.buf);
 #else
 	int r = __syscall(SYS_ipc, IPCOP_semctl, id, num, IPC_CMD(cmd), &arg.buf);

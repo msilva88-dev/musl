@@ -25,7 +25,7 @@ int msgctl(int q, int cmd, struct msqid_ds *buf)
 		buf = &tmp;
 	}
 #endif
-#ifndef SYS_ipc
+#if !defined(SYS_ipc) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	int r = __syscall(SYS_msgctl, q, IPC_CMD(cmd), buf);
 #else
 	int r = __syscall(SYS_ipc, IPCOP_msgctl, q, IPC_CMD(cmd), 0, buf, 0);

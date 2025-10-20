@@ -4,7 +4,7 @@
 
 int semop(int id, struct sembuf *buf, size_t n)
 {
-#ifndef SYS_ipc
+#if !defined(SYS_ipc) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_semop, id, buf, n);
 #else
 	return syscall(SYS_ipc, IPCOP_semop, id, n, 0, buf);

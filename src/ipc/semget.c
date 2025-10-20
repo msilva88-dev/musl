@@ -11,7 +11,7 @@ int semget(key_t key, int n, int fl)
 	 * n fits in the correct (per POSIX) userspace type, so
 	 * we have to check here. */
 	if (n > USHRT_MAX) return __syscall_ret(-EINVAL);
-#ifndef SYS_ipc
+#if !defined(SYS_ipc) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	return syscall(SYS_semget, key, n, fl);
 #else
 	return syscall(SYS_ipc, IPCOP_semget, key, n, fl);
