@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stddef.h>
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#include <pthread.h>
+#include <sched.h>
 #endif
 
 static void dummy_0()
@@ -166,20 +166,29 @@ _Noreturn void __pthread_exit(void *result)
 		 * processed above, so unregister it with the kernel. */
 		if (self->robust_list.off)
 			__syscall(SYS_set_robust_list, 0, 3*sizeof(long));
+#endif
 
 		/* The following call unmaps the thread's stack mapping
 		 * and then exits without touching the stack. */
 		__unmapself(self->map_base, self->map_size);
-#elif defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-		__syscall(SYS_munmap, self->map_base, self->map_size);
-#endif
 	}
 
 	/* Wake any joiner. */
 	a_store(&self->detach_state, DT_EXITED);
 	__wake(&self->detach_state, 1, 1);
 
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (self->clear_child_tid) {
+		a_store(self->clear_child_tid, 0);
+		__wake(self->clear_child_tid, 1, 0);
+	}
+
+	__syscall(SYS___threxit, &self->tid);
+	for(;;);
+#elif defined(__linux__)
 	for (;;) __syscall(SYS_exit, 0);
+#endif
 }
 
 void __do_cleanup_push(struct __ptcb *cb)
@@ -208,12 +217,21 @@ static int start(void *p)
 	if (state) {
 		if (a_cas(&args->control, 1, 2)==1)
 			__wait(&args->control, 0, 2, 1);
-#if defined(__linux__)
 		if (args->control) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+			pthread_t self = __pthread_self();
+			self->clear_child_tid = &args->control;
+
+			a_store(self->clear_child_tid, 0);
+			__wake(self->clear_child_tid, 1, 0);
+
+			__syscall(SYS___threxit, &self->tid);
+			for(;;);
+#elif defined(__linux__)
 			__syscall(SYS_set_tid_address, &args->control);
 			for (;;) __syscall(SYS_exit, 0);
-		}
 #endif
+		}
 	}
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	__syscall(SYS_sigprocmask, SIG_SETMASK, &args->sig_mask);

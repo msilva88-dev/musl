@@ -14,8 +14,11 @@ void __post_Fork(int ret)
 {
 	if (!ret) {
 		pthread_t self = __pthread_self();
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		self->tid = __syscall(SYS_getthrid);
+		self->clear_child_tid = &__thread_list_lock;
+#elif defined(__linux__)
 		self->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
-#if defined(__linux__)
 		self->robust_list.off = 0;
 		self->robust_list.pending = 0;
 #endif

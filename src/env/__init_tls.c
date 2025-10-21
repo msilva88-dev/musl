@@ -36,7 +36,12 @@ int __init_tp(void *p)
 	if (!r) libc.can_do_threads = 1;
 #endif
 	td->detach_state = DT_JOINABLE;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	td->tid = __syscall(SYS_getthrid);
+	td->clear_child_tid = &__thread_list_lock;
+#elif defined(__linux__)
 	td->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
+#endif
 	td->locale = &libc.global_locale;
 #if defined(__linux__)
 	td->robust_list.head = &td->robust_list.head;

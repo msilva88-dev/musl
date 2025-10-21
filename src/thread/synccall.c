@@ -64,7 +64,11 @@ void __synccall(void (*func)(void *), void *ctx)
 	sem_init(&caller_sem, 0, 0);
 	sem_init(&exit_sem, 0, 0);
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (!libc.threads_minus_1 || __syscall(SYS_getthrid) != self->tid)
+#elif defined(__linux__)
 	if (!libc.threads_minus_1 || __syscall(SYS_gettid) != self->tid)
+#endif
 		goto single_threaded;
 
 	callback = func;

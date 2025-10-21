@@ -1,3 +1,6 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <sched.h>
+#endif
 #include "pthread_impl.h"
 #include "lock.h"
 
