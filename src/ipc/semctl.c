@@ -44,10 +44,14 @@ int semctl(int id, int num, int cmd, ...)
 		arg.buf = &tmp;
 	}
 #endif
-#if !defined(SYS_ipc) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	int r = __syscall(SYS___semctl, id, num, IPC_CMD(cmd), arg.buf);
+#elif defined(__linux__)
+#ifndef SYS_ipc
 	int r = __syscall(SYS_semctl, id, num, IPC_CMD(cmd), arg.buf);
 #else
 	int r = __syscall(SYS_ipc, IPCOP_semctl, id, num, IPC_CMD(cmd), &arg.buf);
+#endif
 #endif
 #ifdef SYSCALL_IPC_BROKEN_MODE
 	if (r >= 0) switch (cmd | IPC_TIME64) {
