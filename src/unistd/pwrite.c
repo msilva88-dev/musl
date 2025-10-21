@@ -16,5 +16,9 @@ ssize_t pwrite(int fd, const void *buf, size_t size, off_t ofs)
 #endif
 	if (fcntl(fd, F_GETFL) & O_APPEND)
 		return __syscall_ret(-EOPNOTSUPP);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return syscall_cp(SYS_pwrite, fd, buf, size, 0, __SYSCALL_LL_PRW(ofs));
+#elif defined(__linux__)
 	return syscall_cp(SYS_pwrite, fd, buf, size, __SYSCALL_LL_PRW(ofs));
+#endif
 }
