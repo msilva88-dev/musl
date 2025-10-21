@@ -35,8 +35,8 @@ struct pthread {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	char name[32];
 	struct pthread_attr attr;
-	pid_t *clear_child_tid;
-	pid_t *set_child_tid;
+	pid_t *ctid;
+	char clear_ctid;
 #endif
 	int tid;
 	int errno_val;

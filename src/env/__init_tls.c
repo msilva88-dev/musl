@@ -38,7 +38,7 @@ int __init_tp(void *p)
 	td->detach_state = DT_JOINABLE;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	td->tid = __syscall(SYS_getthrid);
-	td->clear_child_tid = &__thread_list_lock;
+	if (td->clear_ctid) td->ctid = &__thread_list_lock;
 #elif defined(__linux__)
 	td->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
 #endif

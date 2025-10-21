@@ -110,7 +110,6 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 	uintptr_t sp = ((uintptr_t)stack & ~0xF);
 #endif
 	struct start_args *args = NULL;
-	pid_t *ctid = NULL __attribute__((unused)),
 	pid_t pid = -1, *ptid = NULL, ptid_def = -1;
 	int ret = 0;
 	void *shmem = NULL;
@@ -152,9 +151,11 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 		}
 
 		if (flags & CLONE_CHILD_SETTID) {
-			ctid = va_arg(ap, pid_t *);
-			if (!ctid) {
-				return -EINVAL;
+			if (tls) {
+				tls->ctid = va_arg(ap, pid_t *);
+				if (!tls->ctid) {
+					return -EINVAL;
+				}
 			}
 		}
 	}
@@ -355,13 +356,8 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 #endif
 
 	if ((flags & CLONE_THREAD) && (flags & CLONE_VM)) {
-		if (
-			ctid
-			&& (flags & CLONE_CHILD_CLEARTID)
-			&& (flags & CLONE_CHILD_SETTID)
-		) {
-			*ctid = 0;
-			__syscall(SYS_futex, ctid, FUTEX_WAKE, 1, NULL, NULL);
+		if (tls && (flags & CLONE_CHILD_CLEARTID)) {
+			tls->clear_ctid = 1;
 		}
 
 		__syscall(SYS___threxit, ret);

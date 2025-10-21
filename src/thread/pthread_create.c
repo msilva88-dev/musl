@@ -179,9 +179,9 @@ _Noreturn void __pthread_exit(void *result)
 
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	if (self->clear_child_tid) {
-		a_store(self->clear_child_tid, 0);
-		__wake(self->clear_child_tid, 1, 0);
+	if (self->ctid) {
+		if (self->clear_ctid) a_store(self->ctid, 0);
+		__wake(self->ctid, 1, 0);
 	}
 
 	__syscall(SYS___threxit, &self->tid);
@@ -220,10 +220,12 @@ static int start(void *p)
 		if (args->control) {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			pthread_t self = __pthread_self();
-			self->clear_child_tid = &args->control;
+			if (self->clear_ctid) {
+				self->ctid = &args->control;
+				a_store(self->ctid, 0);
+			}
 
-			a_store(self->clear_child_tid, 0);
-			__wake(self->clear_child_tid, 1, 0);
+			__wake(self->ctid, 1, 0);
 
 			__syscall(SYS___threxit, &self->tid);
 			for(;;);
