@@ -302,7 +302,7 @@
 /* 300 (t32___thrsleep) is replaced by 94 (__thrsleep) */
 #define __NR___thrwakeup		301
 #define __NR___threxit			302
-#define __NR___thrsigdivert		303
+#define __NR___thrsigdivert		303 // __NR_rt_sigtimedwait
 #define __NR___getcwd			304 // __NR_getcwd
 #define __NR_adjfreq			305
 /* 306 (getfsstat53) is replaced by 62 (getfsstat) */
@@ -346,7 +346,6 @@
 #define __NR_setfsgid			123
 #define __NR_capget			125
 #define __NR_capset			126
-#define __NR_rt_sigtimedwait		128
 #define __NR_rt_sigqueueinfo		129
 #define __NR_utime			132
 #define __NR_uselib			134
