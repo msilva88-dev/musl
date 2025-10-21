@@ -26,10 +26,13 @@ struct swapent {
 #define SWF_ENABLE              0x2
 #define SWF_BUSY                0x4
 #define SWF_FAKE                0x8
-#elif defined(__linux__)
+#endif
+#if defined(__HyperbolaBSD__) || defined(__linux__)
 #define SWAP_FLAG_PREFER        0x8000
 #define SWAP_FLAG_PRIO_MASK     0x7fff
 #define SWAP_FLAG_PRIO_SHIFT    0
+#endif
+#if defined(__linux__)
 #define SWAP_FLAG_DISCARD       0x10000
 #endif
 
