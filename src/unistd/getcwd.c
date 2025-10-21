@@ -14,7 +14,11 @@ char *getcwd(char *buf, size_t size)
 		errno = EINVAL;
 		return 0;
 	}
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	long ret = syscall(SYS___getcwd, buf, size);
+#elif defined(__linux__)
 	long ret = syscall(SYS_getcwd, buf, size);
+#endif
 	if (ret < 0)
 		return 0;
 	if (ret == 0 || buf[0] != '/') {
