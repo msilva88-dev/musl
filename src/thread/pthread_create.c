@@ -370,7 +370,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->robust_list.head = &new->robust_list.head;
 #endif
 	new->canary = self->canary;
+#if defined(__linux__)
 	new->sysinfo = self->sysinfo;
+#endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	new->attr._a_policy = SCHED_OTHER;
 	new->attr._a_prio = 0;

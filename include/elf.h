@@ -1085,7 +1085,9 @@ typedef struct {
 
 
 
+#if defined(__linux__)
 #define AT_SYSINFO	32
+#endif
 #define AT_SYSINFO_EHDR	33
 
 

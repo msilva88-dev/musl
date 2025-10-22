@@ -45,8 +45,8 @@ int __init_tp(void *p)
 	td->locale = &libc.global_locale;
 #if defined(__linux__)
 	td->robust_list.head = &td->robust_list.head;
-#endif
 	td->sysinfo = __sysinfo;
+#endif
 	td->next = td->prev = td;
 	return 0;
 }

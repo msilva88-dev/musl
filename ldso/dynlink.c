@@ -1999,8 +1999,10 @@ void __dls3(size_t *sp, size_t *auxv)
 	 * global data that may be needed before we can make syscalls. */
 	__environ = envp;
 	decode_vec(auxv, aux, AUX_CNT);
+#if defined(__linux__)
 	search_vec(auxv, &__sysinfo, AT_SYSINFO);
 	__pthread_self()->sysinfo = __sysinfo;
+#endif
 	libc.page_size = aux[AT_PAGESZ];
 #if defined(__linux__)
 	libc.secure = ((aux[0]&0x7800)!=0x7800 || aux[AT_UID]!=aux[AT_EUID]

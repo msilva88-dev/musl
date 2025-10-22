@@ -23,7 +23,9 @@ struct pthread {
 	uintptr_t *dtv;
 #endif
 	struct pthread *prev, *next; /* non-ABI */
+#if defined(__linux__)
 	uintptr_t sysinfo;
+#endif
 #ifndef TLS_ABOVE_TP
 #ifdef CANARY_PAD
 	uintptr_t canary_pad;
