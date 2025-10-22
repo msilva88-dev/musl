@@ -1,11 +1,19 @@
 #include <sys/auxv.h>
 #include <errno.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#elif defined(__linux__)
 #include "libc.h"
+#endif
 
 unsigned long __getauxval(unsigned long item)
 {
 	size_t *auxv = libc.auxv;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (item == AT_SECURE) return __syscall(SYS_issetugid);
+#elif defined(__linux__)
 	if (item == AT_SECURE) return libc.secure;
+#endif
 	for (; *auxv; auxv+=2)
 		if (*auxv==item) return auxv[1];
 	errno = ENOENT;

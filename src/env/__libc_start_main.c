@@ -53,7 +53,9 @@ void __init_libc(char **envp, char *pn)
 	for (i=0; i<3; i++) if (pfd[i].revents&POLLNVAL)
 		if (__sys_open("/dev/null", O_RDWR)<0)
 			a_crash();
+#if defined(__linux__)
 	libc.secure = 1;
+#endif
 }
 
 static void libc_start_init(void)

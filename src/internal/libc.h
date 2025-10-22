@@ -20,7 +20,9 @@ struct tls_module {
 struct __libc {
 	char can_do_threads;
 	char threaded;
+#if defined(__linux__)
 	char secure;
+#endif
 	volatile signed char need_locks;
 	int threads_minus_1;
 	size_t *auxv;

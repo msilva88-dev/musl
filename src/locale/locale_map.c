@@ -6,6 +6,9 @@
 #include "libc.h"
 #include "lock.h"
 #include "fork_impl.h"
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#endif
 
 #define malloc __libc_malloc
 #define calloc undef
@@ -63,7 +66,11 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 	for (p=loc_head; p; p=p->next)
 		if (!strcmp(val, p->name)) return p;
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (!__syscall(SYS_issetugid) path = getenv("MUSL_LOCPATH");
+#elif defined(__linux__)
 	if (!libc.secure) path = getenv("MUSL_LOCPATH");
+#endif
 	/* FIXME: add a default path? */
 
 	if (path) for (; *path; path=z+!!*z) {

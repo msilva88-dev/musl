@@ -8,6 +8,9 @@
 #include "libc.h"
 #include "lock.h"
 #include "fork_impl.h"
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#endif
 
 #define malloc __libc_malloc
 #define calloc undef
@@ -163,7 +166,7 @@ static void do_tzset()
 		             || !strcmp(dummy_name, "UTC")
 		             || !strcmp(dummy_name, "GMT")))
 			posix_form = 1;
-	}	
+	}
 
 	/* Non-suid can use an absolute tzfile pathname or a relative
 	 * pathame beginning with "."; in secure mode, only the
@@ -171,7 +174,11 @@ static void do_tzset()
 	if (!posix_form) {
 		if (*s == ':') s++;
 		if (*s == '/' || *s == '.') {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+			if (!__syscall(SYS_issetugid) || !strcmp(s, "/etc/localtime"))
+#elif defined(__linux__)
 			if (!libc.secure || !strcmp(s, "/etc/localtime"))
+#endif
 				map = __map_file(s, &map_size);
 		} else {
 			size_t l = strlen(s);

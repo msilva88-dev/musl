@@ -1016,11 +1016,13 @@ static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 		 * For libraries, however, $ORIGIN can be processed safely
 		 * since the library's pathname came from a trusted source
 		 * (either system paths or a call to dlopen). */
-		if (libc.secure)
-			return 0;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		if (issetugid())
+			return 0;
 		l = get_execpath_bsd(buf, buf_size);
 #elif defined(__linux__)
+		if (libc.secure)
+			return 0;
 		l = readlink("/proc/self/exe", buf, buf_size);
 #endif
 		if (l == -1) switch (errno) {
@@ -1053,7 +1055,11 @@ static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 		l = 1;
 	}
 	/* Disallow non-absolute origins for suid/sgid/AT_SECURE. */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (issetugid() && *origin != '/')
+#elif defined(__linux__)
 	if (libc.secure && *origin != '/')
+#endif
 		return 0;
 	p->rpath = malloc(strlen(p->rpath_orig) + n*l + 1);
 	if (!p->rpath) return -1;
@@ -1996,11 +2002,17 @@ void __dls3(size_t *sp, size_t *auxv)
 	search_vec(auxv, &__sysinfo, AT_SYSINFO);
 	__pthread_self()->sysinfo = __sysinfo;
 	libc.page_size = aux[AT_PAGESZ];
+#if defined(__linux__)
 	libc.secure = ((aux[0]&0x7800)!=0x7800 || aux[AT_UID]!=aux[AT_EUID]
 		|| aux[AT_GID]!=aux[AT_EGID] || aux[AT_SECURE]);
+#endif
 
 	/* Only trust user/env if kernel says we're not suid/sgid */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+        if (!issetugid()) {
+#elif defined(__linux__)
 	if (!libc.secure) {
+#endif
 		env_path = getenv("LD_LIBRARY_PATH");
 		env_preload = getenv("LD_PRELOAD");
 	}

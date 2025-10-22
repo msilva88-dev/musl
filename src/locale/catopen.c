@@ -7,7 +7,11 @@
 #include <langinfo.h>
 #include <locale.h>
 #include <sys/mman.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#elif defined(__linux__)
 #include "libc.h"
+#endif
 
 #define V(p) be32toh(*(uint32_t *)(p))
 
@@ -34,7 +38,11 @@ nl_catd catopen(const char *name, int oflag)
 	char buf[PATH_MAX];
 	size_t i;
 	const char *path, *lang, *p, *z;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	if (__syscall(SYS_issetugid) || !(path = getenv("NLSPATH"))) {
+#elif defined(__linux__)
 	if (libc.secure || !(path = getenv("NLSPATH"))) {
+#endif
 		errno = ENOENT;
 		return (nl_catd)-1;
 	}
