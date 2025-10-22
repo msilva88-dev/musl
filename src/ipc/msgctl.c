@@ -1,14 +1,23 @@
 #include <sys/msg.h>
+#if defined(__linux__)
 #include <endian.h>
+#endif
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
+#if defined(__linux__)
 #if __BYTE_ORDER != __BIG_ENDIAN
 #undef SYSCALL_IPC_BROKEN_MODE
+#endif
 #endif
 
 int msgctl(int q, int cmd, struct msqid_ds *buf)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	int r = __syscall(SYS_msgctl, q, cmd, buf);
+#elif defined(__linux__)
 #if IPC_TIME64
 	struct msqid_ds out, *orig;
 	if (cmd&IPC_TIME64) {
@@ -25,7 +34,7 @@ int msgctl(int q, int cmd, struct msqid_ds *buf)
 		buf = &tmp;
 	}
 #endif
-#if !defined(SYS_ipc) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifndef SYS_ipc
 	int r = __syscall(SYS_msgctl, q, IPC_CMD(cmd), buf);
 #else
 	int r = __syscall(SYS_ipc, IPCOP_msgctl, q, IPC_CMD(cmd), 0, buf, 0);
@@ -46,6 +55,7 @@ int msgctl(int q, int cmd, struct msqid_ds *buf)
 		IPC_HILO(buf, msg_rtime);
 		IPC_HILO(buf, msg_ctime);
 	}
+#endif
 #endif
 	return __syscall_ret(r);
 }

@@ -2,7 +2,9 @@
 #include <limits.h>
 #include <errno.h>
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
 int semget(key_t key, int n, int fl)
 {

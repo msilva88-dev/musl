@@ -1,6 +1,8 @@
 #include <sys/shm.h>
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
 int shmdt(const void *addr)
 {

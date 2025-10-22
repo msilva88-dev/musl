@@ -24,13 +24,21 @@ extern "C" {
 #include <bits/ipc.h>
 #include <bits/ipcstat.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define IPC_R 000400
+#define IPC_W 000200
+#define IPC_M 010000
+#endif
+
 #define IPC_CREAT  01000
 #define IPC_EXCL   02000
 #define IPC_NOWAIT 04000
 
 #define IPC_RMID 0
 #define IPC_SET  1
+#if defined(__linux__)
 #define IPC_INFO 3
+#endif
 
 #define IPC_PRIVATE ((key_t) 0)
 

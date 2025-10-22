@@ -1,6 +1,8 @@
 #include <sys/shm.h>
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
 void *shmat(int id, const void *addr, int flag)
 {

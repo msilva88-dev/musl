@@ -21,6 +21,10 @@ extern "C" {
 #define __swap_successes swap_successes
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+typedef short shmatt_t;
+#endif
+
 #include <bits/shm.h>
 
 #define SHM_R 0400
@@ -28,9 +32,15 @@ extern "C" {
 
 #define SHM_RDONLY 010000
 #define SHM_RND    020000
+#if defined(__linux__)
 #define SHM_REMAP  040000
 #define SHM_EXEC   0100000
+#endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SHM_LOCK 3
+#define SHM_UNLOCK 4
+#elif defined(__linux__)
 #define SHM_LOCK 11
 #define SHM_UNLOCK 12
 #define SHM_STAT (13 | (IPC_STAT & 0x100))
@@ -57,6 +67,7 @@ extern "C" {
 #define SHM_HUGE_16GB  (34U << 26)
 
 typedef unsigned long shmatt_t;
+#endif
 
 void *shmat(int, const void *, int);
 int shmctl(int, int, struct shmid_ds *);

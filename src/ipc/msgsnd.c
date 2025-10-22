@@ -1,6 +1,8 @@
 #include <sys/msg.h>
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
 int msgsnd(int q, const void *m, size_t len, int flag)
 {

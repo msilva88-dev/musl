@@ -1,6 +1,5 @@
 #include "syscall.h"
 
-#if defined(__linux__)
 #define IPCOP_semop      1
 #define IPCOP_semget     2
 #define IPCOP_semctl     3
@@ -13,7 +12,6 @@
 #define IPCOP_shmdt     22
 #define IPCOP_shmget    23
 #define IPCOP_shmctl    24
-#endif
 
 #ifndef IPC_64
 #define IPC_64 0x100

@@ -1,6 +1,8 @@
 #include <sys/sem.h>
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
 int semop(int id, struct sembuf *buf, size_t n)
 {

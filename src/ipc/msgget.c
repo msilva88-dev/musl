@@ -1,6 +1,8 @@
 #include <sys/msg.h>
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
 int msgget(key_t k, int flag)
 {

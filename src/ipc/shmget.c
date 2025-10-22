@@ -1,7 +1,9 @@
 #include <sys/shm.h>
 #include <stdint.h>
 #include "syscall.h"
+#if defined(__linux__)
 #include "ipc.h"
+#endif
 
 int shmget(key_t key, size_t size, int flag)
 {

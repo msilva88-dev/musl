@@ -16,7 +16,13 @@ extern "C" {
 
 #include <sys/ipc.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define SEM_A		IPC_W
+#define SEM_R		IPC_R
+#endif
+
 #define SEM_UNDO	0x1000
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define GETPID		11
 #define GETVAL		12
 #define GETALL		13
@@ -24,9 +30,28 @@ extern "C" {
 #define GETZCNT		15
 #define SETVAL		16
 #define SETALL		17
+#elif defined(__linux__)
+#define GETPID		4
+#define GETVAL		5
+#define GETALL		6
+#define GETNCNT		3
+#define GETZCNT		7
+#define SETVAL		8
+#define SETALL		9
+#endif
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+struct sem {
+	unsigned short semval;
+	pid_t sempid;
+	unsigned short semncnt;
+	unsigned short semzcnt;
+};
+#endif
 
 #include <bits/sem.h>
 
+#if defined(__linux__)
 #define _SEM_SEMUN_UNDEFINED 1
 
 #define SEM_STAT (18 | (IPC_STAT & 0x100))
@@ -45,6 +70,7 @@ struct  seminfo {
 	int semvmx;
 	int semaem;
 };
+#endif
 
 struct sembuf {
 	unsigned short sem_num;

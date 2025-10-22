@@ -2,6 +2,12 @@
 
 struct shmid_ds {
 	struct ipc_perm shm_perm;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	int shm_segsz;
+	pid_t shm_lpid;
+	pid_t shm_cpid;
+	shmatt_t shm_nattch;
+#elif defined(__linux__)
 	size_t shm_segsz;
 	unsigned long __shm_atime_lo;
 	unsigned long __shm_atime_hi;
@@ -15,11 +21,23 @@ struct shmid_ds {
 	unsigned long __pad1;
 	unsigned long __pad2;
 	unsigned long __pad3;
+#endif
 	time_t shm_atime;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	unsigned long __pad1;
+#endif
 	time_t shm_dtime;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	unsigned long __pad2;
+#endif
 	time_t shm_ctime;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	unsigned long __pad3;
+	void *shm_internal;
+#endif
 };
 
+#if defined(__linux__)
 struct shminfo {
 	unsigned long shmmax, shmmin, shmmni, shmseg, shmall, __unused[4];
 };
@@ -29,3 +47,4 @@ struct shm_info {
 	unsigned long shm_tot, shm_rss, shm_swp;
 	unsigned long __swap_attempts, __swap_successes;
 };
+#endif
