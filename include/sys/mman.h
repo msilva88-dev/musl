@@ -71,10 +71,12 @@ extern "C" {
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(_BSD_SOURCE)
 #define MAP_INHERIT_SHARE 0
 #define MAP_INHERIT_COPY  1
 #define MAP_INHERIT_NONE  2
 #define MAP_INHERIT_ZERO  3
+#endif
 #endif
 
 #if defined(__linux__)
