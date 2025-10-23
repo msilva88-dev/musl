@@ -1,6 +1,8 @@
 #include <elf.h>
 #include <link.h>
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/sysctl.h>
+#elif defined(__OpenBSD__)
 #include <sys/sysctl.h>
 #endif
 #include "pthread_impl.h"
