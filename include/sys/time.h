@@ -35,6 +35,12 @@ int futimesat(int, const char *, const struct timeval [2]);
 int lutimes(const char *, const struct timeval [2]);
 int settimeofday(const struct timeval *, const struct timezone *);
 int adjtime (const struct timeval *, struct timeval *);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+int adjfreq (const int64_t *, int64_t *);
+#endif
+#endif
+
 #define timerisset(t) ((t)->tv_sec || (t)->tv_usec)
 #define timerclear(t) ((t)->tv_sec = (t)->tv_usec = 0)
 #define timercmp(s,t,op) ((s)->tv_sec == (t)->tv_sec ? \
