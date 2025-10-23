@@ -248,9 +248,11 @@ int sigrelse(int);
 void (*sigset(int, void (*)(int)))(int);
 #define TRAP_BRKPT 1
 #define TRAP_TRACE 2
+#if defined(__linux__)
 #define TRAP_BRANCH 3
 #define TRAP_HWBKPT 4
 #define TRAP_UNK 5
+#endif
 #define POLL_IN 1
 #define POLL_OUT 2
 #define POLL_MSG 3
@@ -262,9 +264,9 @@ void (*sigset(int, void (*)(int)))(int);
 #define SS_DISABLE    4
 #elif defined(__linux__)
 #define SS_DISABLE    2
-#endif
 #define SS_AUTODISARM (1U << 31)
 #define SS_FLAG_BITS SS_AUTODISARM
+#endif
 #endif
 
 #if defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
