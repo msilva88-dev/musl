@@ -488,6 +488,13 @@ ssize_t recvmsg (int, struct msghdr *, int);
 int getsockopt (int, int, int, void *__restrict, socklen_t *__restrict);
 int setsockopt (int, int, int, const void *, socklen_t);
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+int getrtable (void);
+int setrtable (int);
+#endif
+#endif
+
 int sockatmark (int);
 
 #if _REDIR_TIME64
