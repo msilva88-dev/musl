@@ -32,7 +32,11 @@ extern "C" {
 #define POLLRDHUP  0x2000
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+typedef unsigned int nfds_t;
+#elif defined(__linux__)
 typedef unsigned long nfds_t;
+#endif
 
 struct pollfd {
 	int fd;
