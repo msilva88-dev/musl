@@ -237,6 +237,11 @@ void psignal(int, const char *);
 
 #endif
 
+#ifdef _BSD_SOURCE
+extern char *const sys_siglist[_NSIG];
+extern char *const sys_signame[_NSIG];
+#endif
+
 #if defined(_XOPEN_SOURCE) || defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
 int killpg(pid_t, int);
 int sigaltstack(const stack_t *__restrict, stack_t *__restrict);
