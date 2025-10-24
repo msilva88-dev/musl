@@ -1,3 +1,4 @@
+#define _BSD_SOURCE
 #include <signal.h>
 #include <string.h>
 #include "locale_impl.h"
@@ -136,7 +137,7 @@ static const char strings[] =
 #if defined(SIGEMT)
 	"EMT\0"
 #else
-	"Unknown\0"
+	"7\0"
 #endif
 #elif defined(__linux__)
 	"BUS\0"
@@ -169,7 +170,7 @@ static const char strings[] =
 #elif defined(SIGEMT)
 	"EMT\0"
 #else
-	"Unknown\0"
+	"16\0"
 #endif
 	"CHLD\0"
 	"CONT\0"
@@ -190,20 +191,20 @@ static const char strings[] =
 #if defined(SIGWINCH) || defined(__linux__)
 	"WINCH\0"
 #else
-	"Unknown\0"
+	"28\0"
 #endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #if defined(SIGINFO)
 	"INFO\0"
 #else
-	"Unknown\0"
+	"29\0"
 #endif
 	"USR1\0"
 	"USR2\0"
 #if defined(SIGTHR)
 	"THR"
 #else
-	"Unknown"
+	"32"
 #endif
 #elif defined(__linux__)
 	"POLL\0"
