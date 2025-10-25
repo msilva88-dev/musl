@@ -2,18 +2,39 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <syslog.h>
+#include "libc.h"
+#include "lock.h"
 #include "syscall.h"
+
+int setlogmask_r(int mask, struct syslog_data *data)
+{
+	LOCK(lock);
+	int ret = data->log_mask;
+	if (mask) data->log_mask = mask;
+	UNLOCK(lock);
+	return ret;
+}
 
 void closelog_r(struct syslog_data *data)
 {
+	int cs;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+	LOCK(lock);
 	data->log_tag = NULL;
+	UNLOCK(lock);
+	pthread_setcancelstate(cs, NULL);
 }
 
 void openlog_r(const char *ident, int opt, int facility, struct syslog_data *data)
 {
+	int cs;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+	LOCK(lock);
 	if (ident) data->log_tag = ident;
 	data->log_stat = opt;
 	if (facility && !(facility &~ LOG_FACMASK)) data->log_fac = facility;
+	UNLOCK(lock);
+	pthread_setcancelstate(cs, NULL);
 }
 
 static inline void __dec(int *plen, int *tleft, char **taddr)
@@ -31,47 +52,62 @@ enum {
 	__VSL_TSIZE = LOG_MAXLINE+1
 };
 
-extern char *__progname;
 static void __vsyslog_r(int priority, struct syslog_data *data, const char *message, va_list ap)
 {
 	char c = '\0', ebuf[NL_TEXTMAX] = "", mbuf[__VSL_MSIZE] = "", tbuf[__VSL_TSIZE] = "";
 	char *mptr = mbuf, *tptr = tbuf, *sptr = NULL;
 	int bak_errno = 0, mleft = __VSL_MSIZE, plen = 0, tcount = 0, tleft = __VSL_TSIZE;
+	int cs, log_stat, log_mask, log_fac;
+	char *log_tag;
 
 	if (priority & ~(__VSL_PMASK)) {
-		syslog(__VSL_ILOG, "syslog: unknown priority: %x", priority);
-		priority = priority & __VSL_PMASK;
+		char buf[128];
+		int n = snprintf(
+			buf,
+			sizeof(buf),
+			"<%d>syslog_r: unknown priority: %x\n",
+			LOG_ERR|LOG_CONS,
+			priority
+		);
+		if (n > 0) {
+			if (n > sizeof(buf)) n = sizeof(buf); // limitar al tamaño del buffer
+			write(STDERR_FILENO, buf, n);
+		}
+		priority &= __VSL_PMASK;
 	}
 
-	if (!(LOG_MASK(LOG_PRI(priority)) & data->log_mask)) return;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+	LOCK(lock);
+	log_tag = data->log_tag ? data->log_tag : (__progname, data->log_tag = __progname);
+	log_stat = data->log_stat;
+	log_mask = data->log_mask;
+	log_fac  = data->log_fac;
+	UNLOCK(lock);
+	pthread_setcancelstate(cs, NULL);
+
+	if (!(LOG_MASK(LOG_PRI(priority)) & log_mask)) return;
 	bak_errno = errno;
 
-	if (!(priority & LOG_FACMASK)) priority = priority | data->log_fac;
+	if (!(priority & LOG_FACMASK)) priority = priority | log_fac;
 
 	plen = snprintf(tptr, tleft, "<%d>", priority);
 	__dec(&plen, &tleft, &tptr);
 
-	if (data->log_stat & LOG_PERROR) sptr = tptr;
+	if (log_stat & LOG_PERROR) sptr = tptr;
 
-	if (data->log_tag) {
-		plen = snprintf(tptr, tleft, "%.*s", NAME_MAX, data->log_tag);
-		__dec(&plen, &tleft, &tptr);
-	} else {
-		data->log_tag = __progname;
-	}
+	plen = snprintf(tptr, tleft, "%.*s", NAME_MAX, log_tag);
+	__dec(&plen, &tleft, &tptr);
 
-	if (data->log_stat & LOG_PID) {
+	if (log_stat & LOG_PID) {
 		plen = snprintf(tptr, tleft, "[%ld]", (long)getpid());
 		__dec(&plen, &tleft, &tptr);
 	}
 
-	if (data->log_tag) {
-		for (char i = 0; i < 2; i++) {
-			if (tleft > 1) {
-				*tptr = ':';
-				tptr++;
-				tleft--;
-			}
+	for (char i = 0; i < 2; i++) {
+		if (tleft > 1) {
+			*tptr = ':';
+			tptr++;
+			tleft--;
 		}
 	}
 
@@ -119,7 +155,7 @@ static void __vsyslog_r(int priority, struct syslog_data *data, const char *mess
 
 	for (tcount = tptr - tbuf; tcount > 0 && tptr[-1] == '\n'; tcount--) *(--tptr) = '\0';
 
-	if (data->log_stat & LOG_PERROR) {
+	if (log_stat & LOG_PERROR) {
 		int std_len = 0;
 		if (tcount > (sptr - tbuf)) std_len = tcount - (sptr - tbuf);
 		struct iovec iovec_str[] = {
@@ -129,7 +165,7 @@ static void __vsyslog_r(int priority, struct syslog_data *data, const char *mess
 		writev(STDERR_FILENO, iovec_str, 2);
 	}
 
-	__syscall(SYS_sendsyslog, tbuf, tcount, data->log_stat & LOG_CONS);
+	__syscall(SYS_sendsyslog, tbuf, tcount, log_stat & LOG_CONS);
 }
 
 void syslog_r(int priority, struct syslog_data *data, const char *message, ...)
