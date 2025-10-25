@@ -149,6 +149,14 @@ The implementation of mount_info (include/sys/mount_info.h) is
 Copyright © 1989, 1991, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of unvis (src/misc/unvis.c) is
+Copyright © 1989, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of vis (src/misc/vis.c) is
+Copyright © 1989, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of setproctitle (src/bsd/setproctitle.c) is
 Copyright © 1995 Peter Wemm.
 It is licensed under a two-clause BSD license.
