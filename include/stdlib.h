@@ -119,6 +119,11 @@ void setproctitle_fast(const char *, ...);
 #endif
 #endif
 
+#ifdef _BSD_SOURCE
+const char *getprogname(void);
+void setprogname(const char *);
+#endif
+
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
  || defined(_BSD_SOURCE)
 char *realpath (const char *__restrict, char *__restrict);
