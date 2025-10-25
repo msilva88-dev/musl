@@ -297,19 +297,26 @@ int sigandset(sigset_t *, const sigset_t *, const sigset_t *);
 #define SIG_DFL  ((void (*)(int)) 0)
 #define SIG_IGN  ((void (*)(int)) 1)
 
-#if defined(_BSD_SOURCE) && defined(__OpenBSD__)
 /*
  * Legacy BSD compat.
  */
+#ifdef _BSD_SOURCE
 struct  sigvec {
 	void (*sv_handler)(int);
 	int sv_mask;
 	int sv_flags;
-};
-#define SV_ONSTACK SA_ONSTACK
-#define SV_INTERRUPT SA_RESTART
-#define SV_RESETHAND SA_RESETHAND
 #define sv_onstack sv_flags
+};
+
+#define SV_HOLD SA_NODEFER
+#define SV_INTERRUPT SA_RESTART
+#define SV_ONSTACK SA_ONSTACK
+#define SV_RESETHAND SA_RESETHAND
+
+int sigblock(int);
+#define sigmask(m) (1U << ((m)-1))
+int sigsetmask(int);
+int sigvec(int, struct sigvec *, struct sigvec *);
 #endif
 
 typedef int sig_atomic_t;
