@@ -1,7 +1,10 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#endif
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _BSD_SOURCE
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 char *suboptarg;
 #endif
 
@@ -11,7 +14,7 @@ int getsubopt(char **opt, char *const *keys, char **val)
 	int i;
 
 	*val = NULL;
-#ifdef _BSD_SOURCE
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	if (!s || !*s) {
 		suboptarg = NULL;
 		return -1;
@@ -28,7 +31,7 @@ int getsubopt(char **opt, char *const *keys, char **val)
 		suboptarg = NULL;
 		return -1;
 	}
-#else
+#elif defined(__linux__)
 	*opt = strchr(s, ',');
 	if (*opt) *(*opt)++ = 0;
 	else *opt = s + strlen(s);

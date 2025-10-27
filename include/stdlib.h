@@ -107,14 +107,9 @@ char *mkdtemp (char *);
 int getsubopt (char **, char *const *, char **);
 int rand_r (unsigned *);
 
-#ifdef _BSD_SOURCE
-extern char *suboptarg;
-#endif
-
-#endif
-
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
+extern char *suboptarg;
 char *devname(dev_t, mode_t);
 void setproctitle(const char *, ...);
 #if defined(__HyperbolaBSD__)
