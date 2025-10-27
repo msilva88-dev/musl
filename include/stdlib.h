@@ -107,6 +107,10 @@ char *mkdtemp (char *);
 int getsubopt (char **, char *const *, char **);
 int rand_r (unsigned *);
 
+#ifdef _BSD_SOURCE
+extern char *suboptarg;
+#endif
+
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
