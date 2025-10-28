@@ -21,8 +21,15 @@ int feholdexcept(fenv_t *);
 int fesetenv(const fenv_t *);
 int feupdateenv(const fenv_t *);
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+int feenableexcept(int);
+int fedisableexcept(int);
+int fegetexcept(void);
+#endif
+#endif
+
 #ifdef __cplusplus
 }
 #endif
 #endif
-
