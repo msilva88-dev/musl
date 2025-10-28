@@ -403,6 +403,9 @@ int         finitef(float);
 
 double      scalb(double, double);
 float       scalbf(float, float);
+#ifdef _BSD_SOURCE
+long double scalbl(long double, long double);
+#endif
 
 double      significand(double);
 float       significandf(float);
