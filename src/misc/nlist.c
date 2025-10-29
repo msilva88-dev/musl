@@ -29,6 +29,7 @@
 
 /* nlist from OpenBSD 7.0 source code: lib/libc/gen/nlist.c */
 
+#define _BSD_SOURCE
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <errno.h>

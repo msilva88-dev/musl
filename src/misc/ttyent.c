@@ -29,6 +29,7 @@
 
 /* ttyent from OpenBSD 7.0 source code: lib/libc/gen/getttyent.c */
 
+#define _BSD_SOURCE
 #include <ttyent.h>
 #include <stdio.h>
 #include <ctype.h>

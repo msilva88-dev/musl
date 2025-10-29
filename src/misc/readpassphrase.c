@@ -21,6 +21,7 @@
 
 /* readpassphrase from OpenBSD 7.0 source code: lib/libc/gen/readpassphrase.c */
 
+#define _BSD_SOURCE
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
