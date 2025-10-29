@@ -45,10 +45,12 @@ struct ttyent {
 	char *ty_window, *ty_comment;
 };
 
+#ifdef _BSD_SOURCE
 struct ttyent *getttynam(const char *);
 struct ttyent *getttyent(void);
 int setttyent(void);
 int endttyent(void);
+#endif
 
 #ifdef __cplusplus
 }
