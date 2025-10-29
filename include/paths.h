@@ -16,6 +16,10 @@
 #define	_PATH_MAILDIR	"/var/mail"
 #define	_PATH_MAN	"/usr/share/man"
 #define	_PATH_MNTTAB	"/etc/fstab"
+#define _PATH_FSTAB	_PATH_MNTTAB
+#if defined(__OpenBSD__)
+#define FSTAB		_PATH_MNTTAB
+#endif
 #if defined(__linux__)
 #define	_PATH_MOUNTED	"/etc/mtab"
 #endif
