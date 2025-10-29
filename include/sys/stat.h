@@ -118,6 +118,9 @@ int lchmod(const char *, mode_t);
 #define S_IEXEC S_IXUSR
 #endif
 
+#ifdef _BSD_SOURCE
+int isfdtype(int, int);
+#endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #if defined(_BSD_SOURCE)
