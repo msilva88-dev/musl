@@ -1,3 +1,10 @@
+#ifndef _NLIST_H
+#define _NLIST_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define N_EXT 0001
 #define N_FORMAT "%08x"
 #define N_STAB 0340
@@ -37,4 +44,10 @@ struct nlist {
 
 #ifdef _BSD_SOURCE
 int nlist(const char *, struct nlist *);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
