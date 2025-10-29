@@ -149,6 +149,10 @@ The implementation of mount_info (include/sys/mount_info.h) is
 Copyright © 1989, 1991, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of nlist (src/misc/nlist.c) is
+Copyright © 1989, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of unvis (src/misc/unvis.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
