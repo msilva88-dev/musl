@@ -65,7 +65,15 @@ struct cmsghdr {
 #include <sys/ucred.h>
 #endif
 
-#if defined(_GNU_SOURCE) && defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+struct sockpeercred {
+	uid_t uid;
+	gid_t gid;
+	pid_t pid;
+};
+#endif
+#elif defined(_GNU_SOURCE) && defined(__linux__)
 struct ucred {
 	pid_t pid;
 	uid_t uid;
@@ -487,6 +495,10 @@ ssize_t recvmsg (int, struct msghdr *, int);
 
 int getsockopt (int, int, int, void *__restrict, socklen_t *__restrict);
 int setsockopt (int, int, int, const void *, socklen_t);
+
+#ifdef _BSD_SOURCE
+int getpeereid (int, uid_t *, gid_t *);
+#endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
