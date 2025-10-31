@@ -113,7 +113,7 @@ static bsdlabel_t *__getsdbyname(const char *name)
 	getnum(bsdlp->d_ncylinders, "nc");
 
 	if (cgetstr(buf, "dt", &cq) > 0)
-		bsdlp->d_type = (u_short)gettype(cq, sdtypenames);
+		bsdlp->d_type = (unsigned short)gettype(cq, sdtypenames);
 	else
 		getnumdflt(bsdlp->d_type, "dt", 0);
 	getnumdflt(bsdlp->d_secpercyl, "sc", bsdlp->d_nsectors * bsdlp->d_ntracks);
