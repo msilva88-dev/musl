@@ -58,7 +58,12 @@ extern "C" {
 #define MOUNT_FUSEFS "fuse"
 #endif
 #define MOUNT_MFS "mfs"
+#if defined(__HyperbolaBSD__)
+#define MOUNT_FAT "fat"
+#define MOUNT_MSDOS MOUNT_FAT
+#elif defined(__OpenBSD__)
 #define MOUNT_MSDOS "msdos"
+#endif
 #define MOUNT_NCPFS "ncpfs"
 #define MOUNT_NFS "nfs"
 #define MOUNT_NTFS "ntfs"
@@ -110,6 +115,9 @@ struct msdosfs_args {
 	int flags;
 };
 
+#if defined(__HyperbolaBSD__)
+enum { FATMNT_SHORTNAME = 1, FATMNT_LONGNAME, FATMNT_NOWIN95 };
+#endif
 enum { MSDOSFSMNT_SHORTNAME = 1, MSDOSFSMNT_LONGNAME, MSDOSFSMNT_NOWIN95 };
 
 struct ntfs_args {
