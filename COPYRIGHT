@@ -145,6 +145,10 @@ The implementation of fstab (src/misc/fstab.c) is
 Copyright © 1980, 1988, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of bsdlabel [disklabel] (src/bsd/bsdlabel.c) is
+Copyright © 1983, 1987, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of getmntinfo (src/bsd/getmntinfo.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
