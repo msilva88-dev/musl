@@ -44,7 +44,7 @@
 #define	S_OCTAL2	5	/* octal digit 2 */
 #define	S_OCTAL3	6	/* octal digit 3 */
 
-#define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
+#define	isoctal(c)	(((unsigned char)(c)) >= '0' && ((unsigned char)(c)) <= '7')
 
 /*
  * unvis - decode characters previously encoded by vis
