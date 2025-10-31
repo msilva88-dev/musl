@@ -77,10 +77,11 @@ COMMON_HEADERS += $(wildcard include/netinet/*.h)
 COMMON_HEADERS += $(wildcard include/netpacket/*.h)
 COMMON_HEADERS += $(wildcard include/scsi/*.h)
 COMMON_HEADERS += sys/auxv.h sys/mount.h sys/reboot.h sys/swap.h sys/syscall.h sys/wait.h
-HBBSD_HEADERS = sys/event.h sys/mount_info.h sys/sysarch.h
+BSD_HEADERS = sys/event.h sys/gmon.h sys/mount_info.h sys/sysarch.h
+HBBSD_HEADERS = $(BSD_HEADERS)
 LINUX_HEADERS = mqueue.h sys/epoll.h sys/eventfd.h sys/fanotify.h sys/inotify.h sys/io.h sys/klog.h sys/membarrier.h
 LINUX_HEADERS += sys/personality.h sys/prctl.h sys/random.h sys/signalfd.h sys/sysinfo.h sys/timerfd.h sys/timex.h sys/xattr.h
-OBSD_HEADERS := $(HBBSD_HEADERS)
+OBSD_HEADERS := $(BSD_HEADERS)
 ARCH_INCLUDES = $(wildcard $(srcdir)/arch/$(ARCH)/bits/*.h)
 GENERIC_INCLUDES = $(wildcard $(srcdir)/arch/generic/bits/*.h)
 ifeq ($(UNAME_S),HyperbolaBSD)
