@@ -31,6 +31,7 @@ int memcmp (const void *, const void *, size_t);
 void *memchr (const void *, int, size_t);
 #ifdef _BSD_SOURCE
 int timingsafe_memcmp (const void *, const void *, size_t);
+void strmode (mode_t, char *);
 #endif
 
 char *strcpy (char *__restrict, const char *__restrict);
