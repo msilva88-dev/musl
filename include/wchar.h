@@ -51,9 +51,15 @@ extern "C" {
 
 wchar_t *wcscpy (wchar_t *__restrict, const wchar_t *__restrict);
 wchar_t *wcsncpy (wchar_t *__restrict, const wchar_t *__restrict, size_t);
+#ifdef _BSD_SOURCE
+size_t wcslcpy (wchar_t *__restrict, const wchar_t *__restrict, size_t);
+#endif
 
 wchar_t *wcscat (wchar_t *__restrict, const wchar_t *__restrict);
 wchar_t *wcsncat (wchar_t *__restrict, const wchar_t *__restrict, size_t);
+#ifdef _BSD_SOURCE
+size_t wcslcat (wchar_t *__restrict, const wchar_t *__restrict, size_t);
+#endif
 
 int wcscmp (const wchar_t *, const wchar_t *);
 int wcsncmp (const wchar_t *, const wchar_t *, size_t);
