@@ -110,7 +110,6 @@ int rand_r (unsigned *);
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
 extern char *suboptarg;
-char *devname(dev_t, mode_t);
 void setproctitle(const char *, ...);
 #if defined(__HyperbolaBSD__)
 void setproctitle_fast(const char *, ...);
@@ -119,6 +118,7 @@ void setproctitle_fast(const char *, ...);
 #endif
 
 #ifdef _BSD_SOURCE
+char *devname(dev_t, mode_t);
 const char *getprogname(void);
 void setprogname(const char *);
 #endif

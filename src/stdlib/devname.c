@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* devname from OpenBSD 7.0 source code: lib/libc/gen/devname.c */
+/* devname without BSD db from OpenBSD 7.0 source code: lib/libc/gen/devname.c */
 
 #define _BSD_SOURCE
 #include <sys/stat.h>
@@ -39,8 +39,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static char *
-devname_nodb(dev_t dev, mode_t type)
+static char *devname_nodb(dev_t dev, mode_t type)
 {
 	static char buf[NAME_MAX + 1];
 	char *name = NULL;
@@ -49,7 +48,7 @@ devname_nodb(dev_t dev, mode_t type)
 	DIR *dirp;
 
 	if ((dirp = opendir(_PATH_DEV)) == NULL)
-		return (NULL);
+		return NULL;
 	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_type != DT_UNKNOWN && DTTOIF(dp->d_type) != type)
 			continue;
@@ -61,13 +60,12 @@ devname_nodb(dev_t dev, mode_t type)
 		break;
 	}
 	closedir(dirp);
-	return (name);
+	return name;
 }
 
-char *
-devname(dev_t dev, mode_t type)
+char *devname(dev_t dev, mode_t type)
 {
 	char *name = devname_nodb(dev, type);
 
-	return (name ? name : "??");
+	return name ? name : "??";
 }
