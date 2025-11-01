@@ -3,7 +3,6 @@
 #include "syscall.h"
 #elif defined(__HyperbolaBSD__)
 #include <sys/mman.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
 #endif

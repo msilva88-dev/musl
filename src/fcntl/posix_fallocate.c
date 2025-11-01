@@ -2,11 +2,10 @@
 #if defined(__linux__)
 #include "syscall.h"
 #elif defined(__HyperbolaBSD__)
+#include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #endif
 
 int posix_fallocate(int fd, off_t base, off_t len)

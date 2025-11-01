@@ -30,10 +30,8 @@
 /* fstab from OpenBSD 7.0 source code: lib/libc/gen/fstab.c */
 
 #define _BSD_SOURCE
-#include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
-
 #include <errno.h>
 #include <limits.h>
 #include <fstab.h>

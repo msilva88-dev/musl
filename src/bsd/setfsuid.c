@@ -1,6 +1,5 @@
 #include <unistd.h>
 #include <errno.h>
-#include <sys/types.h>
 
 // setfsuid_wrapper
 
