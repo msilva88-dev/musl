@@ -125,7 +125,7 @@ mapfailed:
  *	profiling is what mcount checks to see if
  *	all the data structures are ready.
  */
-void __moncontrol(int mode)
+hidden void __moncontrol(int mode)
 {
 	struct gmonparam *p = &_gmonparam;
 

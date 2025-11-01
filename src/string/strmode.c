@@ -33,7 +33,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
-void __strmode(mode_t mode, char *p)
+hidden void __strmode(mode_t mode, char *p)
 {
 	 /* print type */
 	switch (mode & S_IFMT) {

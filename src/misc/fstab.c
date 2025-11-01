@@ -172,7 +172,7 @@ struct fstab *getfsfile(const char *name)
 	return NULL;
 }
 
-int setfsent(void)
+hidden int __setfsent(void)
 {
 	struct stat sbuf;
 

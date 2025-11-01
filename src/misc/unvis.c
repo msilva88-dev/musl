@@ -49,7 +49,7 @@
 /*
  * unvis - decode characters previously encoded by vis
  */
-int __unvis(char *cp, char c, int *astate, int flag)
+hidden int __unvis(char *cp, char c, int *astate, int flag)
 {
 	if (flag & UNVIS_END) {
 		if (*astate == S_OCTAL2 || *astate == S_OCTAL3) {

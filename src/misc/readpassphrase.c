@@ -40,7 +40,7 @@ static void handler(int s)
 	signo[s] = 1;
 }
 
-char *__readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
+hidden char *__readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 {
 	ssize_t nr;
 	int input, output, save_errno, i, need_restart;

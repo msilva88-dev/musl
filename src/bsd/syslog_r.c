@@ -52,7 +52,7 @@ enum {
 	__VSL_TSIZE = LOG_MAXLINE+1
 };
 
-static void __vsyslog_r(int priority, struct syslog_data *data, const char *message, va_list ap)
+hidden void __vsyslog_r(int priority, struct syslog_data *data, const char *message, va_list ap)
 {
 	char c = '\0', ebuf[NL_TEXTMAX] = "", mbuf[__VSL_MSIZE] = "", tbuf[__VSL_TSIZE] = "";
 	char *mptr = mbuf, *tptr = tbuf, *sptr = NULL;

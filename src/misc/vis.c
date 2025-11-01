@@ -63,7 +63,7 @@ static inline int isvisible(int c, int flag)
 /*
  * vis - visually encode characters
  */
-char *__vis(char *dst, int c, int flag, int nextc)
+hidden char *__vis(char *dst, int c, int flag, int nextc)
 {
 	if (isvisible(c, flag)) {
 		if ((c == '"' && (flag & VIS_DQ) != 0) || (c == '\\' && (flag & VIS_NOSLASH) == 0)) *dst++ = '\\';
@@ -155,7 +155,7 @@ weak_alias(__vis, vis);
  *	Strvisx encodes exactly len bytes from src into dst.
  *	This is useful for encoding a block of data.
  */
-int __strvis(char *dst, const char *src, int flag)
+hidden int __strvis(char *dst, const char *src, int flag)
 {
 	char c;
 	char *start;

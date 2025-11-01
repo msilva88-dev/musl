@@ -53,7 +53,7 @@ struct ttyent *getttynam(const char *tty)
 	return t;
 }
 
-struct ttyent *__getttyent(void)
+hidden struct ttyent *__getttyent(void)
 {
 	static struct ttyent tty;
 	int c;
@@ -173,7 +173,7 @@ static inline char *value(char *p)
 	return (p = strchr(p, '=')) ? ++p : NULL;
 }
 
-int __setttyent(void)
+hidden int __setttyent(void)
 {
 	if (tf) {
 		rewind(tf);
@@ -184,7 +184,7 @@ int __setttyent(void)
 }
 weak_alias(__setttyent, setttyent);
 
-int __endttyent(void)
+hidden int __endttyent(void)
 {
 	int rval;
 
