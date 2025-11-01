@@ -20,6 +20,9 @@ void bzero (void *, size_t);
 char *index (const char *, int);
 char *rindex (const char *, int);
 #endif
+#ifdef _BSD_SOURCE
+int timingsafe_bcmp (const void *, const void *, size_t);
+#endif
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE)  || defined(_BSD_SOURCE)
 int ffs (int);

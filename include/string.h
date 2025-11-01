@@ -29,6 +29,9 @@ void *memmove (void *, const void *, size_t);
 void *memset (void *, int, size_t);
 int memcmp (const void *, const void *, size_t);
 void *memchr (const void *, int, size_t);
+#ifdef _BSD_SOURCE
+int timingsafe_memcmp (const void *, const void *, size_t);
+#endif
 
 char *strcpy (char *__restrict, const char *__restrict);
 char *strncpy (char *__restrict, const char *__restrict, size_t);
