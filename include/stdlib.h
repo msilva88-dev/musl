@@ -18,7 +18,11 @@ extern "C" {
 #define __NEED_size_t
 #define __NEED_wchar_t
 
+#ifndef _BSD_SOURCE
 #include <bits/alltypes.h>
+#else
+#include <sys/types.h>
+#endif
 
 int atoi (const char *);
 long atol (const char *);
@@ -33,6 +37,10 @@ long strtol (const char *__restrict, char **__restrict, int);
 unsigned long strtoul (const char *__restrict, char **__restrict, int);
 long long strtoll (const char *__restrict, char **__restrict, int);
 unsigned long long strtoull (const char *__restrict, char **__restrict, int);
+#ifdef _BSD_SOURCE
+quad_t strtoq (const char *__restrict, char **__restrict, int);
+u_quad_t strtouq (const char *__restrict, char **__restrict, int);
+#endif
 
 int rand (void);
 void srand (unsigned);
