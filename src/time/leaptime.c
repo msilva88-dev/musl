@@ -29,7 +29,7 @@ static const time_t fallback_leaps[] = {
  * The first leap second (1972-06-30) corresponds to TAI-UTC = 10s,
  * so we subtract 10 to align with the 1970-01-01 POSIX epoch.
  */
-static time_t tai_to_posix(time_t tai_utc) {
+static inline time_t tai_to_posix(time_t tai_utc) {
 	return tai_utc - 10;
 }
 
@@ -69,7 +69,7 @@ static void __update_internal_leap_table(void) {
 	leap_initialized = 1;
 }
 
-static time_t __leap(time_t t)
+static inline time_t __leap(time_t t)
 {
 	__update_internal_leap_table();
 	for (int i = leap_count-1; i>=0; i--)
