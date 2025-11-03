@@ -148,6 +148,11 @@ extern char *tzname[2];
 
 #endif
 
+#ifdef _BSD_SOURCE
+time_t timelocal (struct tm *);
+time_t time2posix (time_t);
+time_t posix2time (time_t);
+#endif
 
 #if defined(_XOPEN_SOURCE) || defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
 char *strptime (const char *__restrict, const char *__restrict, struct tm *__restrict);
