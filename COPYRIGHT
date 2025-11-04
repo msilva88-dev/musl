@@ -185,7 +185,7 @@ The implementation of setproctitle (src/bsd/setproctitle.c) is
 Copyright © 1995 Peter Wemm.
 It is licensed under a two-clause BSD license.
 
-The implementation of readpassphrase (src/misc/readpassphrase.c) is
+The implementation of readpassphrase (src/passwd/readpassphrase.c) is
 Copyright © 2000-2002, 2007, 2010 Todd C. Miller <millert@openbsd.org>.
 It is licensed under a ISC license.
 
