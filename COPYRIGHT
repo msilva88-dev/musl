@@ -190,6 +190,10 @@ The implementation of setproctitle (src/bsd/setproctitle.c) is
 Copyright © 1995 Peter Wemm.
 It is licensed under a two-clause BSD license.
 
+The implementation of pw_dup (src/passwd/pw_dup.c) is
+Copyright © 2000, 2002 Todd C. Miller <millert@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of readpassphrase (src/passwd/readpassphrase.c) is
 Copyright © 2000-2002, 2007, 2010 Todd C. Miller <millert@openbsd.org>.
 It is licensed under a ISC license.
