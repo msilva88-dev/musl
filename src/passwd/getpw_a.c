@@ -17,20 +17,25 @@ static char *itoa(char *p, uint32_t x)
 	return p;
 }
 
-int __getpw_a(const char *name, uid_t uid, struct passwd *pw, char **buf, size_t *size, struct passwd **res)
+int __getpw_a(const char *name, uid_t uid, struct passwd *pw, char **buf, size_t *size, struct passwd **res,
+	FILE **sofp, int stayopen)
 {
 	FILE *f;
 	int cs;
 	int rv = 0;
+	int opened_local = 0;
 
 	*res = 0;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
-
-	f = fopen("/etc/passwd", "rbe");
-	if (!f) {
-		rv = errno;
-		goto done;
+	if (sofp && *sofp) f = *sofp;
+	else {
+		f = fopen("/etc/passwd", "rbe");
+		if (!f) {
+			rv = errno;
+			goto done;
+		}
+		opened_local = 1;
 	}
 
 	while (!(rv = __getpwent_a(f, pw, buf, size, res)) && *res) {
@@ -38,7 +43,13 @@ int __getpw_a(const char *name, uid_t uid, struct passwd *pw, char **buf, size_t
 		|| !name && (*res)->pw_uid == uid)
 			break;
 	}
-	fclose(f);
+	if (opened_local) fclose(f);
+	else {
+		if (!stayopen) {
+			fclose(*sofp);
+			*sofp = NULL;
+		} else rewind(*sofp);
+	}
 
 	if (!*res && (rv == 0 || rv == ENOENT || rv == ENOTDIR)) {
 		int32_t req = name ? GETPWBYNAME : GETPWBYUID;
