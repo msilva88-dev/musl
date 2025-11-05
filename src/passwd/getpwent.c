@@ -15,7 +15,7 @@ void setpwent()
 	setpassent(0);
 }
 
-void __endpwent()
+hidden void __endpwent()
 {
 	if (f) fclose(f);
 	f = 0;
