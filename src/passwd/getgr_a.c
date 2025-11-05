@@ -17,19 +17,25 @@ static char *itoa(char *p, uint32_t x)
 	return p;
 }
 
-int __getgr_a(const char *name, gid_t gid, struct group *gr, char **buf, size_t *size, char ***mem, size_t *nmem, struct group **res)
+int __getgr_a(const char *name, gid_t gid, struct group *gr, char **buf, size_t *size, char ***mem, size_t *nmem, struct group **res,
+	FILE **sofp, int stayopen)
 {
 	FILE *f;
 	int rv = 0;
 	int cs;
+	int opened_local = 0;
 
 	*res = 0;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
-	f = fopen("/etc/group", "rbe");
-	if (!f) {
-		rv = errno;
-		goto done;
+	if (sofp && *sofp) f = *sofp;
+	else {
+		f = fopen("/etc/group", "rbe");
+		if (!f) {
+			rv = errno;
+			goto done;
+		}
+		opened_local = 1;
 	}
 
 	while (!(rv = __getgrent_a(f, gr, buf, size, mem, nmem, res)) && *res) {
@@ -38,7 +44,13 @@ int __getgr_a(const char *name, gid_t gid, struct group *gr, char **buf, size_t 
 			break;
 		}
 	}
-	fclose(f);
+	if (opened_local) fclose(f);
+	else {
+		if (!stayopen) {
+			fclose(*sofp);
+			*sofp = NULL;
+		} else rewind(*sofp);
+	}
 
 	if (!*res && (rv == 0 || rv == ENOENT || rv == ENOTDIR)) {
 		int32_t req = name ? GETGRBYNAME : GETGRBYGID;
