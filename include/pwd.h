@@ -44,6 +44,7 @@ int putpwent(const struct passwd *, FILE *);
 #endif
 
 #ifdef _BSD_SOURCE
+struct passwd *pw_dup(const struct passwd *);
 const char *user_from_uid(uid_t, int);
 int uid_from_user(const char *, uid_t *);
 #endif
