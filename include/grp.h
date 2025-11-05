@@ -38,16 +38,17 @@ void           setgrent(void);
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
 int setgroupent(int);
-int gid_from_group(const char *, gid_t *);
-const char *group_from_gid(gid_t, int);
 #endif
 #endif
 
-#if defined(__linux__)
 #ifdef _GNU_SOURCE
 struct group  *fgetgrent(FILE *);
 int putgrent(const struct group *, FILE *);
 #endif
+
+#ifdef _BSD_SOURCE
+int gid_from_group(const char *, gid_t *);
+const char *group_from_gid(gid_t, int);
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)

@@ -43,6 +43,11 @@ struct passwd *fgetpwent(FILE *);
 int putpwent(const struct passwd *, FILE *);
 #endif
 
+#ifdef _BSD_SOURCE
+const char *user_from_uid(uid_t, int);
+int uid_from_user(const char *, uid_t *);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
