@@ -115,6 +115,15 @@ struct protoent {
 };
 
 #ifdef _BSD_SOURCE
+struct servent_data {
+	/* no hardcoded */
+	void *fp;
+	char **aliases;
+	int maxaliases;
+	int stayopen;
+	char *line;
+};
+
 struct protoent_data {
 	/* no hardcoded */
 	void *fp;
@@ -142,6 +151,11 @@ void endservent (void);
 struct servent *getservent (void);
 struct servent *getservbyname (const char *, const char *);
 struct servent *getservbyport (int, const char *);
+#ifdef _BSD_SOURCE
+void setservent_r(int, struct servent_data *);
+void endservent_r(struct servent_data *);
+int getservent_r(struct servent *, struct servent_data *);
+#endif
 
 void setprotoent (int);
 void endprotoent (void);
