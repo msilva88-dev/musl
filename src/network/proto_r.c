@@ -1,3 +1,4 @@
+#define _BSD_SOURCE
 #include <netdb.h>
 #include <string.h>
 #ifdef NO_HARDCODED
@@ -15,7 +16,6 @@
 #define UNUSED_A
 #endif
 
-static int idx;
 static const unsigned char protos[] = {
 	"\000ip\0"
 	"\001icmp\0"
@@ -91,135 +91,136 @@ static const unsigned char protos[] = {
 };
 #else
 #define UNUSED_A
-static void *fp;
-static char **aliases;
-static int maxaliases;
-static int stayopen_flag;
-static char *line;
 #endif
 
-void endprotoent(void)
+void endprotoent_r(struct protoent_data *data)
 {
+	if (!data) return;
 #ifndef NO_HARDCODED
-	idx = 0;
+	data->idx = 0;
 #else
-	if (fp && !stayopen_flag) {
-		fclose(fp);
-		fp = NULL;
+	if (data->fp && !data->stayopen) {
+		fclose(data->fp);
+		data->fp = NULL;
 	}
-	free(line);
-	line = NULL;
-	if (aliases) {
-		for (int i = 0; aliases[i]; i++) free(aliases[i]);
-		free(aliases);
-		aliases = NULL;
+	free(data->line);
+	data->line = NULL;
+	if (data->aliases) {
+		for (int i = 0; data->aliases[i]; i++) free(data->aliases[i]);
+		free(data->aliases);
+		data->aliases = NULL;
 	}
-	maxaliases = 0;
-	stayopen_flag = 0;
+	data->maxaliases = 0;
+	data->stayopen = 0;
 #endif
 }
 
-void setprotoent(int stayopen UNUSED_A)
+void setprotoent_r(int stayopen UNUSED_A, struct protoent_data *data)
 {
+	if (!data) return;
 #ifndef NO_HARDCODED
 	(void)stayopen;
-	idx = 0;
+	data->idx = 0;
 #else
-	if (fp) rewind(fp);
-	else fp = fopen(_PATH_PROTOCOLS, "re");
-	stayopen_flag = stayopen != 0;
+	if (data->fp) rewind(data->fp);
+	else data->fp = fopen(_PATH_PROTOCOLS, "re");
+	data->stayopen = stayopen != 0;
 #endif
 }
 
-struct protoent *getprotoent(void)
+int getprotoent_r(struct protoent *p, struct protoent_data *data)
 {
-	static struct protoent p;
+	int ret = 0;
+	if (!data || !p) return -1;
 #ifndef NO_HARDCODED
 	static const char *aliases;
-	if (idx >= sizeof protos) return NULL;
-	p.p_proto = protos[idx];
-	p.p_name = (char *)&protos[idx+1];
-	p.p_aliases = (char **)&aliases;
-	idx += strlen(p.p_name) + 2;
-	return &p;
+	if (data->idx >= sizeof protos) return -1;
+	p->p_proto = protos[data->idx];
+	p->p_name = (char *)&protos[data->idx+1];
+	p->p_aliases = (char **)&aliases;
+	data->idx += strlen(p->p_name) + 2;
 #else
 	char *lline = NULL, *hash, *saveptr, *tok, *name, *endp;
 	size_t len = 0;
 	ssize_t n;
 	long num;
 	int i;
-	if (!fp && !(fp = fopen(_PATH_PROTOCOLS, "re"))) return NULL;
+	if (!data->fp && !(data->fp = fopen(_PATH_PROTOCOLS, "re"))) return -1;
 
-	while ((n = getline(&lline, &len, fp)) != -1) {
+	while ((n = getline(&lline, &len, data->fp)) != -1) {
 		if (n == 0 || lline[0] == '#' || lline[0] == '\n') continue;
 		if (lline[n-1] == '\n') lline[n-1] = '\0';
 		if ((hash = strchr(lline, '#'))) *hash = '\0';
 		if (!(tok = strtok_r(lline, " \t", &saveptr))) continue;
+		memset(p, 0, sizeof(*p));
 		name = strdup(tok);
 		if (!(tok = strtok_r(NULL, " \t", &saveptr))) free(name), continue;
 		num = strtol(tok, &endp, 10);
 		if (*endp != '\0' || num < 0 || num > INT_MAX) free(name), continue;
-		p.p_name = name;
-		p.p_proto = (int)num;
-		if (!aliases) {
-			aliases = calloc((maxaliases = 5), sizeof(char *));
-			if (!aliases) break;
+		p->p_name = name;
+		p->p_proto = (int)num;
+		if (!data->aliases) {
+			data->aliases = calloc((data->maxaliases = 5), sizeof(char *));
+			if (!data->aliases) break;
 		} else {
-			for (i = 0; aliases[i]; i++) free(aliases[i]);
-			memset(aliases, 0, maxaliases * sizeof(char *));
+			for (i = 0; data->aliases[i]; i++) free(data->aliases[i]);
+			memset(data->aliases, 0, data->maxaliases * sizeof(char *));
 		}
-		for (i = 0; (tok = strtok_r(NULL, " \t", &saveptr)) && i < maxaliases - 1; i++) {
-			aliases[i] = strdup(tok);
+		for (i = 0; (tok = strtok_r(NULL, " \t", &saveptr)) && i < data->maxaliases - 1; i++) {
+			data->aliases[i] = strdup(tok);
 		}
-		aliases[i] = NULL;
-		p.p_aliases = aliases;
-		free(line);
-		line = strdup(lline);
+		data->aliases[i] = NULL;
+		p->p_aliases = data->aliases;
+		free(data->line);
+		data->line = strdup(lline);
 		free(lline);
 
-		return &p;
+		return ret;
 	}
 
 	free(lline);
-	return NULL;
+	ret = -1;
 #endif
+	return ret;
 }
 
-struct protoent *getprotobyname(const char *name)
+int getprotobyname_r(const char *name, struct protoent *p, struct protoent_data *data)
 {
-	struct protoent *p;
+	int ret = 0;
+	if (!name || !data || !p) return -1;
 #ifndef NO_HARDCODED
-	idx = 0;
-	do p = getprotoent();
-	while (p && strcmp(name, p->p_name));
+	data->idx = 0;
+	do ret = getprotoent_r(p, data);
+	while (ret == 0 && strcmp(name, p->p_name));
 #else
 	int found = 0;
-	setprotoent(stayopen_flag);
+	setprotoent_r(data->stayopen, data);
 	do {
-		if (!(p = getprotoent())) break;
+		if ((ret = getprotoent_r(p, data)) != 0) break;
 		if (strcmp(name, p->p_name) == 0) break;
 		for (char **alias = p->p_aliases; *alias; alias++) {
 			if (strcmp(*alias, name) == 0) found = 1, break;
 		}
 		if (found) break;
 	} while (1);
-	if (!stayopen_flag) endprotoent();
+	if (data->fp && !data->stayopen) endprotoent_r(data);
 #endif
-	return p;
+	return ret;
 }
 
-struct protoent *getprotobynumber(int num)
+int getprotobynumber_r(int num, struct protoent *p, struct protoent_data *data)
 {
-	struct protoent *p;
+	int ret = 0;
+	if (!data || !p) return -1;
 #ifndef NO_HARDCODED
-	idx = 0;
+	data->idx = 0;
 #else
-	setprotoent(stayopen_flag);
+	setprotoent_r(data->stayopen, data);
 #endif
-	do p = getprotoent();
-	while (p && p->p_proto != num);
+	do ret = getprotoent_r(p, data);
+	while (ret == 0 && p->p_proto != num);
 #ifdef NO_HARDCODED
-	if (!stayopen_flag) endprotoent();
+	if (data->fp && !data->stayopen) endprotoent_r(data);
 #endif
-	return p;
+	return ret;
 }

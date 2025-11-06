@@ -8,6 +8,10 @@
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_DEVNULL	"/dev/null"
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define	_PATH_HEQUIV	"/etc/hosts.equiv"
+#endif
+#define	_PATH_HOSTS	"/etc/hosts"
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define _PATH_KLOG	"/dev/klog"
 #elif defined(__linux__)
 #define	_PATH_KLOG	"/proc/kmsg"
@@ -20,11 +24,14 @@
 #if defined(__OpenBSD__)
 #define FSTAB		_PATH_MNTTAB
 #endif
+#define	_PATH_NETWORKS	"/etc/networks"
 #if defined(__linux__)
 #define	_PATH_MOUNTED	"/etc/mtab"
 #endif
 #define	_PATH_NOLOGIN	"/etc/nologin"
+#define	_PATH_PROTOCOLS	"/etc/protocols"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
+#define	_PATH_SERVICES	"/etc/services"
 #define	_PATH_SHADOW	"/etc/shadow"
 #define	_PATH_SHELLS	"/etc/shells"
 #define	_PATH_TTY	"/dev/tty"

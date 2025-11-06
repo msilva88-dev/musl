@@ -13,6 +13,12 @@ extern "C" {
 #include <bits/alltypes.h>
 #endif
 
+#include <paths.h>
+
+#ifdef _BSD_SOURCE
+typedef	uint32_t in_addr_t;
+#endif
+
 struct addrinfo {
 	int ai_flags;
 	int ai_family;
@@ -27,11 +33,18 @@ struct addrinfo {
 #define AI_PASSIVE      0x01
 #define AI_CANONNAME    0x02
 #define AI_NUMERICHOST  0x04
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define AI_EXT		0x08
+#define AI_NUMERICSERV	0x10
+#define AI_FQDN		0x20
+#define AI_ADDRCONFIG	0x40
+#define AI_MASK		0x7f
+#elif defined(__linux__)
 #define AI_V4MAPPED     0x08
 #define AI_ALL          0x10
 #define AI_ADDRCONFIG   0x20
 #define AI_NUMERICSERV  0x400
-
+#endif
 
 #define NI_NUMERICHOST  0x01
 #define NI_NUMERICSERV  0x02
@@ -50,7 +63,19 @@ struct addrinfo {
 #define EAI_SERVICE    -8
 #define EAI_MEMORY     -10
 #define EAI_SYSTEM     -11
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define EAI_BADHINTS   -12
+#define EAI_PROTOCOL   -13
+#define EAI_OVERFLOW   -14
+#elif defined(__linux__)
 #define EAI_OVERFLOW   -12
+#endif
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+#define SCOPE_DELIMITER '%'
+#endif
+#endif
 
 int getaddrinfo (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict, struct addrinfo **__restrict);
 void freeaddrinfo (struct addrinfo *);
@@ -89,6 +114,19 @@ struct protoent {
 	int p_proto;
 };
 
+#ifdef _BSD_SOURCE
+struct protoent_data {
+	/* no hardcoded */
+	void *fp;
+	char **aliases;
+	int maxaliases;
+	int stayopen;
+	char *line;
+	/* hardcoded; index of hardcoded protocols */
+	size_t idx;
+};
+#endif
+
 void sethostent (int);
 void endhostent (void);
 struct hostent *gethostent (void);
@@ -110,6 +148,13 @@ void endprotoent (void);
 struct protoent *getprotoent (void);
 struct protoent *getprotobyname (const char *);
 struct protoent *getprotobynumber (int);
+#ifdef _BSD_SOURCE
+void setprotoent_r(int, struct protoent_data *);
+void endprotoent_r(struct protoent_data *);
+int getprotoent_r(struct protoent *, struct protoent_data *);
+int getprotobyname_r(const char *, struct protoent *, struct protoent_data *);
+int getprotobynumber_r(int, struct protoent *, struct protoent_data *);
+#endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE) || defined(_POSIX_SOURCE) \
  || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE+0 < 200809L) \
@@ -121,6 +166,10 @@ __attribute__((const))
 #endif
 int *__h_errno_location(void);
 #define h_errno (*__h_errno_location())
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define NETDB_INTERNAL -1
+#define NETDB_SUCCESS  0
+#endif
 #define HOST_NOT_FOUND 1
 #define TRY_AGAIN      2
 #define NO_RECOVERY    3
