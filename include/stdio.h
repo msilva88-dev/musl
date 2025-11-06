@@ -221,6 +221,16 @@ typedef struct _IO_cookie_io_functions_t {
 FILE *fopencookie(void *, const char *, cookie_io_functions_t);
 #endif
 
+#ifdef _BSD_SOURCE
+FILE *funopen(const void *cookie,
+	int (*readfn)(void *, char *, int),
+	int (*writefn)(void *, const char *, int),
+	fpos_t (*seekfn)(void *, fpos_t, int),
+	int (*closefn)(void *));
+FILE *fropen(const void *cookie, int (*readfn)(void *, char *, int));
+FILE *fwopen(const void *cookie, int (*writefn)(void *, const char *, int));
+#endif
+
 #if defined(_LARGEFILE64_SOURCE)
 #define tmpfile64 tmpfile
 #define fopen64 fopen
