@@ -190,6 +190,51 @@ The implementation of setproctitle (src/bsd/setproctitle.c) is
 Copyright © 1995 Peter Wemm.
 It is licensed under a two-clause BSD license.
 
+The implementation of uuid_compare (src/misc/uuid_compare.c) is
+Copyright © 2002, 2005 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_create (src/misc/uuid_create.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_create_nil (src/misc/uuid_create_nil.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_equal (src/misc/uuid_equal.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_from_string (src/misc/uuid_from_string.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_hash (src/misc/uuid_hash.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_is_nil (src/misc/uuid_is_nil.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_stream (src/misc/uuid_stream.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Thomas Moestl <tmm@FreeBSD.org>.
+It is licensed under a two-clause BSD license.
+
+The implementation of uuid_to_string (src/misc/uuid_to_string.c) is
+Copyright © 2002 Marcel Moolenaar, and
+Copyright © 2002 Hiten Mahesh Pandya.
+It is licensed under a two-clause BSD license.
+
 The implementation of pw_dup (src/passwd/pw_dup.c) is
 Copyright © 2000, 2002 Todd C. Miller <millert@openbsd.org>.
 It is licensed under a ISC license.
