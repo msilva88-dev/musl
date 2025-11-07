@@ -78,7 +78,8 @@ hidden void __vsyslog_r(int priority, struct syslog_data *data, const char *mess
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	LOCK(lock);
-	log_tag = data->log_tag ? data->log_tag : (__progname, data->log_tag = __progname);
+	if (!data->log_tag) data->log_tag = __progname;
+	log_tag = data->log_tag;
 	log_stat = data->log_stat;
 	log_mask = data->log_mask;
 	log_fac  = data->log_fac;
