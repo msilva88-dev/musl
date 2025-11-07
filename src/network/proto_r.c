@@ -99,12 +99,8 @@ void endprotoent_r(struct protoent_data *data)
 #ifndef NO_HARDCODED
 	data->idx = 0;
 #else
-	if (data->fp && !data->stayopen) {
-		fclose(data->fp);
-		data->fp = NULL;
-	}
-	free(data->line);
-	data->line = NULL;
+	if (data->fp && !data->stayopen) fclose(data->fp), data->fp = NULL;
+	if (data->line) free(data->line), data->line = NULL;
 	if (data->aliases) {
 		for (int i = 0; data->aliases[i]; i++) free(data->aliases[i]);
 		free(data->aliases);
@@ -140,25 +136,25 @@ int getprotoent_r(struct protoent *p, struct protoent_data *data)
 	p->p_aliases = (char **)&aliases;
 	data->idx += strlen(p->p_name) + 2;
 #else
-	char *lline = NULL, *hash, *saveptr, *tok, *name, *endp;
+	char *hash, *saveptr, *tok, *name, *endp;
 	size_t len = 0;
 	ssize_t n;
-	long num;
+	long proto;
 	int i;
 	if (!data->fp && !(data->fp = fopen(_PATH_PROTOCOLS, "re"))) return -1;
 
-	while ((n = getline(&lline, &len, data->fp)) != -1) {
-		if (n == 0 || lline[0] == '#' || lline[0] == '\n') continue;
-		if (lline[n-1] == '\n') lline[n-1] = '\0';
-		if ((hash = strchr(lline, '#'))) *hash = '\0';
-		if (!(tok = strtok_r(lline, " \t", &saveptr))) continue;
-		memset(p, 0, sizeof(*p));
+	while ((n = getline(&data->line, &len, data->fp)) != -1) {
+		if (n == 0 || data->line[0] == '#' || data->line[0] == '\n') continue;
+		if (data->line[n-1] == '\n') data->line[n-1] = '\0';
+		if ((hash = strchr(data->line, '#'))) *hash = '\0';
+		if (!(tok = strtok_r(data->line, " \t", &saveptr))) continue;
 		name = strdup(tok);
 		if (!(tok = strtok_r(NULL, " \t", &saveptr))) free(name), continue;
-		num = strtol(tok, &endp, 10);
-		if (*endp != '\0' || num < 0 || num > INT_MAX) free(name), continue;
+		proto = strtol(tok, &endp, 10);
+		if (*endp != '\0' || proto < 0 || proto > UCHAR_MAX) free(name), continue;
+		free(p->p_name);
 		p->p_name = name;
-		p->p_proto = (int)num;
+		p->p_proto = (uint8_t)proto;
 		if (!data->aliases) {
 			data->aliases = calloc((data->maxaliases = 5), sizeof(char *));
 			if (!data->aliases) break;
@@ -171,14 +167,10 @@ int getprotoent_r(struct protoent *p, struct protoent_data *data)
 		}
 		data->aliases[i] = NULL;
 		p->p_aliases = data->aliases;
-		free(data->line);
-		data->line = strdup(lline);
-		free(lline);
 
 		return ret;
 	}
 
-	free(lline);
 	ret = -1;
 #endif
 	return ret;

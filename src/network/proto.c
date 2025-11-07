@@ -91,7 +91,7 @@ static const unsigned char protos[] = {
 };
 #else
 #define UNUSED_A
-static void *fp;
+static FILE *fp;
 static char **aliases;
 static int maxaliases;
 static int stayopen_flag;
@@ -103,12 +103,8 @@ void endprotoent(void)
 #ifndef NO_HARDCODED
 	idx = 0;
 #else
-	if (fp && !stayopen_flag) {
-		fclose(fp);
-		fp = NULL;
-	}
-	free(line);
-	line = NULL;
+	if (fp && !stayopen_flag) fclose(fp), fp = NULL;
+	if (line) free(line), line = NULL;
 	if (aliases) {
 		for (int i = 0; aliases[i]; i++) free(aliases[i]);
 		free(aliases);
@@ -143,24 +139,25 @@ struct protoent *getprotoent(void)
 	idx += strlen(p.p_name) + 2;
 	return &p;
 #else
-	char *lline = NULL, *hash, *saveptr, *tok, *name, *endp;
+	char *hash, *saveptr, *tok, *name, *endp;
 	size_t len = 0;
 	ssize_t n;
-	long num;
+	long proto;
 	int i;
 	if (!fp && !(fp = fopen(_PATH_PROTOCOLS, "re"))) return NULL;
 
-	while ((n = getline(&lline, &len, fp)) != -1) {
-		if (n == 0 || lline[0] == '#' || lline[0] == '\n') continue;
-		if (lline[n-1] == '\n') lline[n-1] = '\0';
-		if ((hash = strchr(lline, '#'))) *hash = '\0';
-		if (!(tok = strtok_r(lline, " \t", &saveptr))) continue;
+	while ((n = getline(&line, &len, fp)) != -1) {
+		if (n == 0 || line[0] == '#' || line[0] == '\n') continue;
+		if (line[n-1] == '\n') line[n-1] = '\0';
+		if ((hash = strchr(line, '#'))) *hash = '\0';
+		if (!(tok = strtok_r(line, " \t", &saveptr))) continue;
 		name = strdup(tok);
 		if (!(tok = strtok_r(NULL, " \t", &saveptr))) free(name), continue;
-		num = strtol(tok, &endp, 10);
-		if (*endp != '\0' || num < 0 || num > INT_MAX) free(name), continue;
+		proto = strtol(tok, &endp, 10);
+		if (*endp != '\0' || proto < 0 || proto > UCHAR_MAX) free(name), continue;
+		free(p.p_name);
 		p.p_name = name;
-		p.p_proto = (int)num;
+		p.p_proto = (uint8_t)proto;
 		if (!aliases) {
 			aliases = calloc((maxaliases = 5), sizeof(char *));
 			if (!aliases) break;
@@ -173,14 +170,10 @@ struct protoent *getprotoent(void)
 		}
 		aliases[i] = NULL;
 		p.p_aliases = aliases;
-		free(line);
-		line = strdup(lline);
-		free(lline);
 
 		return &p;
 	}
 
-	free(lline);
 	return NULL;
 #endif
 }
