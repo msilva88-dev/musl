@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <sys/socket.h>
+
 #define _SDL_DATA_LEN 24
 struct sockaddr_dl {
 	unsigned char sdl_len, sdl_family;
