@@ -17,7 +17,10 @@ struct sockaddr_dl {
 
 #define LLADDR(sdl) (caddr_t)((sdl)->sdl_nlen + (sdl)->sdl_data)
 
+#define _BSD_SOURCE
+char *link_ntoa_r(const struct sockaddr_dl *, char *, size_t);
 char *link_ntoa(const struct sockaddr_dl *);
+#endif
 
 #ifdef __cplusplus
 }
