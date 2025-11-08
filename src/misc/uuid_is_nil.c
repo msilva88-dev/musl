@@ -29,6 +29,7 @@
 
 /* uuid_is_nil from OpenBSD 7.0 source code: lib/libc/uuid/uuid_is_nil.c */
 
+#define _BSD_SOURCE
 #include <string.h>
 #include <uuid.h>
 

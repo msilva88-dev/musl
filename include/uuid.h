@@ -16,6 +16,7 @@ typedef struct uuid {
 	uint8_t clock_seq_hi_and_reserved, clock_seq_low, node[6];
 } uuid_t;
 
+#ifdef _BSD_SOURCE
 int32_t uuid_compare(const uuid_t *, const uuid_t *, uint32_t *);
 void uuid_create(uuid_t *, uint32_t *);
 void uuid_create_nil(uuid_t *, uint32_t *);
@@ -28,6 +29,7 @@ void uuid_from_string(const char *, uuid_t *, uint32_t *);
 uint16_t uuid_hash(const uuid_t *, uint32_t *);
 int32_t uuid_is_nil(const uuid_t *, uint32_t *);
 void uuid_to_string(const uuid_t *, char **, uint32_t *);
+#endif
 
 #ifdef __cplusplus
 }

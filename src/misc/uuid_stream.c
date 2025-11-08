@@ -53,6 +53,7 @@
 
 /* uuid_stream from OpenBSD 7.0 source code: lib/libc/uuid/uuid_stream.c */
 
+#define _BSD_SOURCE
 #include <endian.h>
 #include <uuid.h>
 

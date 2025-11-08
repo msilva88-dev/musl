@@ -29,6 +29,7 @@
 
 /* uuid_create from OpenBSD 7.0 source code: lib/libc/uuid/uuid_create.c */
 
+#define _BSD_SOURCE
 #include <stdlib.h>
 #include <uuid.h>
 

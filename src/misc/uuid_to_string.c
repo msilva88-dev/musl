@@ -29,6 +29,7 @@
 
 /* uuid_to_string from OpenBSD 7.0 source code: lib/libc/uuid/uuid_to_string.c */
 
+#define _BSD_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <uuid.h>

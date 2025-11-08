@@ -29,6 +29,7 @@
 
 /* uuid_hash from OpenBSD 7.0 source code: lib/libc/uuid/uuid_hash.c */
 
+#define _BSD_SOURCE
 #include <uuid.h>
 
 /*
