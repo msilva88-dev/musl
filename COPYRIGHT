@@ -235,6 +235,17 @@ Copyright © 2002 Marcel Moolenaar, and
 Copyright © 2002 Hiten Mahesh Pandya.
 It is licensed under a two-clause BSD license.
 
+The implementation of arc4random (src/stdlib/arc4random.c) is
+Copyright © 1996, David Mazieres <dm@uun.org>,
+Copyright © 2008, Damien Miller <djm@openbsd.org>,
+Copyright © 2013, Markus Friedl <markus@openbsd.org>, and
+Copyright © 2014, Theo de Raadt <deraadt@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of arc4random_uniform (src/stdlib/arc4random_uniform.c) is
+Copyright © 2008 Damien Miller <djm@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of pw_dup (src/passwd/pw_dup.c) is
 Copyright © 2000, 2002 Todd C. Miller <millert@openbsd.org>.
 It is licensed under a ISC license.

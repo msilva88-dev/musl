@@ -71,7 +71,7 @@ static inline void quarterround32(uint32_t *a, uint32_t *b, uint32_t *c, uint32_
 	*b = rotl32(xor32(*b, *c), 7);
 }
 
-void __chacha_encrypt_bytes(struct chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes)
+void __chacha_encrypt_bytes(struct __chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes)
 {
 	uint32_t x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
 	uint32_t j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
@@ -191,7 +191,7 @@ void __chacha_encrypt_bytes(struct chacha_ctx *x, const uint8_t *m, uint8_t *c, 
 	}
 }
 
-void __chacha_ivsetup(struct chacha_ctx *x, const uint8_t *iv)
+void __chacha_ivsetup(struct __chacha_ctx *x, const uint8_t *iv)
 {
 	x->input[12] = 0;
 	x->input[13] = 0;
@@ -199,7 +199,7 @@ void __chacha_ivsetup(struct chacha_ctx *x, const uint8_t *iv)
 	x->input[15] = u8to32_little(iv + 4);
 }
 
-void __chacha_keysetup(struct chacha_ctx *x, const uint8_t *k, uint32_t kbits)
+void __chacha_keysetup(struct __chacha_ctx *x, const uint8_t *k, uint32_t kbits)
 {
 	if (kbits != 128 && kbits != 256) return;
 

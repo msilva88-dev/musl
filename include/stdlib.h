@@ -126,6 +126,9 @@ void setproctitle_fast(const char *, ...);
 #endif
 
 #ifdef _BSD_SOURCE
+uint32_t arc4random(void);
+void arc4random_buf(void *, size_t);
+uint32_t arc4random_uniform(uint32_t);
 char *devname(dev_t, mode_t);
 const char *getprogname(void);
 void setprogname(const char *);
