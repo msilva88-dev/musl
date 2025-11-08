@@ -23,6 +23,11 @@ int inet_aton (const char *, struct in_addr *);
 struct in_addr inet_makeaddr(in_addr_t, in_addr_t);
 in_addr_t inet_lnaof(struct in_addr);
 in_addr_t inet_netof(struct in_addr);
+#ifdef _BSD_SOURCE
+char *inet_neta(in_addr_t, char *, size_t);
+char *inet_net_ntop(int, const void *, int, char *, size_t);
+int inet_net_pton(int, const char *, void *, size_t);
+#endif
 
 #ifdef __cplusplus
 }
