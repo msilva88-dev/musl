@@ -134,6 +134,7 @@ char *devname(dev_t, mode_t);
 void freezero(void *, size_t);
 const char *getprogname(void);
 void setprogname(const char *);
+void *recallocarray(void *, size_t, size_t, size_t);
 #endif
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
