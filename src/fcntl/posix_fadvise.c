@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <errno.h>
+#include "libc.h"
 #endif
 
 int posix_fadvise(int fd, off_t base, off_t len, int advice)
@@ -62,13 +63,10 @@ int posix_fadvise(int fd, off_t base, off_t len, int advice)
 			return EINVAL;
 	}
 
-	long pagesize = sysconf(_SC_PAGESIZE);
-	if (pagesize <= 0) pagesize = 4096;
-
 	off_t end = base + len;
 	if (end < base) return EOVERFLOW;
 
-	off_t aligned_base = base & ~(pagesize - 1);
+	off_t aligned_base = base & ~(PAGE_SIZE - 1);
 	size_t aligned_len = end - aligned_base;
 
 	void *addr = mmap(

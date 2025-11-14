@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "libc.h"
 
 // vmsplice_wrapper
 
@@ -20,14 +21,13 @@ ssize_t vmsplice(int fd, const struct iovec *iov, size_t cnt, unsigned flags)
 	}
 
 	ssize_t total = 0;
-	long page_size = sysconf(_SC_PAGESIZE);
 	for (size_t i = 0; i < cnt; i++) {
 		const char *buf = iov[i].iov_base;
 		size_t len = iov[i].iov_len;
 		size_t offset = 0;
 
 		if (flags & SPLICE_F_GIFT) {
-			if (((uintptr_t)buf % page_size) != 0 || (len % page_size) != 0) {
+			if (((uintptr_t)buf % PAGE_SIZE) != 0 || (len % PAGE_SIZE) != 0) {
 				errno = EINVAL;
 				return -1;
 			}

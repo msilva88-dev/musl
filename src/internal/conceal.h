@@ -1,6 +1,9 @@
 #ifndef CONCEAL_H
 #define CONCEAL_H
 
+#include <stdint.h>
+#include "libc.h"
+
 #define CONCEAL_MAGIC 0x636F6E6365616C00ULL /* "conceal\0" */
 #define CONCEAL_FLAG_MMAPPED 1
 #define CONCEAL_FLAG_MLOCKED 2
@@ -19,10 +22,7 @@ static inline struct conceal_hdr *conceal_hdr_from_user(void *p)
 
 static inline size_t pagesize_round(size_t len)
 {
-	long page_size = sysconf(_SC_PAGESIZE);
-	if (page_size <= 0) return len;
-	size_t pg = (size_t)page_size;
-	return (len + pg - 1) & ~(pg - 1);
+	return (len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 }
 
 #endif
