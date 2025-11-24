@@ -356,7 +356,7 @@ void *malloc(size_t n)
 	unlock(mal.split_merge_lock);
 	void *mem = CHUNK_TO_MEM(c);
 	fill_junk(mem, n - OVERHEAD, 1);
-	unprotect_chunk(mem, CHUNK_SIZE(c) - OVERHEAD);
+	//unprotect_chunk(mem, CHUNK_SIZE(c) - OVERHEAD);
 	return mem;
 }
 
@@ -538,7 +538,7 @@ void __bin_chunk(struct chunk *self)
 	bin_chunk(self, i);
 	unlock(mal.split_merge_lock);
 
-	protect_chunk(CHUNK_TO_MEM(self), size - OVERHEAD);
+	//protect_chunk(CHUNK_TO_MEM(self), size - OVERHEAD);
 
 	/* Replace middle of large chunks with fresh zero pages */
 	if (size > RECLAIM && (size^(size-osize)) > size-osize) {
@@ -580,7 +580,7 @@ void free(void *p)
 	if (IS_MMAPPED(self))
 		unmap_chunk(self);
 	else {
-		unprotect_chunk(p, CHUNK_SIZE(self) - OVERHEAD);
+		//unprotect_chunk(p, CHUNK_SIZE(self) - OVERHEAD);
 		__bin_chunk(self);
 	}
 }

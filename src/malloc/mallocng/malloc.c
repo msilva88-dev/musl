@@ -379,9 +379,9 @@ success:
 	ctr = ctx.mmap_counter;
 	unlock();
 	void *q = enframe(g, idx, n, ctr);
-	unprotect_chunk(q, n);
+	//unprotect_chunk(q, n);
 	fill_junk(q, n, 1);
-	protect_chunk(q, n);
+	//protect_chunk(q, n);
 	return q;
 }
 

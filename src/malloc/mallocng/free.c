@@ -104,7 +104,7 @@ static struct mapinfo nontrivial_free(struct meta *g, int i)
 void free(void *p)
 {
 	if (!p) return;
-	if (free_mchunk(p)) return;
+	//if (free_mchunk(p)) return;
 
 	struct meta *g = get_meta(p);
 	int idx = get_slot_index(p);
