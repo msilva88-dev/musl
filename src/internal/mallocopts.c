@@ -183,9 +183,9 @@ static inline uint64_t monotonic_seconds(void)
 {
 	struct timespec ts;
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
-		/* Fallback: return 0 so age check simply defers until clock works.
-		   Alternatively could a_crash(); but silent fallback is safer here. */
-		return 0;
+		/* Fall back to wall clock to avoid indefinite suppression of checks. */
+		time_t t = time(NULL);
+		return (uint64_t)(t >= 0 ? t : 0);
 	}
 	return (uint64_t)ts.tv_sec;
 }
@@ -334,6 +334,16 @@ static int remove_guard_entry(void *base)
 	}
 	unlock(&__guard_list_lock);
 	return -1;
+}
+
+/* Helper for overflow: check (base + add) ((PAGE_SIZE - 1) included) */
+static inline int plus_overflows(uintptr_t base, size_t add)
+{
+	if (
+		(add > (SIZE_MAX - base))
+		|| ((PAGE_SIZE - 1) && add + (PAGE_SIZE - 1) > (SIZE_MAX - base))
+	) return 1;
+	return 0;
 }
 
 void fill_junk(void *p, size_t len, int on_alloc)
@@ -788,7 +798,7 @@ void protect_chunk(void *p, size_t size)
 	if (size >= FREEUNMAP_THRESHOLD) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
 		/* Overflow check for end computation */
-		if (size > SIZE_MAX - (uintptr_t)p - (PAGE_SIZE - 1)) m_crash("protect_chunk: overflow\n");
+		if (plus_overflows((uintptr_t)p, size)) m_crash("protect_chunk (from malloc): overflow\n");
 		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		if (end < (uintptr_t)p) m_crash("protect_chunk (from malloc): end < p overflow\n");
 		size_t plen = end - base;
@@ -803,7 +813,7 @@ void unprotect_chunk(void *p, size_t size)
 	if (!__mallocopts.mo_freeunmap) return;
 	if (size >= FREEUNMAP_THRESHOLD) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
-		if (size > SIZE_MAX - (uintptr_t)p - (PAGE_SIZE - 1)) m_crash("unprotect_chunk (from malloc): overflow\n");
+		if (plus_overflows((uintptr_t)p, size)) m_crash("unprotect_chunk (from malloc): overflow\n");
 		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		if (end < (uintptr_t)p) m_crash("unprotect_chunk (from malloc): end < p overflow\n");
 		size_t plen = end - base;
