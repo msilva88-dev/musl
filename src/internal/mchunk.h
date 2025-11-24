@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define MCHUNK_MAGIC 0xC0DECAFEu
+#define MCHUNK_MAGIC_FREED 0xDEAD0000u
 #define MCHUNK_FLAG_NONE 0x0
 #define MCHUNK_FLAG_CONCEAL 0x1
 #define MCHUNK_FLAG_GUARD 0x2

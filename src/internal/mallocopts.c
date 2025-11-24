@@ -28,11 +28,13 @@ hidden struct __mallocopts {
 hidden struct __delayed_chunk {
 	void *addr;
 	size_t len;
-	time_t when;
+	uint64_t when;
 } __delayed_chunks[MAX_DELAYED_CHUNKS];
 hidden int __delayed_count = 0;
 static volatile int __delayed_list_lock[2] = { 0, 0 };
 #define DELAYED_PROTECT_THRESHOLD PAGE_SIZE
+/* Delay before inspecting freed chunks (seconds) */
+#define DELAYED_CHUNK_DELAY_SEC 1
 
 static struct __guard_entry {
 	void *base; // mmap base (include front guard)
@@ -177,12 +179,23 @@ static int add_guard_entry(void *base, size_t total)
 	return 0;
 }
 
+static inline uint64_t monotonic_seconds(void)
+{
+	struct timespec ts;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+		/* Fallback: return 0 so age check simply defers until clock works.
+		   Alternatively could a_crash(); but silent fallback is safer here. */
+		return 0;
+	}
+	return (uint64_t)ts.tv_sec;
+}
+
 static void check_delayed_chunks()
 {
 	// Strategy: gather candidates under lock (and remove them from the
 	// shared array), then perform mprotect/inspection *without* holding the lock.
 	// This avoids doing slow or re-entrant ops while the list lock is held.
-	time_t now = time(NULL);
+	time_t now = monotonic_seconds();
 
 	// local snapshot buffer (small, MAX_DELAYED_CHUNKS constant)
 	struct __delayed_chunk snap[MAX_DELAYED_CHUNKS];
@@ -191,7 +204,7 @@ static void check_delayed_chunks()
 	lock(&__delayed_list_lock);
 	for (int i = 0; i < __delayed_count; ) {
 		struct __delayed_chunk *d = &__delayed_chunks[i];
-		if ((now - d->when) < 1) {
+		if (now < d->when || (now - d->when) < DELAYED_CHUNK_DELAY_SEC) {
 			i++;
 			continue;
 		}
@@ -609,13 +622,13 @@ void register_delayed_chunk(void *p, size_t len)
 	}
 	__delayed_chunks[__delayed_count].addr = p;
 	__delayed_chunks[__delayed_count].len = len;
-	__delayed_chunks[__delayed_count].when = time(NULL);
+	__delayed_chunks[__delayed_count].when = monotonic_seconds();
 	__delayed_count++;
 	unlock(&__delayed_list_lock);
 	if (__mallocopts.mo_freecheck && __mallocopts.mo_freeunmap && len >= DELAYED_PROTECT_THRESHOLD) {
 		uintptr_t page_base = (uintptr_t)p & ~(PAGE_SIZE - 1);
-		/* Overflow check before arithmetic (uintptr_t)p + len */
-		if (len > SIZE_MAX - (uintptr_t)p) m_crash("free(): overflow found in freecheck\n");
+		/* Overflow check includes rounding addition (PAGE_SIZE - 1) */
+		if (len > SIZE_MAX - (uintptr_t)p - (PAGE_SIZE - 1)) m_crash("free(): overflow found in freecheck\n");
 		size_t prot_len = ((((uintptr_t)p + len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 		(void)mprotect((void*)page_base, prot_len, PROT_NONE);
 	}
@@ -632,8 +645,8 @@ void free_chunk(void *p)
 	if (!m || m->magic != MCHUNK_MAGIC) m_crash("free(): invalid pointer\n");
 	check_malloc_options_once();
 	freecheck(p, m);
-	/* Clear magic early so any concurrent/double free attempt fails fast. */
-	m->magic = 0;
+	/* Mark as freed with a sentinel to allow double-free detection. */
+	m->magic = MCHUNK_MAGIC_FREED;
 	if (m->flags & MCHUNK_FLAG_CONCEAL) explicit_bzero(p, m->user_len);
 	else fill_junk(p, m->user_len, 0);
 	// delayed free handling: register for delayed checking/protection
@@ -657,6 +670,7 @@ int free_mchunk(void *p)
 		free_chunk(p);
 		return 1;
 	}
+	if (m && m->magic == MCHUNK_MAGIC_FREED) m_crash("free(): double free detected\n");
 	return 0;
 }
 
@@ -774,7 +788,7 @@ void protect_chunk(void *p, size_t size)
 	if (size >= FREEUNMAP_THRESHOLD) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
 		/* Overflow check for end computation */
-		if (size > SIZE_MAX - (uintptr_t)p) m_crash("protect_chunk: overflow\n");
+		if (size > SIZE_MAX - (uintptr_t)p - (PAGE_SIZE - 1)) m_crash("protect_chunk: overflow\n");
 		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		if (end < (uintptr_t)p) m_crash("protect_chunk (from malloc): end < p overflow\n");
 		size_t plen = end - base;
@@ -789,7 +803,7 @@ void unprotect_chunk(void *p, size_t size)
 	if (!__mallocopts.mo_freeunmap) return;
 	if (size >= FREEUNMAP_THRESHOLD) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
-		if (size > SIZE_MAX - (uintptr_t)p) m_crash("unprotect_chunk (from malloc): overflow\n");
+		if (size > SIZE_MAX - (uintptr_t)p - (PAGE_SIZE - 1)) m_crash("unprotect_chunk (from malloc): overflow\n");
 		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		if (end < (uintptr_t)p) m_crash("unprotect_chunk (from malloc): end < p overflow\n");
 		size_t plen = end - base;
