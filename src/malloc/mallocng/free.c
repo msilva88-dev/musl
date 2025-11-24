@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-#include "atomic.h" // a_crash()
-#include "conceal.h"
+#include "libc.h"
+#include "mallocopts.h"
 
 #include "meta.h"
 
@@ -104,36 +104,10 @@ static struct mapinfo nontrivial_free(struct meta *g, int i)
 void free(void *p)
 {
 	if (!p) return;
-
-	// try to see if this pointer is a 'conceal' allocation
-	struct conceal_hdr *h = conceal_hdr_from_user(p);
-
-	// if it's a conceal allocation, handle it *here* and return (or crash)
-	if (h && h->magic == CONCEAL_MAGIC) {
-		// compute user length safely
-		size_t user_len = h->len;
-
-		explicit_bzero(p, user_len);
-
-		// defensive: only munmap if header seems page-aligned
-		if (!((uintptr_t)h % (size_t)PAGE_SIZE)) {
-			size_t total = sizeof(struct conceal_hdr) + user_len;
-			size_t mlen = pagesize_round(total);
-			if (h->flags & CONCEAL_FLAG_MLOCKED) munlock((void *)h, mlen);
-			explicit_bzero(h, sizeof(*h));
-			munmap((void *)h, mlen);
-			return;
-		}
-
-		// NOT page-aligned -> treat as invalid pointer (avoid calling get_meta)
-		static const char werr[] = "free(): conceal allocation not page-aligned (invalid)\n";
-		write(2, werr, sizeof(werr) - 1);
-		a_crash();
-	}
+	if (free_mchunk(p)) return;
 
 	struct meta *g = get_meta(p);
 	int idx = get_slot_index(p);
-
 	size_t stride = get_stride(g);
 	unsigned char *start = g->mem->storage + stride*idx;
 	unsigned char *end = start + stride - IB;

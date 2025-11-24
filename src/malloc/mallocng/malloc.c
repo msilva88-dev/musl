@@ -5,6 +5,8 @@
 #include <sys/mman.h>
 #include <errno.h>
 
+#include "mallocopts.h"
+
 #include "meta.h"
 
 LOCK_OBJ_DEF;
@@ -376,7 +378,11 @@ void *malloc(size_t n)
 success:
 	ctr = ctx.mmap_counter;
 	unlock();
-	return enframe(g, idx, n, ctr);
+	void *q = enframe(g, idx, n, ctr);
+	unprotect_chunk(q, n);
+	fill_junk(q, n, 1);
+	protect_chunk(q, n);
+	return q;
 }
 
 int is_allzero(void *p)

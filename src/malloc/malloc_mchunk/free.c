@@ -1,6 +1,7 @@
 #include <stdlib.h>
+#include "mallocopts.h"
 
 void free(void *p)
 {
-	__libc_free(p);
+	free_chunk(p);
 }

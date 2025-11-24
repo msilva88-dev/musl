@@ -117,7 +117,6 @@ int rand_r (unsigned *);
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
-extern char *malloc_options; // it is a stub
 extern char *suboptarg;
 void setproctitle(const char *, ...);
 #if defined(__HyperbolaBSD__)
@@ -127,6 +126,7 @@ void setproctitle_fast(const char *, ...);
 #endif
 
 #ifdef _BSD_SOURCE
+extern char *malloc_options;
 uint32_t arc4random(void);
 void arc4random_buf(void *, size_t);
 uint32_t arc4random_uniform(uint32_t);

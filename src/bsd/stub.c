@@ -1,1 +1,0 @@
-char *malloc_options;

@@ -10,6 +10,7 @@
 #include "pthread_impl.h"
 #include "malloc_impl.h"
 #include "fork_impl.h"
+#include "mallocopts.h"
 
 #define malloc __libc_malloc_impl
 #define realloc __libc_realloc
@@ -310,11 +311,13 @@ void *malloc(size_t n)
 		size_t len = n + OVERHEAD + PAGE_SIZE - 1 & -PAGE_SIZE;
 		char *base = __mmap(0, len, PROT_READ|PROT_WRITE,
 			MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-		if (base == (void *)-1) return 0;
+		if (base == MAP_FAILED) return 0;
 		c = (void *)(base + SIZE_ALIGN - OVERHEAD);
 		c->csize = len - (SIZE_ALIGN - OVERHEAD);
 		c->psize = SIZE_ALIGN - OVERHEAD;
-		return CHUNK_TO_MEM(c);
+		void *mem = CHUNK_TO_MEM(c);
+		fill_junk(mem, len - OVERHEAD, 1);
+		return mem;
 	}
 
 	i = bin_index_up(n);
@@ -324,7 +327,9 @@ void *malloc(size_t n)
 		if (c != BIN_TO_CHUNK(i) && CHUNK_SIZE(c)-n <= DONTCARE) {
 			unbin(c, i);
 			unlock_bin(i);
-			return CHUNK_TO_MEM(c);
+			void *mem = CHUNK_TO_MEM(c);
+			fill_junk(mem, n - OVERHEAD, 1);
+			return mem;
 		}
 		unlock_bin(i);
 	}
@@ -349,7 +354,10 @@ void *malloc(size_t n)
 	}
 	trim(c, n);
 	unlock(mal.split_merge_lock);
-	return CHUNK_TO_MEM(c);
+	void *mem = CHUNK_TO_MEM(c);
+	fill_junk(mem, n - OVERHEAD, 1);
+	unprotect_chunk(mem, CHUNK_SIZE(c) - OVERHEAD);
+	return mem;
 }
 
 int __malloc_allzerop(void *p)
@@ -418,7 +426,9 @@ void *realloc(void *p, size_t n)
 			goto copy_realloc;
 		self = (void *)(base + extra);
 		self->csize = newlen - extra;
-		return CHUNK_TO_MEM(self);
+		void *mem = CHUNK_TO_MEM(self);
+		fill_junk(mem, n - OVERHEAD, 1);
+		return mem;
 	}
 
 	next = NEXT_CHUNK(self);
@@ -435,7 +445,9 @@ void *realloc(void *p, size_t n)
 		self->csize = split->psize = n | C_INUSE;
 		split->csize = next->psize = n0-n | C_INUSE;
 		__bin_chunk(split);
-		return CHUNK_TO_MEM(self);
+		void *mem = CHUNK_TO_MEM(self);
+		fill_junk(mem, n - OVERHEAD, 1);
+		return mem;
 	}
 
 	lock(mal.split_merge_lock);
@@ -451,7 +463,9 @@ void *realloc(void *p, size_t n)
 			self->csize = next->psize = n0+nsize | C_INUSE;
 			trim(self, n);
 			unlock(mal.split_merge_lock);
-			return CHUNK_TO_MEM(self);
+			void *mem = CHUNK_TO_MEM(self);
+			fill_junk(mem, n - OVERHEAD, 1);
+			return mem;
 		}
 		unlock_bin(i);
 	}
@@ -473,6 +487,17 @@ void __bin_chunk(struct chunk *self)
 
 	/* Crash on corrupted footer (likely from buffer overflow) */
 	if (next->psize != self->csize) a_crash();
+
+	// ensure options parsed once before any checks that depend on them
+	check_malloc_options_once();
+
+	if (__mallocopts.mo_junklev > 0) {
+		unsigned char *u = CHUNK_TO_MEM(self);
+		size_t len = CHUNK_SIZE(self) - OVERHEAD;
+		for (size_t i = 0; i < (len < 64 ? len : 64); i++) {
+			if (u[i] != 0xDF) a_crash();
+		}
+	}
 
 	lock(mal.split_merge_lock);
 
@@ -513,6 +538,8 @@ void __bin_chunk(struct chunk *self)
 	bin_chunk(self, i);
 	unlock(mal.split_merge_lock);
 
+	protect_chunk(CHUNK_TO_MEM(self), size - OVERHEAD);
+
 	/* Replace middle of large chunks with fresh zero pages */
 	if (size > RECLAIM && (size^(size-osize)) > size-osize) {
 		uintptr_t a = (uintptr_t)self + SIZE_ALIGN+PAGE_SIZE-1 & -PAGE_SIZE;
@@ -546,12 +573,16 @@ void free(void *p)
 {
 	if (!p) return;
 
+	if (free_mchunk(p)) return;
+
 	struct chunk *self = MEM_TO_CHUNK(p);
 
 	if (IS_MMAPPED(self))
 		unmap_chunk(self);
-	else
+	else {
+		unprotect_chunk(p, CHUNK_SIZE(self) - OVERHEAD);
 		__bin_chunk(self);
+	}
 }
 
 void __malloc_donate(char *start, char *end)

@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 #include <string.h>
 #include "meta.h"
+#include "mallocopts.h"
 
 void *realloc(void *p, size_t n)
 {
