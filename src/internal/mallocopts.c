@@ -51,7 +51,7 @@ static struct __guard_quarantine {
 	size_t total;
 	uint64_t when;
 	struct __guard_quarantine *next;
-} __guard_quarantine *__guard_q = NULL;
+} *__guard_q = NULL;
 static volatile int __guard_q_lock[2] = {0,0};
 
 static volatile int mallocopts_initialized = 0;
@@ -206,6 +206,49 @@ static inline uint64_t monotonic_seconds(void)
 	return (uint64_t)ts.tv_sec;
 }
 
+static void guard_quarantine_add(void *base, size_t total)
+{
+	struct __guard_quarantine *n = mmap(NULL, sizeof(*n), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if (n == MAP_FAILED) return;
+	n->base = base;
+	n->total = total;
+	n->when = monotonic_seconds();
+	lock(&__guard_q_lock);
+	n->next = __guard_q;
+	__guard_q = n;
+	unlock(&__guard_q_lock);
+}
+
+static void guard_quarantine_sweep(uint64_t now)
+{
+	lock(&__guard_q_lock);
+	struct __guard_quarantine **pp = &__guard_q;
+	while (*pp) {
+		struct __guard_quarantine *q = *pp;
+		if (now - q->when >= DELAYED_CHUNK_DELAY_SEC) {
+			*pp = q->next;
+			unlock(&__guard_q_lock);
+
+			// remove guard list entry before unmapping to prevent stale list UAF
+			if (remove_guard_entry(q->base) != 0) {
+				m_warn("malloc: quarantine sweep could not remove guard entry\n");
+			}
+			// basic sanity check on size (optional): skip absurd totals
+			if (q->total == 0 || q->total > SIZE_MAX / 2) {
+				m_warn("malloc: quarantine sweep suspicious total size, skipping unmap\n");
+			} else {
+				munmap(q->base, q->total);
+			}
+
+			munmap(q, sizeof(*q));
+			lock(&__guard_q_lock);
+			continue;
+		}
+		pp = &q->next;
+	}
+	unlock(&__guard_q_lock);
+}
+
 static void check_delayed_chunks()
 {
 	// Strategy: gather candidates under lock (and remove them from the
@@ -281,39 +324,6 @@ static inline void guard_hold(struct __guard_entry *g)
 {
 	// increment reference (atomic)
 	a_inc(&g->ref);
-}
-
-static void guard_quarantine_add(void *base, size_t total)
-{
-	struct __guard_quarantine *n = mmap(NULL, sizeof(*n), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (n == MAP_FAILED) return;
-	n->base = base;
-	n->total = total;
-	n->when = monotonic_seconds();
-	lock(&__guard_q_lock);
-	n->next = __guard_q;
-	__guard_q = n;
-	unlock(&__guard_q_lock);
-}
-
-static void guard_quarantine_sweep(uint64_t now)
-{
-	lock(&__guard_q_lock);
-	struct __guard_quarantine **pp = &__guard_q;
-	while (*pp) {
-		struct __guard_quarantine *q = *pp;
-		if (now - q->when >= DELAYED_CHUNK_DELAY_SEC) {
-			*pp = q->next;
-			unlock(&__guard_q_lock);
-			// fully unmap guarded region now
-			munmap(q->base, q->total);
-			munmap(q, sizeof(*q));
-			lock(&__guard_q_lock);
-			continue;
-		}
-		pp = &q->next;
-	}
-	unlock(&__guard_q_lock);
 }
 
 static void guard_release(struct __guard_entry *g)
@@ -752,7 +762,7 @@ void free_chunk(void *p)
 	if (m->flags & MCHUNK_FLAG_GUARD) {
 		// Mark freed, protect for UAF, then quarantine for delayed full unmap
 		protect_chunk(p, m->user_len);
-		guard_quarantine_add(m->base ? m->base : (void*)m, m->base ? m->total_len : (m->total_len));
+		guard_quarantine_add(m->base ? m->base : (void*)m, m->total_len);
 		return;
 	}
 	// unmap the region: use stored base/total_len if present, else treat m as base
