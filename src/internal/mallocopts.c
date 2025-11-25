@@ -614,22 +614,14 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 
 		// add the new guard entry first (so we don't lose metadata on failure)
 		if (add_guard_entry(new_base, new_total) != 0) {
-			(void)mprotect(new_base, PAGE_SIZE, PROT_READ | PROT_WRITE);
-			(void)mprotect(new_base + PAGE_SIZE + new_aligned, PAGE_SIZE, PROT_READ | PROT_WRITE);
-			munmap(new_base, new_total);
-			errno = ENOMEM;
-			guard_release(g);
-			return MAP_FAILED;
+			/* Mapping has been moved by mremap; cannot safely revert. */
+			m_crash("malloc: guard metadata allocation failed after mremap\n");
 		}
 
 		// remove the old entry after successfully adding the new one
 		if (remove_guard_entry(old_base) != 0) {
-			// unexpected: try to clean up the new entry and fail
-			remove_guard_entry(new_base);
-			munmap(new_base, new_total);
-			errno = EINVAL;
-			guard_release(g);
-			return MAP_FAILED;
+			/* Old entry should exist; inconsistent guard list. */
+			m_crash("malloc: failed to remove old guard entry after mremap\n");
 		}
 
 		// release caller ref and return user pointer
