@@ -286,6 +286,7 @@ static void dump_malloc_stats(void)
 	fprintf(f,
 		"==== malloc statistics ====\n"
 		"alloc_calls: %" PRIu64 "\n"
+		"alloc_failures: %" PRIu64 "\n"
 		"free_calls: %" PRIu64 "\n"
 		"realloc_calls: %" PRIu64 "\n"
 		"alloc_bytes: %" PRIu64 "\n"
@@ -306,6 +307,7 @@ static void dump_malloc_stats(void)
 		"xmalloc_enabled: %u\n"
 		"canaries_enabled: %u\n",
 		__mstats.alloc_calls,
+		__mstats.alloc_failures,
 		__mstats.free_calls,
 		__mstats.realloc_calls,
 		__mstats.alloc_bytes,
@@ -758,6 +760,9 @@ void *mguard(size_t size, int flags)
 
 	if ((mprotect(front_guard, PAGE_SIZE, PROT_NONE) != 0) || (mprotect(rear_guard, PAGE_SIZE, PROT_NONE) != 0)) {
 		int serrno = errno;
+#ifdef MALLOC_STATS
+		++__mstats.alloc_failures;
+#endif
 		munmap(base, total);
 		errno = serrno;
 		return MAP_FAILED;
@@ -765,7 +770,9 @@ void *mguard(size_t size, int flags)
 
 	if (add_guard_entry(base, total) != 0) {
 		int serrno = errno;
-
+#ifdef MALLOC_STATS
+		++__mstats.alloc_failures;
+#endif
 		mprotect(front_guard, PAGE_SIZE, PROT_READ | PROT_WRITE);
 		mprotect(rear_guard, PAGE_SIZE, PROT_READ | PROT_WRITE);
 		munmap(base, total);
