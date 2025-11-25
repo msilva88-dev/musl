@@ -147,6 +147,13 @@ static inline void m_crash(const char *const msg)
 	a_crash();
 }
 
+static inline void m_warn(const char *const msg)
+{
+	size_t n = 0;
+	while (msg[n]) n++;
+	write(2, msg, n);
+}
+
 /* lock/unlock helpers — accept pointer to two-int array (element 0 = lock, element 1 = waiter counter) */
 
 static inline void lock(int (*arr)[2])
@@ -231,7 +238,10 @@ static void check_delayed_chunks()
 			size_t prot_len = ((((uintptr_t)ptr + snap[s].len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 			/* If we cannot temporarily make it readable, skip inspection to avoid a crash. */
 			if (mprotect((void*)page_base, prot_len, PROT_READ) == 0) need_reprotect = 1;
-			else continue;
+			else {
+				m_warn("malloc: skipped UAF check (mprotect failed)\n");
+				continue;
+			}
 		}
 
 		int bad = 0;
@@ -371,6 +381,7 @@ void fill_junk(void *p, size_t len, int on_alloc)
 	else memset(p, val, PAGE_SIZE);
 }
 
+/* freecheck: validate alignment and magic (only for active chunks) */
 void freecheck(void *p, struct __mchunk *m)
 {
 	if (!p) return;
@@ -383,7 +394,8 @@ void freecheck(void *p, struct __mchunk *m)
 	// otherwise if not conceal we will validate via other mechanisms
 	// (here we only check the conceal case to avoid calling malloc_usable_size
 	// on garbage).
-	if (m && m->magic != MCHUNK_MAGIC) m_crash("free(): invalid or already freed pointer\n");
+	if (!m) m_crash("free(): invalid pointer header\n");
+	if (m->magic != MCHUNK_MAGIC) m_crash("free(): invalid or already freed pointer\n");
 }
 
 // mguard: allocate region; if guard option enabled, create 2 guard pages
@@ -651,6 +663,37 @@ void register_delayed_chunk(void *p, size_t len)
 	if ((arc4random() & 0x0F) == 0) check_delayed_chunks();
 }
 
+void protect_chunk(void *p, size_t size)
+{
+	if (!p || size == 0) return;
+	check_malloc_options_once();
+	if (!__mallocopts.mo_freeunmap) return;
+	if (size >= FREEUNMAP_THRESHOLD) {
+		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
+		/* Overflow check for end computation */
+		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("protect_chunk (from malloc): overflow\n");
+		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+		if (end < (uintptr_t)p) m_crash("protect_chunk (from malloc): end < p overflow\n");
+		size_t plen = end - base;
+		(void)mprotect((void*)base, plen, PROT_NONE);
+	}
+}
+
+void unprotect_chunk(void *p, size_t size)
+{
+	if (!p || size == 0) return;
+	check_malloc_options_once();
+	if (!__mallocopts.mo_freeunmap) return;
+	if (size >= FREEUNMAP_THRESHOLD) {
+		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
+		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("unprotect_chunk (from malloc): overflow\n");
+		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+		if (end < (uintptr_t)p) m_crash("unprotect_chunk (from malloc): end < p overflow\n");
+		size_t plen = end - base;
+		(void)mprotect((void*)base, plen, PROT_READ | PROT_WRITE);
+	}
+}
+
 // free_chunk: free an mchunk-allocated area (user pointer)
 void free_chunk(void *p)
 {
@@ -670,7 +713,11 @@ void free_chunk(void *p)
 	// delayed free handling: register for delayed checking/protection
 	register_delayed_chunk(p, m->user_len);
 	if (m->flags & MCHUNK_FLAG_GUARD) {
-		if (munguard(p, m->user_len) != 0) m_crash("free(): invalid or already freed pointer\n");
+		/* Quarantine header for delayed double-free detection: do not immediately unmap.
+		   Instead, protect entire guarded mapping to catch UAF, and schedule metadata unmap later. */
+		protect_chunk(p, m->user_len);
+		/* Optionally schedule original header base (m->base) for delayed unmap after delay. */
+		register_delayed_chunk(m, sizeof(struct __mchunk)); /* tiny header check */
 		return;
 	}
 	// unmap the region: use stored base/total_len if present, else treat m as base
@@ -798,35 +845,4 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 	// free will explicit_bzero if conceal flag set (free_chunk handles it)
 	free_chunk(old);
 	return newp;
-}
-
-void protect_chunk(void *p, size_t size)
-{
-	if (!p || size == 0) return;
-	check_malloc_options_once();
-	if (!__mallocopts.mo_freeunmap) return;
-	if (size >= FREEUNMAP_THRESHOLD) {
-		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
-		/* Overflow check for end computation */
-		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("protect_chunk (from malloc): overflow\n");
-		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-		if (end < (uintptr_t)p) m_crash("protect_chunk (from malloc): end < p overflow\n");
-		size_t plen = end - base;
-		(void)mprotect((void*)base, plen, PROT_NONE);
-	}
-}
-
-void unprotect_chunk(void *p, size_t size)
-{
-	if (!p || size == 0) return;
-	check_malloc_options_once();
-	if (!__mallocopts.mo_freeunmap) return;
-	if (size >= FREEUNMAP_THRESHOLD) {
-		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
-		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("unprotect_chunk (from malloc): overflow\n");
-		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-		if (end < (uintptr_t)p) m_crash("unprotect_chunk (from malloc): end < p overflow\n");
-		size_t plen = end - base;
-		(void)mprotect((void*)base, plen, PROT_READ | PROT_WRITE);
-	}
 }
