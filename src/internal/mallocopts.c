@@ -683,7 +683,7 @@ void register_delayed_chunk(void *p, size_t len)
 		unlock(&__delayed_list_lock);
 		// Optional probabilistic cleanup to reduce contention:
 		// only run occasionally to avoid CPU storm.
-		if ((arc4random() & 0x0F) == 0) check_delayed_chunks();
+		if (arc4random_uniform(16) == 0) check_delayed_chunks();
 		// re-acquire lock and re-evaluate; if still full give up
 		lock(&__delayed_list_lock);
 		if (__delayed_count >= MAX_DELAYED_CHUNKS) {
