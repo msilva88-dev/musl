@@ -64,7 +64,7 @@ static volatile int __page_cache_lock[2] = { 0, 0 };
 static struct __page_cache_entry {
 	void *ptr;
 	size_t len;
-	struct page_cache_entry *next;
+	struct __page_cache_entry *next;
 } *__page_cache_head = NULL;
 static size_t __page_cache_bytes = 0; /* total bytes of cached mappings */
 static size_t __page_cache_last_capacity = 0; /* track previous capacity for trim */
@@ -81,9 +81,9 @@ static void page_cache_trim(void)
 	size_t cap = page_cache_capacity();
 	if (__page_cache_bytes <= cap) return;
 	lock(&__page_cache_lock);
-	struct page_cache_entry **pp = &__page_cache_head;
+	struct __page_cache_entry **pp = &__page_cache_head;
 	while (*pp && __page_cache_bytes > cap) {
-		struct page_cache_entry *e = *pp;
+		struct __page_cache_entry *e = *pp;
 		*pp = e->next;
 		__page_cache_bytes -= e->len;
 		munmap(e->ptr, e->len);
@@ -487,7 +487,7 @@ static void page_cache_put(void *ptr, size_t len)
 		munmap(ptr, len);
 		return;
 	}
-	struct page_cache_entry *e =
+	struct __page_cache_entry *e =
 		mmap(NULL, sizeof(*e), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (e == MAP_FAILED) {
 		unlock(&__page_cache_lock);
@@ -508,10 +508,10 @@ static void *page_cache_try_get(size_t len) {
 	size_t cap = page_cache_capacity();
 	if (!cap) return NULL;
 	lock(&__page_cache_lock);
-	struct page_cache_entry **pp = &__page_cache_head;
+	struct __page_cache_entry **pp = &__page_cache_head;
 	while (*pp) {
 		if ((*pp)->len == len) {
-			struct page_cache_entry *e = *pp;
+			struct __page_cache_entry *e = *pp;
 			*pp = e->next;
 			__page_cache_bytes -= e->len;
 			void *ptr = e->ptr;
