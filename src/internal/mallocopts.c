@@ -494,7 +494,7 @@ static inline uint64_t make_canary(void *user_ptr, size_t user_len)
 		: 0xF00DFACECAFEBEEFULL;
 }
 
-static inline void check_canary(void *p, size_t size)
+static inline void set_canary(void *p, size_t size)
 {
 	check_malloc_options_once();
 	if (__mallocopts.mo_canaries) {
@@ -890,7 +890,7 @@ void *malloc_chunk(size_t size, int flags)
 	}
 	void *p = (char *)m + sizeof(struct __mchunk);
 	fill_junk(p, size, 1);
-	check_canary(p, size);
+	set_canary(p, size);
 	return p;
 }
 
@@ -926,7 +926,7 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 		else fill_junk((char *)old + newlen, oldlen - newlen, 0);
 		m->user_len = newlen;
 		/* Re-arm canary at new end */
-		check_canary(old, newlen);
+		set_canary(old, newlen);
 		return old;
 	}
 
@@ -941,7 +941,7 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 			if (nm && nm->magic == MCHUNK_MAGIC) {
 				nm->user_len = newlen;
 				nm->flags = old_flags;
-				check_canary(r, newlen);
+				set_canary(r, newlen);
 			}
 			return r;
 		}
