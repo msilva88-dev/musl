@@ -56,9 +56,42 @@ static struct __guard_quarantine {
 	uint64_t when;
 	struct __guard_quarantine *next;
 } *__guard_q = NULL;
-static volatile int __guard_q_lock[2] = {0,0};
+static volatile int __guard_q_lock[2] = { 0, 0 };
+
+/* Page cache (adjusted by mo_cachesize: capacity = (1<<exp) * 1KB) */
+#define PAGE_CACHE_MAX_EXP 8
+static volatile int __page_cache_lock[2] = { 0, 0 };
+static struct __page_cache_entry {
+	void *ptr;
+	size_t len;
+	struct page_cache_entry *next;
+} *__page_cache_head = NULL;
+static size_t __page_cache_bytes = 0; /* total bytes of cached mappings */
+static size_t __page_cache_last_capacity = 0; /* track previous capacity for trim */
 
 static volatile int mallocopts_initialized = 0;
+
+static inline size_t page_cache_capacity(void)
+{
+	return ((size_t)1 << __mallocopts.mo_cachesize) * 1024;
+}
+
+static void page_cache_trim(void)
+{
+	size_t cap = page_cache_capacity();
+	if (__page_cache_bytes <= cap) return;
+	lock(&__page_cache_lock);
+	struct page_cache_entry **pp = &__page_cache_head;
+	while (*pp && __page_cache_bytes > cap) {
+		struct page_cache_entry *e = *pp;
+		*pp = e->next;
+		__page_cache_bytes -= e->len;
+		munmap(e->ptr, e->len);
+		munmap(e, sizeof(*e));
+	}
+	unlock(&__page_cache_lock);
+}
+
 void check_malloc_options_once()
 {
 	// idempotent init; simple parsing from MALLOC_OPTIONS or malloc_options if present
@@ -157,6 +190,11 @@ void check_malloc_options_once()
 		if (!__heap_canary_secret)
 			__heap_canary_secret = (uint64_t)(uintptr_t)&__heap_canary_secret ^ 0xA5A5A5A5A5A5A5A5ULL;
 	}
+
+	/* Adjust page cache if capacity changed due to < or > options */
+	size_t cap = page_cache_capacity();
+	if (__page_cache_last_capacity && cap < __page_cache_last_capacity) page_cache_trim();
+	__page_cache_last_capacity = cap;
 }
 
 static inline void m_crash(const char *const msg)
@@ -420,6 +458,70 @@ static struct __guard_entry *find_guard_by_ptr(void *ptr)
 		g = next;
 	}
 	unlock(&__guard_list_lock);
+	return NULL;
+}
+
+static void page_cache_put(void *ptr, size_t len)
+{
+	if (!ptr || len == 0) {
+		munmap(ptr, len);
+		return;
+	}
+	/* Only cache page-aligned, page-multiple unguarded, unconcealed regions */
+	if ((len & (PAGE_SIZE-1)) != 0) {
+		munmap(ptr, len);
+		return;
+	}
+	if (__mallocopts.mo_guard) {
+		munmap(ptr, len);
+		return;
+	}
+	size_t cap = page_cache_capacity();
+	if (!cap) {
+		munmap(ptr, len);
+		return;
+	}
+	lock(&__page_cache_lock);
+	if (__page_cache_bytes + len > cap) {
+		unlock(&__page_cache_lock);
+		munmap(ptr, len);
+		return;
+	}
+	struct page_cache_entry *e =
+		mmap(NULL, sizeof(*e), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if (e == MAP_FAILED) {
+		unlock(&__page_cache_lock);
+		munmap(ptr, len);
+		return;
+	}
+	e->ptr = ptr;
+	e->len = len;
+	e->next = __page_cache_head;
+	__page_cache_head = e;
+	__page_cache_bytes += len;
+	unlock(&__page_cache_lock);
+}
+
+static void *page_cache_try_get(size_t len) {
+	if (__mallocopts.mo_guard) return NULL;
+	if ((len & (PAGE_SIZE-1)) != 0) return NULL;
+	size_t cap = page_cache_capacity();
+	if (!cap) return NULL;
+	lock(&__page_cache_lock);
+	struct page_cache_entry **pp = &__page_cache_head;
+	while (*pp) {
+		if ((*pp)->len == len) {
+			struct page_cache_entry *e = *pp;
+			*pp = e->next;
+			__page_cache_bytes -= e->len;
+			void *ptr = e->ptr;
+			munmap(e, sizeof(*e));
+			unlock(&__page_cache_lock);
+			return ptr;
+		}
+		pp = &(*pp)->next;
+	}
+	unlock(&__page_cache_lock);
 	return NULL;
 }
 
@@ -826,8 +928,13 @@ void free_chunk(void *p)
 		guard_quarantine_add(m->base ? m->base : (void*)m, m->total_len);
 		return;
 	}
-	// unmap the region: use stored base/total_len if present, else treat m as base
-	munmap(m->base ? m->base : (void *)m, m->total_len);
+	// Attempt page cache; exclude concealed regions for security
+	if (!(m->flags & MCHUNK_FLAG_CONCEAL)) {
+		void *baseptr = m->base ? m->base : (void*)m;
+		page_cache_put(baseptr, m->total_len);
+	} else {
+		munmap(m->base ? m->base : (void *)m, m->total_len);
+	}
 }
 
 // free_mchunk: attempt to free pointer if it's a mchunk; return 1 if handled
@@ -858,7 +965,13 @@ void *malloc_chunk(size_t size, int flags)
 	size_t user_with_canary = size + extra;
 	size_t mlen = user_with_canary + sizeof(struct __mchunk);
 	size_t aligned = __mallocopts.mo_guard ? (mlen + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1) : mlen;
-	void *map = mguard(aligned, flags);
+	void *map = NULL;
+	/* Try page cache reuse when not using guard pages; require page alignment */
+	if (!__mallocopts.mo_guard) {
+		size_t rounded = (aligned + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+		if (rounded == aligned) map = page_cache_try_get(aligned);
+	}
+	if (!map) map = mguard(aligned, flags);
 	if (map == MAP_FAILED) {
 		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed (mmap)\n");
 		return NULL;
