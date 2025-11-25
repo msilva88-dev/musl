@@ -23,6 +23,10 @@ hidden struct __mallocopts {
 	uint16_t __pad: 1;
 } __mallocopts = { .mo_cachesize = 6 /* 64KB (2**6) */, .mo_junklev = 1, .mo_mutexes = 3 /* 8 (2**3) */ };
 
+/* Canary support */
+#define CANARY_SIZE 8
+static uint64_t __heap_canary_secret = 0;
+
 // delayed-chunks for junk/free checking
 #define MAX_DELAYED_CHUNKS 64
 hidden struct __delayed_chunk {
@@ -145,6 +149,13 @@ void check_malloc_options_once()
 			__mallocopts.mo_xmalloc = 0;
 			break;
 		}
+	}
+
+	/* Initialize canary secret once if canaries enabled */
+	if (__mallocopts.mo_canaries && !__heap_canary_secret) {
+		__heap_canary_secret = arc4random();
+		if (!__heap_canary_secret)
+			__heap_canary_secret = (uint64_t)(uintptr_t)&__heap_canary_secret ^ 0xA5A5A5A5A5A5A5A5ULL;
 	}
 }
 
@@ -476,6 +487,23 @@ void freecheck(void *p)
 	if (addr % sizeof(void*) != 0) m_crash("free(): invalid pointer alignment\n");
 }
 
+static inline uint64_t make_canary(void *user_ptr, size_t user_len)
+{
+	return (__heap_canary_secret ^ (uint64_t)(uintptr_t)user_ptr ^ (uint64_t)user_len)
+		? (__heap_canary_secret ^ (uint64_t)(uintptr_t)user_ptr ^ (uint64_t)user_len)
+		: 0xF00DFACECAFEBEEFULL;
+}
+
+static inline void check_canary(void *p, size_t size)
+{
+	check_malloc_options_once();
+	if (__mallocopts.mo_canaries) {
+		unsigned char *end = (unsigned char*)p + size;
+		uint64_t can = make_canary(p, size);
+		memcpy(end, &can, CANARY_SIZE);
+	}
+}
+
 // mguard: allocate region; if guard option enabled, create 2 guard pages
 // around an aligned interior region. Return pointer to user area (map + PAGE) on success.
 // For CONCEAL flag on supported OSes, attempt optimizations.
@@ -778,6 +806,14 @@ void free_chunk(void *p)
 	if (m->magic == MCHUNK_MAGIC_FREED) m_crash("free(): double free detected\n");
 	if (m->magic != MCHUNK_MAGIC) m_crash("free(): invalid or corrupted pointer\n");
 	freecheck(p);
+	/* Canary check (before altering user region) */
+	if (__mallocopts.mo_canaries) {
+		unsigned char *end = (unsigned char*)p + m->user_len;
+		if (m->user_len > SIZE_MAX - CANARY_SIZE) m_crash("malloc: size overflow in canary check\n");
+		uint64_t stored;
+		memcpy(&stored, end, CANARY_SIZE);
+		if (stored != make_canary(p, m->user_len)) m_crash("malloc: canary corrupted\n");
+	}
 	/* Mark as freed with a sentinel to allow double-free detection. */
 	m->magic = MCHUNK_MAGIC_FREED;
 	if (m->flags & MCHUNK_FLAG_CONCEAL) explicit_bzero(p, m->user_len);
@@ -813,12 +849,14 @@ int free_mchunk(void *p)
 void *malloc_chunk(size_t size, int flags)
 {
 	check_malloc_options_once();
-	if (size > SIZE_MAX - sizeof(struct __mchunk)) {
+	size_t extra = (__mallocopts.mo_canaries ? CANARY_SIZE : 0);
+	if (size > SIZE_MAX - sizeof(struct __mchunk) - extra) {
 		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
 		errno = ENOMEM;
 		return NULL;
 	}
-	size_t mlen = size + sizeof(struct __mchunk);
+	size_t user_with_canary = size + extra;
+	size_t mlen = user_with_canary + sizeof(struct __mchunk);
 	size_t aligned = __mallocopts.mo_guard ? (mlen + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1) : mlen;
 	void *map = mguard(aligned, flags);
 	if (map == MAP_FAILED) {
@@ -826,7 +864,7 @@ void *malloc_chunk(size_t size, int flags)
 		return NULL;
 	}
 	// sanity: if metadata doesn't fit inside aligned region -> cleanup
-	if (sizeof(struct __mchunk) + size > aligned) {
+	if (sizeof(struct __mchunk) + user_with_canary > aligned) {
 		int serrno = ENOMEM;
 		if (__mallocopts.mo_guard) {
 			void *base = (char *)map - PAGE_SIZE;
@@ -852,6 +890,7 @@ void *malloc_chunk(size_t size, int flags)
 	}
 	void *p = (char *)m + sizeof(struct __mchunk);
 	fill_junk(p, size, 1);
+	check_canary(p, size);
 	return p;
 }
 
@@ -886,6 +925,8 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 		// then optionally fill with junk according to options
 		else fill_junk((char *)old + newlen, oldlen - newlen, 0);
 		m->user_len = newlen;
+		/* Re-arm canary at new end */
+		check_canary(old, newlen);
 		return old;
 	}
 
@@ -900,6 +941,7 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 			if (nm && nm->magic == MCHUNK_MAGIC) {
 				nm->user_len = newlen;
 				nm->flags = old_flags;
+				check_canary(r, newlen);
 			}
 			return r;
 		}
