@@ -311,12 +311,16 @@ static void check_delayed_chunks()
 			/* Sample head, middle, tail (page-aligned) */
 			uintptr_t base = (uintptr_t)ptr;
 			size_t total = snap[s].len;
-			size_t offsets[3] = {
-				0,
-				((total/2) & ~(PAGE_SIZE-1)),
-				(total > PAGE_SIZE ? ((total - PAGE_SIZE) & ~(PAGE_SIZE-1)) : 0)
-			};
-			for (int seg = 0; seg < 3 && !bad; seg++) {
+			size_t offsets[3];
+			int seg_count = 0;
+			offsets[seg_count++] = 0;
+			if (total > PAGE_SIZE) {
+				size_t tail = (total - PAGE_SIZE) & ~(PAGE_SIZE - 1);
+				if (tail != 0 && tail != offsets[0]) offsets[seg_count++] = tail;
+				size_t mid = (total/2) & ~(PAGE_SIZE - 1);
+				if (mid != offsets[0] && mid != tail) offsets[seg_count++] = mid;
+			}
+			for (int seg = 0; seg < seg_count && !bad; seg++) {
 				uintptr_t seg_addr = base + offsets[seg];
 				unsigned char *segp = (unsigned char*)seg_addr;
 				size_t seg_len = PAGE_SIZE;
