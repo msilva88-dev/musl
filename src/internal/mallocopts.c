@@ -209,7 +209,10 @@ static inline uint64_t monotonic_seconds(void)
 static void guard_quarantine_add(void *base, size_t total)
 {
 	struct __guard_quarantine *n = mmap(NULL, sizeof(*n), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (n == MAP_FAILED) return;
+	if (n == MAP_FAILED) {
+		m_warn("malloc: failed to add guard quarantine node\n");
+		return;
+	}
 	n->base = base;
 	n->total = total;
 	n->when = monotonic_seconds();
@@ -233,8 +236,8 @@ static void guard_quarantine_sweep(uint64_t now)
 			if (remove_guard_entry(q->base) != 0) {
 				m_warn("malloc: quarantine sweep could not remove guard entry\n");
 			}
-			// basic sanity check on size (optional): skip absurd totals
-			if (q->total == 0 || q->total > SIZE_MAX / 2) {
+			// sanity check on size: skip absurd totals or non-page-aligned sizes
+			if (q->total == 0 || q->total > SIZE_MAX / 2 || (q->total & (PAGE_SIZE - 1)) != 0) {
 				m_warn("malloc: quarantine sweep suspicious total size, skipping unmap\n");
 			} else {
 				munmap(q->base, q->total);
