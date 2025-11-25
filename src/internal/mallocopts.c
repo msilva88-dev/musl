@@ -236,12 +236,12 @@ static void guard_quarantine_sweep(uint64_t now)
 			if (remove_guard_entry(q->base) != 0) {
 				m_warn("malloc: quarantine sweep could not remove guard entry\n");
 			}
+
 			// sanity check on size: skip absurd totals or non-page-aligned sizes
 			if (q->total == 0 || q->total > SIZE_MAX / 2 || (q->total & (PAGE_SIZE - 1)) != 0) {
-				m_warn("malloc: quarantine sweep suspicious total size, skipping unmap\n");
-			} else {
-				munmap(q->base, q->total);
+				m_crash("malloc: corrupted guard quarantine size\n");
 			}
+			munmap(q->base, q->total);
 
 			munmap(q, sizeof(*q));
 			lock(&__guard_q_lock);
@@ -732,6 +732,7 @@ void register_delayed_chunk(void *p, size_t len)
 		size_t prot_len = ((((uintptr_t)p + len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 		(void)mprotect((void*)page_base, prot_len, PROT_NONE);
 	}
+	/* Single probabilistic cleanup trigger */
 	if (arc4random_uniform(16) == 0) check_delayed_chunks();
 }
 
