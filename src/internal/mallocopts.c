@@ -1,5 +1,8 @@
 #include <sys/mman.h>
 #include <errno.h>
+#ifdef MALLOC_STATS
+#include <inttypes.h>
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,6 +77,7 @@ static size_t __page_cache_last_capacity = 0; /* track previous capacity for tri
    Races are acceptable; values are approximate. */
 static struct __malloc_stats {
 	uint64_t alloc_calls;
+	uint64_t alloc_failures;
 	uint64_t free_calls;
 	uint64_t realloc_calls;
 	uint64_t alloc_bytes;
@@ -281,22 +285,24 @@ static void dump_malloc_stats(void)
 	if (!f) return;
 	fprintf(f,
 		"==== malloc statistics ====\n"
-		"alloc_calls: %llu\n"
-		"free_calls: %llu\n"
-		"realloc_calls: %llu\n"
-		"alloc_bytes: %llu\n"
-		"freed_bytes: %llu\n"
-		"guard_allocs: %llu\n"
-		"cache_hits: %llu\n"
-		"cache_inserts: %llu\n"
-		"quarantine_pending: %llu\n"
-		"quarantine_unmaps: %llu\n"
-		"canary_failures: %llu\n"
-		"uaf_detected: %llu\n"
+		"alloc_calls: %" PRIu64 "\n"
+		"free_calls: %" PRIu64 "\n"
+		"realloc_calls: %" PRIu64 "\n"
+		"alloc_bytes: %" PRIu64 "\n"
+		"freed_bytes: %" PRIu64 "\n"
+		"guard_allocs: %" PRIu64 "\n"
+		"cache_hits: %" PRIu64 "\n"
+		"cache_inserts: %" PRIu64 "\n"
+		"quarantine_pending: %" PRIu64 "\n"
+		"quarantine_unmaps: %" PRIu64 "\n"
+		"canary_failures: %" PRIu64 "\n"
+		"uaf_detected: %" PRIu64 "\n"
 		"cachesize_exp: %u (capacity=%zu)\n"
 		"junk_level: %u\n"
 		"guard_enabled: %u\n"
 		"free_unmap_enabled: %u\n"
+		"freecheck_enabled: %u\n"
+		"realloc_always_enabled: %u\n"
 		"xmalloc_enabled: %u\n"
 		"canaries_enabled: %u\n",
 		__mstats.alloc_calls,
@@ -316,6 +322,8 @@ static void dump_malloc_stats(void)
 		(unsigned)__mallocopts.mo_junklev,
 		(unsigned)__mallocopts.mo_guard,
 		(unsigned)__mallocopts.mo_freeunmap,
+		(unsigned)__mallocopts.mo_freecheck,
+		(unsigned)__mallocopts.mo_realloc,
 		(unsigned)__mallocopts.mo_xmalloc,
 		(unsigned)__mallocopts.mo_canaries
 	);
