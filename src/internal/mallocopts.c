@@ -1091,6 +1091,9 @@ void *malloc_chunk(size_t size, int flags)
 	}
 	if (!map) map = mguard(aligned, flags);
 	if (map == MAP_FAILED) {
+#ifdef MALLOC_STATS
+		++__mstats.alloc_failures;
+#endif
 		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed (mmap)\n");
 		return NULL;
 	}
@@ -1104,6 +1107,9 @@ void *malloc_chunk(size_t size, int flags)
 		} else {
 			munmap(map, aligned);
 		}
+#ifdef MALLOC_STATS
+		++__mstats.alloc_failures;
+#endif
 		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
 		errno = serrno;
 		return NULL;
