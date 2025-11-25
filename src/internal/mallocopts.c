@@ -455,6 +455,7 @@ void freecheck(void *p)
 void *mguard(size_t size, int flags)
 {
 	if (size == 0) {
+		if (__mallocopts.mo_xmalloc) m_crash("malloc: mguard zero size");
 		errno = ENOMEM;
 		return MAP_FAILED;
 	}
@@ -559,6 +560,7 @@ int munguard(void *ptr, size_t size)
 void *mreguard(void *ptr, size_t old_size, size_t new_size)
 {
 	if (!ptr || old_size == 0 || new_size == 0) {
+		if (__mallocopts.mo_xmalloc) m_crash("malloc: mreguard zero size");
 		errno = EINVAL;
 		return MAP_FAILED;
 	}
@@ -703,7 +705,7 @@ void register_delayed_chunk(void *p, size_t len)
 		size_t prot_len = ((((uintptr_t)p + len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 		(void)mprotect((void*)page_base, prot_len, PROT_NONE);
 	}
-	if ((arc4random() & 0x0F) == 0) check_delayed_chunks();
+	if (arc4random_uniform(16) == 0) check_delayed_chunks();
 }
 
 void protect_chunk(void *p, size_t size)
@@ -813,12 +815,9 @@ void *malloc_chunk(size_t size, int flags)
 	m->magic = MCHUNK_MAGIC;
 	m->user_len = size;
 	m->flags = __mallocopts.mo_guard ? flags | MCHUNK_FLAG_GUARD : flags;
-	// fetch guard entry if present to store real base/total for munmap later
-	struct __guard_entry *g = find_guard_by_ptr(map);
 	if (__mallocopts.mo_guard && g) {
-		m->base = g->base;
-		m->total_len = g->total;
-		guard_release(g);
+		m->base = (char*)map - PAGE_SIZE;
+		m->total_len = aligned + 2*PAGE_SIZE;
 	} else {
 		m->base = map;
 		m->total_len = aligned;
