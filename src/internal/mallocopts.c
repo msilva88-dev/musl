@@ -300,10 +300,33 @@ static void check_delayed_chunks()
 		}
 
 		int bad = 0;
-		for (size_t j = 0; j < check_len; j++) {
-			if (ptr[j] != JUNK_PATTERN_FREE) {
-				bad = 1;
-				break;
+		if (snap[s].len <= 4096) {
+			for (size_t j = 0; j < check_len; j++) {
+				if (ptr[j] != JUNK_PATTERN_FREE) {
+					bad = 1;
+					break;
+				}
+			}
+		} else {
+			/* Sample head, middle, tail (page-aligned) */
+			uintptr_t base = (uintptr_t)ptr;
+			size_t total = snap[s].len;
+			size_t offsets[3] = {
+				0,
+				((total/2) & ~(PAGE_SIZE-1)),
+				(total > PAGE_SIZE ? ((total - PAGE_SIZE) & ~(PAGE_SIZE-1)) : 0)
+			};
+			for (int seg = 0; seg < 3 && !bad; seg++) {
+				uintptr_t seg_addr = base + offsets[seg];
+				unsigned char *segp = (unsigned char*)seg_addr;
+				size_t seg_len = PAGE_SIZE;
+				if (seg_addr + seg_len > base + total) seg_len = (base + total) - seg_addr;
+				for (size_t j = 0; j < seg_len; j++) {
+					if (segp[j] != JUNK_PATTERN_FREE) {
+						bad = 1;
+						break;
+					}
+				}
 			}
 		}
 
@@ -815,7 +838,7 @@ void *malloc_chunk(size_t size, int flags)
 	m->magic = MCHUNK_MAGIC;
 	m->user_len = size;
 	m->flags = __mallocopts.mo_guard ? flags | MCHUNK_FLAG_GUARD : flags;
-	if (__mallocopts.mo_guard && g) {
+	if (__mallocopts.mo_guard) {
 		m->base = (char*)map - PAGE_SIZE;
 		m->total_len = aligned + 2*PAGE_SIZE;
 	} else {
