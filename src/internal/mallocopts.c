@@ -782,15 +782,19 @@ int free_mchunk(void *p)
 // malloc_chunk: allocate an mchunk (returns user pointer)
 void *malloc_chunk(size_t size, int flags)
 {
+	check_malloc_options_once();
 	if (size > SIZE_MAX - sizeof(struct __mchunk)) {
+		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
 		errno = ENOMEM;
 		return NULL;
 	}
 	size_t mlen = size + sizeof(struct __mchunk);
-	check_malloc_options_once();
 	size_t aligned = __mallocopts.mo_guard ? (mlen + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1) : mlen;
 	void *map = mguard(aligned, flags);
-	if (map == MAP_FAILED) return NULL;
+	if (map == MAP_FAILED) {
+		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed (mmap)\n");
+		return NULL;
+	}
 	// sanity: if metadata doesn't fit inside aligned region -> cleanup
 	if (sizeof(struct __mchunk) + size > aligned) {
 		int serrno = ENOMEM;
@@ -801,6 +805,7 @@ void *malloc_chunk(size_t size, int flags)
 		} else {
 			munmap(map, aligned);
 		}
+		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
 		errno = serrno;
 		return NULL;
 	}
@@ -876,6 +881,7 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 
 	// fallback: allocate, copy, free
 	void *newp = malloc_chunk(newlen, old_flags);
+	/* malloc_chunk handles mo_xmalloc; this is a secondary guard. */
 	if (!newp) return NULL;
 
 	size_t ncopy = oldlen < newlen ? oldlen : newlen;
