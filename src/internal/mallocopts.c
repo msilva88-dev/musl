@@ -69,6 +69,26 @@ static struct __page_cache_entry {
 static size_t __page_cache_bytes = 0; /* total bytes of cached mappings */
 static size_t __page_cache_last_capacity = 0; /* track previous capacity for trim */
 
+#ifdef MALLOC_STATS
+/* Statistics grouped into a single structure for easier extension and atomic snapshot.
+   Races are acceptable; values are approximate. */
+static struct __malloc_stats {
+	uint64_t alloc_calls;
+	uint64_t free_calls;
+	uint64_t realloc_calls;
+	uint64_t alloc_bytes;
+	uint64_t freed_bytes;
+	uint64_t guard_allocs;
+	uint64_t cache_hits;
+	uint64_t cache_inserts;
+	uint64_t canary_failures;
+	uint64_t uaf_detected;
+	uint64_t quarantine_unmaps;
+	uint64_t quarantine_pending;
+	int dump_registered;
+} __mstats;
+#endif
+
 static volatile int mallocopts_initialized = 0;
 
 static inline size_t page_cache_capacity(void)
@@ -195,6 +215,13 @@ void check_malloc_options_once()
 	size_t cap = page_cache_capacity();
 	if (__page_cache_last_capacity && cap < __page_cache_last_capacity) page_cache_trim();
 	__page_cache_last_capacity = cap;
+
+#ifdef MALLOC_STATS
+	/* Register atexit dumper once */
+	if (__mallocopts.mo_dump && !__mstats.dump_registered) {
+		if (atexit(dump_malloc_stats) == 0) __mstats.dump_registered = 1;
+	}
+#endif
 }
 
 static inline void m_crash(const char *const msg)
@@ -244,6 +271,58 @@ static int add_guard_entry(void *base, size_t total)
 	return 0;
 }
 
+#ifdef MALLOC_STATS
+static void dump_malloc_stats(void)
+{
+	check_malloc_options_once();
+	if (!__mallocopts.mo_dump) return;
+	if (access("./malloc.out", F_OK) != 0) return;
+	FILE *f = fopen("./malloc.out", "a");
+	if (!f) return;
+	fprintf(f,
+		"==== malloc statistics ====\n"
+		"alloc_calls: %llu\n"
+		"free_calls: %llu\n"
+		"realloc_calls: %llu\n"
+		"alloc_bytes: %llu\n"
+		"freed_bytes: %llu\n"
+		"guard_allocs: %llu\n"
+		"cache_hits: %llu\n"
+		"cache_inserts: %llu\n"
+		"quarantine_pending: %llu\n"
+		"quarantine_unmaps: %llu\n"
+		"canary_failures: %llu\n"
+		"uaf_detected: %llu\n"
+		"cachesize_exp: %u (capacity=%zu)\n"
+		"junk_level: %u\n"
+		"guard_enabled: %u\n"
+		"free_unmap_enabled: %u\n"
+		"xmalloc_enabled: %u\n"
+		"canaries_enabled: %u\n",
+		__mstats.alloc_calls,
+		__mstats.free_calls,
+		__mstats.realloc_calls,
+		__mstats.alloc_bytes,
+		__mstats.freed_bytes,
+		__mstats.guard_allocs,
+		__mstats.cache_hits,
+		__mstats.cache_inserts,
+		__mstats.quarantine_pending,
+		__mstats.quarantine_unmaps,
+		__mstats.canary_failures,
+		__mstats.uaf_detected,
+		(unsigned)__mallocopts.mo_cachesize,
+		((size_t)1 << __mallocopts.mo_cachesize) * 1024,
+		(unsigned)__mallocopts.mo_junklev,
+		(unsigned)__mallocopts.mo_guard,
+		(unsigned)__mallocopts.mo_freeunmap,
+		(unsigned)__mallocopts.mo_xmalloc,
+		(unsigned)__mallocopts.mo_canaries
+	);
+	fclose(f);
+}
+#endif
+
 static inline uint64_t monotonic_seconds(void)
 {
 	struct timespec ts;
@@ -265,6 +344,9 @@ static void guard_quarantine_add(void *base, size_t total)
 	n->base = base;
 	n->total = total;
 	n->when = monotonic_seconds();
+#ifdef MALLOC_STATS
+	++__mstats.quarantine_pending;
+#endif
 	lock(&__guard_q_lock);
 	n->next = __guard_q;
 	__guard_q = n;
@@ -293,6 +375,10 @@ static void guard_quarantine_sweep(uint64_t now)
 			munmap(q->base, q->total);
 
 			munmap(q, sizeof(*q));
+#ifdef MALLOC_STATS
+			++__mstats.quarantine_unmaps;
+			if (__mstats.quarantine_pending) --__mstats.quarantine_pending;
+#endif
 			lock(&__guard_q_lock);
 			continue;
 		}
@@ -393,7 +479,12 @@ static void check_delayed_chunks()
 			(void)mprotect((void*)page_base, prot_len, PROT_NONE);
 		}
 
-		if (bad) m_crash("malloc: use-after-free detected\n");
+		if (bad) {
+#ifdef MALLOC_STATS
+			++__mstats.uaf_detected;
+#endif
+			m_crash("malloc: use-after-free detected\n");
+		}
 	}
 	// Sweep guarded quarantine after chunk checks
 	guard_quarantine_sweep(now);
@@ -500,6 +591,9 @@ static void page_cache_put(void *ptr, size_t len)
 	__page_cache_head = e;
 	__page_cache_bytes += len;
 	unlock(&__page_cache_lock);
+#ifdef MALLOC_STATS
+	++__mstats.cache_inserts;
+#endif
 }
 
 static void *page_cache_try_get(size_t len) {
@@ -517,6 +611,9 @@ static void *page_cache_try_get(size_t len) {
 			void *ptr = e->ptr;
 			munmap(e, sizeof(*e));
 			unlock(&__page_cache_lock);
+#ifdef MALLOC_STATS
+			++__mstats.cache_hits;
+#endif
 			return ptr;
 		}
 		pp = &(*pp)->next;
@@ -914,7 +1011,12 @@ void free_chunk(void *p)
 		if (m->user_len > SIZE_MAX - CANARY_SIZE) m_crash("malloc: size overflow in canary check\n");
 		uint64_t stored;
 		memcpy(&stored, end, CANARY_SIZE);
-		if (stored != make_canary(p, m->user_len)) m_crash("malloc: canary corrupted\n");
+		if (stored != make_canary(p, m->user_len)) {
+#ifdef MALLOC_STATS
+			++__mstats.canary_failures;
+#endif
+			m_crash("malloc: canary corrupted\n");
+		}
 	}
 	/* Mark as freed with a sentinel to allow double-free detection. */
 	m->magic = MCHUNK_MAGIC_FREED;
@@ -926,6 +1028,10 @@ void free_chunk(void *p)
 		// Mark freed, protect for UAF, then quarantine for delayed full unmap
 		protect_chunk(p, m->user_len);
 		guard_quarantine_add(m->base ? m->base : (void*)m, m->total_len);
+#ifdef MALLOC_STATS
+		++__mstats.free_calls;
+		__mstats.freed_bytes += m->user_len;
+#endif
 		return;
 	}
 	// Attempt page cache; exclude concealed regions for security
@@ -935,6 +1041,10 @@ void free_chunk(void *p)
 	} else {
 		munmap(m->base ? m->base : (void *)m, m->total_len);
 	}
+#ifdef MALLOC_STATS
+	++__mstats.free_calls;
+	__mstats.freed_bytes += m->user_len;
+#endif
 }
 
 // free_mchunk: attempt to free pointer if it's a mchunk; return 1 if handled
@@ -1004,6 +1114,11 @@ void *malloc_chunk(size_t size, int flags)
 	void *p = (char *)m + sizeof(struct __mchunk);
 	fill_junk(p, size, 1);
 	set_canary(p, size);
+#ifdef MALLOC_STATS
+	++__mstats.alloc_calls;
+	__mstats.alloc_bytes += size;
+	if (__mallocopts.mo_guard) ++__mstats.guard_allocs;
+#endif
 	return p;
 }
 
@@ -1040,6 +1155,9 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 		m->user_len = newlen;
 		/* Re-arm canary at new end */
 		set_canary(old, newlen);
+#ifdef MALLOC_STATS
+		++__mstats.realloc_calls;
+#endif
 		return old;
 	}
 
@@ -1072,5 +1190,8 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 
 	// free will explicit_bzero if conceal flag set (free_chunk handles it)
 	free_chunk(old);
+#ifdef MALLOC_STATS
+	++__mstats.realloc_calls;
+#endif
 	return newp;
 }
