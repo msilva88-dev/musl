@@ -45,6 +45,15 @@ static struct __guard_entry {
 } *__guard_list = NULL;
 static volatile int __guard_list_lock[2] = { 0, 0 };
 
+// Add quarantine structure for guarded frees
+static struct __guard_quarantine {
+	void *base;
+	size_t total;
+	uint64_t when;
+	struct __guard_quarantine *next;
+} __guard_quarantine *__guard_q = NULL;
+static volatile int __guard_q_lock[2] = {0,0};
+
 static volatile int mallocopts_initialized = 0;
 void check_malloc_options_once()
 {
@@ -264,12 +273,47 @@ static void check_delayed_chunks()
 
 		if (bad) m_crash("malloc: use-after-free detected\n");
 	}
+	// Sweep guarded quarantine after chunk checks
+	guard_quarantine_sweep(now);
 }
 
 static inline void guard_hold(struct __guard_entry *g)
 {
 	// increment reference (atomic)
 	a_inc(&g->ref);
+}
+
+static void guard_quarantine_add(void *base, size_t total)
+{
+	struct __guard_quarantine *n = mmap(NULL, sizeof(*n), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if (n == MAP_FAILED) return;
+	n->base = base;
+	n->total = total;
+	n->when = monotonic_seconds();
+	lock(&__guard_q_lock);
+	n->next = __guard_q;
+	__guard_q = n;
+	unlock(&__guard_q_lock);
+}
+
+static void guard_quarantine_sweep(uint64_t now)
+{
+	lock(&__guard_q_lock);
+	struct __guard_quarantine **pp = &__guard_q;
+	while (*pp) {
+		struct __guard_quarantine *q = *pp;
+		if (now - q->when >= DELAYED_CHUNK_DELAY_SEC) {
+			*pp = q->next;
+			unlock(&__guard_q_lock);
+			// fully unmap guarded region now
+			munmap(q->base, q->total);
+			munmap(q, sizeof(*q));
+			lock(&__guard_q_lock);
+			continue;
+		}
+		pp = &q->next;
+	}
+	unlock(&__guard_q_lock);
 }
 
 static void guard_release(struct __guard_entry *g)
@@ -381,8 +425,8 @@ void fill_junk(void *p, size_t len, int on_alloc)
 	else memset(p, val, PAGE_SIZE);
 }
 
-/* freecheck: validate alignment and magic (only for active chunks) */
-void freecheck(void *p, struct __mchunk *m)
+/* freecheck: validate alignment only */
+void freecheck(void *p)
 {
 	if (!p) return;
 	check_malloc_options_once();
@@ -390,12 +434,6 @@ void freecheck(void *p, struct __mchunk *m)
 
 	uintptr_t addr = (uintptr_t)p;
 	if (addr % sizeof(void*) != 0) m_crash("free(): invalid pointer alignment\n");
-	// if it's a conceal header, it's valid only if magic matches;
-	// otherwise if not conceal we will validate via other mechanisms
-	// (here we only check the conceal case to avoid calling malloc_usable_size
-	// on garbage).
-	if (!m) m_crash("free(): invalid pointer header\n");
-	if (m->magic != MCHUNK_MAGIC) m_crash("free(): invalid or already freed pointer\n");
 }
 
 // mguard: allocate region; if guard option enabled, create 2 guard pages
@@ -704,8 +742,7 @@ void free_chunk(void *p)
 	if (!m) m_crash("free(): invalid pointer\n");
 	if (m->magic == MCHUNK_MAGIC_FREED) m_crash("free(): double free detected\n");
 	if (m->magic != MCHUNK_MAGIC) m_crash("free(): invalid or corrupted pointer\n");
-	check_malloc_options_once();
-	freecheck(p, m);
+	freecheck(p);
 	/* Mark as freed with a sentinel to allow double-free detection. */
 	m->magic = MCHUNK_MAGIC_FREED;
 	if (m->flags & MCHUNK_FLAG_CONCEAL) explicit_bzero(p, m->user_len);
@@ -713,11 +750,9 @@ void free_chunk(void *p)
 	// delayed free handling: register for delayed checking/protection
 	register_delayed_chunk(p, m->user_len);
 	if (m->flags & MCHUNK_FLAG_GUARD) {
-		/* Quarantine header for delayed double-free detection: do not immediately unmap.
-		   Instead, protect entire guarded mapping to catch UAF, and schedule metadata unmap later. */
+		// Mark freed, protect for UAF, then quarantine for delayed full unmap
 		protect_chunk(p, m->user_len);
-		/* Optionally schedule original header base (m->base) for delayed unmap after delay. */
-		register_delayed_chunk(m, sizeof(struct __mchunk)); /* tiny header check */
+		guard_quarantine_add(m->base ? m->base : (void*)m, m->base ? m->total_len : (m->total_len));
 		return;
 	}
 	// unmap the region: use stored base/total_len if present, else treat m as base
