@@ -146,7 +146,7 @@ static void page_cache_trim(void)
 #endif
 }
 
-static inline warn_malloc_options(char c)
+static inline void warn_malloc_options(char c)
 {
 	char ubuf[64];
 	int ln = snprintf(ubuf, sizeof ubuf,
