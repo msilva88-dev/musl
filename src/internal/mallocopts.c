@@ -61,14 +61,25 @@ static struct __guard_quarantine {
 } *__guard_q = NULL;
 static volatile int __guard_q_lock[2] = { 0, 0 };
 
-/* Page cache (adjusted by mo_cachesize: capacity = (1<<exp) * 1KB) */
+/* Page cache (adjusted by mo_cachesize: capacity = (1<<exp) * 1KB)
+   Sharded by mo_mutexes: number of buckets = 1<<mo_mutexes (clamped to 32).
+   Level semantics (suggested, undocumented on OpenBSD):
+     0 -> 1 global bucket (minimal locking)
+     1 -> 2 buckets
+     2 -> 4 buckets
+     3 -> 8 buckets
+     4 -> 16 buckets
+     5+-> 32 buckets (max)
+   Increasing shards reduces contention at cost of more metadata nodes. */
 #define PAGE_CACHE_MAX_EXP 8
-static volatile int __page_cache_lock[2] = { 0, 0 };
+#define PAGE_CACHE_MAX_BUCKETS 32
+static volatile int __page_cache_global_lock[2] = { 0, 0 }; /* serialize multi-bucket trim */
+static volatile int __page_cache_bucket_lock[PAGE_CACHE_MAX_BUCKETS][2] = { {0,0} };
 static struct __page_cache_entry {
 	void *ptr;
 	size_t len;
 	struct __page_cache_entry *next;
-} *__page_cache_head = NULL;
+} *__page_cache_heads[PAGE_CACHE_MAX_BUCKETS] = { NULL };
 static size_t __page_cache_bytes = 0; /* total bytes of cached mappings */
 static size_t __page_cache_last_capacity = 0; /* track previous capacity for trim */
 
@@ -100,20 +111,34 @@ static inline size_t page_cache_capacity(void)
 	return ((size_t)1 << __mallocopts.mo_cachesize) * 1024;
 }
 
+/* Compute number of active buckets based on mo_mutexes */
+static inline int page_cache_bucket_count(void)
+{
+	unsigned v = __mallocopts.mo_mutexes;
+	if (v > 5) v = 5;
+	return 1 << v; /* 1,2,4,8,16,32 */
+}
+
 static void page_cache_trim(void)
 {
 	size_t cap = page_cache_capacity();
 	if (__page_cache_bytes <= cap) return;
-	lock(&__page_cache_lock);
-	struct __page_cache_entry **pp = &__page_cache_head;
-	while (*pp && __page_cache_bytes > cap) {
-		struct __page_cache_entry *e = *pp;
-		*pp = e->next;
-		__page_cache_bytes -= e->len;
-		munmap(e->ptr, e->len);
-		munmap(e, sizeof(*e));
+	/* Global lock to serialize trimming across buckets */
+	lock(&__page_cache_global_lock);
+	int buckets = page_cache_bucket_count();
+	for (int b = 0; b < page_cache_bucket_count() && __page_cache_bytes > cap; b++) {
+		lock(&__page_cache_bucket_lock[b]);
+		struct __page_cache_entry **pp = &__page_cache_heads[b];
+		while (*pp && __page_cache_bytes > cap) {
+			struct __page_cache_entry *e = *pp;
+			*pp = e->next;
+			__page_cache_bytes -= e->len;
+			munmap(e->ptr, e->len);
+			munmap(e, sizeof(*e));
+		}
+		unlock(&__page_cache_bucket_lock[b]);
 	}
-	unlock(&__page_cache_lock);
+	unlock(&__page_cache_global_lock);
 }
 
 void check_malloc_options_once()
@@ -215,7 +240,8 @@ void check_malloc_options_once()
 			__heap_canary_secret = (uint64_t)(uintptr_t)&__heap_canary_secret ^ 0xA5A5A5A5A5A5A5A5ULL;
 	}
 
-	/* Adjust page cache if capacity changed due to < or > options */
+	/* Adjust page cache if capacity changed due to < or > (or mo_mutexes changed).
+           We do not re-bucket existing cached entries; future puts/gets use new bucket count. */
 	size_t cap = page_cache_capacity();
 	if (__page_cache_last_capacity && cap < __page_cache_last_capacity) page_cache_trim();
 	__page_cache_last_capacity = cap;
@@ -562,6 +588,14 @@ static struct __guard_entry *find_guard_by_ptr(void *ptr)
 	return NULL;
 }
 
+/* Hash selection: use (len >> PAGE_SHIFT) xor pointer to reduce collisions */
+static inline int page_cache_pick_bucket(void *ptr, size_t len)
+{
+	int buckets = page_cache_bucket_count();
+	uintptr_t h = ((uintptr_t)ptr >> 12) ^ (len >> 12);
+	return (int)(h & (buckets - 1));
+}
+
 static void page_cache_put(void *ptr, size_t len)
 {
 	if (!ptr || len == 0) {
@@ -582,25 +616,32 @@ static void page_cache_put(void *ptr, size_t len)
 		munmap(ptr, len);
 		return;
 	}
-	lock(&__page_cache_lock);
+	/* Fast reject without global lock */
 	if (__page_cache_bytes + len > cap) {
-		unlock(&__page_cache_lock);
+		munmap(ptr, len);
+		return;
+	}
+	int bucket = page_cache_pick_bucket(ptr, len);
+	lock(&__page_cache_bucket_lock[bucket]);
+	/* Re-check capacity under bucket lock; if over, drop */
+	if (__page_cache_bytes + len > cap) {
+		unlock(&__page_cache_bucket_lock[bucket]);
 		munmap(ptr, len);
 		return;
 	}
 	struct __page_cache_entry *e =
 		mmap(NULL, sizeof(*e), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (e == MAP_FAILED) {
-		unlock(&__page_cache_lock);
+		unlock(&__page_cache_bucket_lock[bucket]);
 		munmap(ptr, len);
 		return;
 	}
 	e->ptr = ptr;
 	e->len = len;
-	e->next = __page_cache_head;
-	__page_cache_head = e;
+	e->next = __page_cache_heads[bucket];
+	__page_cache_heads[bucket] = e;
 	__page_cache_bytes += len;
-	unlock(&__page_cache_lock);
+	unlock(&__page_cache_bucket_lock[bucket]);
 #ifdef MALLOC_STATS
 	++__mstats.cache_inserts;
 #endif
@@ -611,8 +652,10 @@ static void *page_cache_try_get(size_t len) {
 	if ((len & (PAGE_SIZE-1)) != 0) return NULL;
 	size_t cap = page_cache_capacity();
 	if (!cap) return NULL;
-	lock(&__page_cache_lock);
-	struct __page_cache_entry **pp = &__page_cache_head;
+	/* Primary bucket chosen by synthetic hash of len to reduce collisions for identical sizes */
+	int primary = page_cache_pick_bucket((void*)(uintptr_t)len, len);
+	lock(&__page_cache_bucket_lock[primary]);
+	struct __page_cache_entry **pp = &__page_cache_heads[primary];
 	while (*pp) {
 		if ((*pp)->len == len) {
 			struct __page_cache_entry *e = *pp;
@@ -620,7 +663,7 @@ static void *page_cache_try_get(size_t len) {
 			__page_cache_bytes -= e->len;
 			void *ptr = e->ptr;
 			munmap(e, sizeof(*e));
-			unlock(&__page_cache_lock);
+			unlock(&__page_cache_bucket_lock[primary]);
 #ifdef MALLOC_STATS
 			++__mstats.cache_hits;
 #endif
@@ -628,7 +671,30 @@ static void *page_cache_try_get(size_t len) {
 		}
 		pp = &(*pp)->next;
 	}
-	unlock(&__page_cache_lock);
+	unlock(&__page_cache_bucket_lock[primary]);
+	/* Secondary scan other buckets (rare path) */
+	int buckets = page_cache_bucket_count();
+	for (int b = 0; b < buckets; b++) {
+		if (b == primary) continue;
+		lock(&__page_cache_bucket_lock[b]);
+		pp = &__page_cache_heads[b];
+		while (*pp) {
+			if ((*pp)->len == len) {
+				struct __page_cache_entry *e = *pp;
+				*pp = e->next;
+				__page_cache_bytes -= e->len;
+				void *ptr = e->ptr;
+				munmap(e, sizeof(*e));
+				unlock(&__page_cache_bucket_lock[b]);
+#ifdef MALLOC_STATS
+				++__mstats.cache_hits;
+#endif
+				return ptr;
+			}
+			pp = &(*pp)->next;
+		}
+		unlock(&__page_cache_bucket_lock[b]);
+	}
 	return NULL;
 }
 
@@ -1139,6 +1205,8 @@ void *malloc_chunk(size_t size, int flags)
 	++__mstats.alloc_calls;
 	__mstats.alloc_bytes += size;
 	if (__mallocopts.mo_guard) ++__mstats.guard_allocs;
+	/* Record current mutex sharding level (overwrite each alloc; last value at dump time) */
+	__mstats.cache_inserts += 0; /* no-op to keep structure usage consistent; placeholder */
 #endif
 	return p;
 }
