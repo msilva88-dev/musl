@@ -12,17 +12,101 @@
 #include "libc.h"
 #include "mallocopts.h"
 
+/*
+===============================================================================
+ musl malloc options and hardening (OpenBSD-inspired) — Design & Documentation
+===============================================================================
+
+This file implements a minimal malloc “options” subsystem, inspired by
+OpenBSD’s malloc(3) semantics, adapted for musl and this allocator design.
+It provides toggles for hardening features (canaries, guard pages, junk fill,
+UAF protections), basic statistics (optional), and a small page-cache with
+contention-reducing sharding.
+
+Key Concepts
+------------
+- Options are configured once (on first use) from:
+    1) Environment MALLOC_OPTIONS (if present and non-empty)
+    2) Global malloc_options (if present and non-empty)
+  OpenBSD’s vm.malloc_conf sysctl(2) is intentionally not used here.
+  Subsequent letters override earlier ones (rightmost wins), matching OBSD.
+
+- This implementation intentionally diverges from some OBSD behaviors
+  (documented where they occur). Notable examples:
+    • Free page protection for UAF checks requires both F (freecheck) and
+      U (freeunmap) here, to reduce overhead; OBSD docs imply F alone.
+    • Page cache capacity unit and default differ from OBSD’s “64 pages”.
+    • Guard-page policy follows the allocator’s design (see notes below).
+
+- Statistics counters (when compiled with -DMALLOC_STATS) are best-effort
+  and racy by design. They are sufficient for coarse insight at process exit.
+
+Module Layout
+-------------
+  • __mallocopts            : runtime flags (bitfields) and knobs
+  • Delayed-chunk list      : buffer freed memory for post-free checks
+  • Guard list & quarantine : metadata for guarded allocations and delayed unmap
+  • Page cache              : reuse of unmapped page-sized regions; sharded by mo_mutexes
+  • Statistics              : counters for allocations, failures, cache, UAF, etc.
+  • Option parser           : check_malloc_options_once (idempotent)
+  • Helpers                 : locks, warnings, canaries, junk fill, overflow checks
+  • Guarded mapping API     : mguard/munguard/mreguard
+  • Free path               : free_chunk (checks + delayed register + cache/quarantine)
+  • Alloc/Realloc           : malloc_chunk/realloc_chunk
+
+Security Hardening Quick Reference
+----------------------------------
+  C/c : Heap canaries on/off (checked on free; crash on mismatch)
+  G/g : Guard pages for eligible allocations (see “Guard Pages” notes)
+  J/j : Junk fill level (0=off, 1=free-time partial page, 2=alloc+free full)
+  F/f : Freecheck (double-free checking + UAF sampling). In this impl, UAF
+        page protection engages when F and U are both enabled.
+  U/u : Free unmap protections for larger frees (mprotect/madvise where relevant)
+  R/r : Realloc policy (always reallocate on equal size when enabled)
+  X/x : xmalloc (abort instead of returning NULL on OOM)
+  D/d : Dump stats to ./malloc.out at exit (if MALLOC_STATS and file exists)
+  </> : Halve/Double page cache capacity exponent (unit is 1KB here)
+  +/- : Increase/Decrease page cache shard count exponent (mo_mutexes)
+
+Threading & Contention
+----------------------
+The page cache is sharded across (1<<mo_mutexes) buckets (clamped to 32)
+to reduce lock contention. A small global lock serializes trim passes.
+__page_cache_bytes is updated without atomics; approximate is acceptable.
+
+Error Reporting
+---------------
+All diagnostics (hard errors) are written directly to fd 2 via write(2)
+without stdio to avoid reentrancy. Crashes use a_crash(). Warning helpers
+are provided for non-fatal situations.
+*/
+
 hidden struct __mallocopts {
-	uint16_t mo_cachesize: 3; // >/< - cache size exponent (2**n * 1KB)
-	uint16_t mo_canaries: 1; // C/c - enable heap canaries
-	uint16_t mo_dump: 1; // D/d - dump stats to malloc.out
-	uint16_t mo_freecheck: 1; // F/f - check double-free/use-after-free
-	uint16_t mo_freeunmap: 1; // U/u - unmap freed large allocations
-	uint16_t mo_guard: 1; // G/g - use guard pages
-	uint16_t mo_junklev: 2; // J/j - junk fill level 0..2
-	uint16_t mo_mutexes: 3; // +/- - thread mutex pool level 0..5
-	uint16_t mo_realloc: 1; // R/r - always reallocate on realloc()
-	uint16_t mo_xmalloc: 1; // X/x - abort on OOM
+	/* mo_cachesize: Free page cache capacity exponent (capacity = (1<<n)*1KB).
+	 * Adjusted via '<' (decrement) and '>' (increment). */
+	uint16_t mo_cachesize: 3;
+	/* mo_canaries: 'C' enable / 'c' disable heap canaries. */
+	uint16_t mo_canaries: 1;
+	/* mo_dump: 'D' enable / 'd' disable dump of stats to ./malloc.out at exit. */
+	uint16_t mo_dump: 1;
+	/* mo_freecheck: 'F' enable / 'f' disable more extensive double-free/UAF checks.
+	 * NOTE (divergence): Page protection on frees engages here only when combined
+	 * with mo_freeunmap 'U' to reduce overhead. */
+	uint16_t mo_freecheck: 1;
+	/* mo_freeunmap: 'U' enable / 'u' disable UAF protections for larger frees. */
+	uint16_t mo_freeunmap: 1;
+	/* mo_guard: 'G' enable / 'g' disable guard pages for eligible allocations. */
+	uint16_t mo_guard: 1;
+	/* mo_junklev: 'J' increment up to 2, 'j' decrement down to 0.
+	 * 0: no junk fill; 1: free-time (up to 1 page); 2: alloc+free full region. */
+	uint16_t mo_junklev: 2;
+	/* mo_mutexes: '+' increment / '-' decrement shard exponent for page cache buckets.
+	 * Active bucket count = 1 << min(mo_mutexes, 5), clamped at 32. */
+	uint16_t mo_mutexes: 3;
+	/* mo_realloc: 'R' enable / 'r' disable “always reallocate” realloc policy. */
+	uint16_t mo_realloc: 1;
+	/* mo_xmalloc: 'X' enable / 'x' disable crash-on-OOM instead of returning NULL. */
+	uint16_t mo_xmalloc: 1;
 	uint16_t __pad: 1;
 } __mallocopts = { .mo_cachesize = 6 /* 64KB (2**6) */, .mo_junklev = 1, .mo_mutexes = 3 /* 8 (2**3) */ };
 
@@ -30,7 +114,12 @@ hidden struct __mallocopts {
 #define CANARY_SIZE 8
 static uint64_t __heap_canary_secret = 0;
 
-// delayed-chunks for junk/free checking
+/* Delayed-chunks for junk/free checking
+ * ------------------------------------
+ * Freed chunks are optionally registered here for:
+ *   • post-free junk pattern validation (detect “write-after-free”)
+ *   • temporary page protection (when F & U & len≥threshold)
+ * We gather a local snapshot and perform checks outside the lock. */
 #define MAX_DELAYED_CHUNKS 64
 hidden struct __delayed_chunk {
 	void *addr;
@@ -43,16 +132,24 @@ static volatile int __delayed_list_lock[2] = { 0, 0 };
 /* Delay before inspecting freed chunks (seconds) */
 #define DELAYED_CHUNK_DELAY_SEC 1
 
+/* Guarded allocation metadata
+ * ---------------------------
+ * When guard pages are enabled, we surround the user mapping with two guard
+ * pages (front/rear). __guard_list tracks active guarded regions, and a
+ * quarantine list delays unmapping to help catch late UAF. */
 static struct __guard_entry {
-	void *base; // mmap base (include front guard)
-	size_t total; // total mapped bytes = aligned + 2*PAGE_SIZE
+	void *base; /* mmap base (include front guard) */
+	size_t total; /* Total mapped bytes = aligned + 2*PAGE_SIZE */
 	struct __guard_entry *next;
-	volatile int ref; // reference count (atomic ops)
-	volatile int removed; // 0 = in-list, 1 = removed
+	volatile int ref; /* Reference count (atomic ops) */
+	volatile int removed; /* 0 = in-list, 1 = removed */
 } *__guard_list = NULL;
 static volatile int __guard_list_lock[2] = { 0, 0 };
 
-// Add quarantine structure for guarded frees
+/* Guard quarantine
+ * ----------------
+ * Freed guarded regions first enter a quarantine (linked list). A periodic
+ * sweep removes the guard list entry and unmaps the full region. */
 static struct __guard_quarantine {
 	void *base;
 	size_t total;
@@ -61,31 +158,49 @@ static struct __guard_quarantine {
 } *__guard_q = NULL;
 static volatile int __guard_q_lock[2] = { 0, 0 };
 
-/* Page cache (adjusted by mo_cachesize: capacity = (1<<exp) * 1KB)
-   Sharded by mo_mutexes: number of buckets = 1<<mo_mutexes (clamped to 32).
-   Level semantics (suggested, undocumented on OpenBSD):
-     0 -> 1 global bucket (minimal locking)
-     1 -> 2 buckets
-     2 -> 4 buckets
-     3 -> 8 buckets
-     4 -> 16 buckets
-     5+-> 32 buckets (max)
-   Increasing shards reduces contention at cost of more metadata nodes. */
+/* Page cache (capacity and sharding)
+ * ----------------------------------
+ * Capacity = (1<<mo_cachesize) * 1KB. Sharded by mo_mutexes:
+ * bucket count = 1 << min(mo_mutexes, 5), i.e., up to 32 buckets. This
+ * reduces lock contention under multithreaded load.
+ * Level semantics (suggested, undocumented on OpenBSD):
+ *   0 -> 1 global bucket (minimal locking)
+ *   1 -> 2 buckets
+ *   2 -> 4 buckets
+ *   3 -> 8 buckets
+ *   4 -> 16 buckets
+ *   5+-> 32 buckets (max)
+ * Increasing shards reduces contention at cost of more metadata nodes. */
 #define PAGE_CACHE_MAX_EXP 8
 #define PAGE_CACHE_MAX_BUCKETS 32
-static volatile int __page_cache_global_lock[2] = { 0, 0 }; /* serialize multi-bucket trim */
+static volatile int __page_cache_global_lock[2] = { 0, 0 }; /* Serialize multi-bucket trim */
 static volatile int __page_cache_bucket_lock[PAGE_CACHE_MAX_BUCKETS][2] = { {0,0} };
 static struct __page_cache_entry {
 	void *ptr;
 	size_t len;
 	struct __page_cache_entry *next;
 } *__page_cache_heads[PAGE_CACHE_MAX_BUCKETS] = { NULL };
-static size_t __page_cache_bytes = 0; /* total bytes of cached mappings */
-static size_t __page_cache_last_capacity = 0; /* track previous capacity for trim */
+static size_t __page_cache_bytes = 0; /* Total bytes of cached mappings */
+static size_t __page_cache_last_capacity = 0; /* Track previous capacity for trim */
 
 #ifdef MALLOC_STATS
-/* Statistics grouped into a single structure for easier extension and atomic snapshot.
-   Races are acceptable; values are approximate. */
+/* Statistics (MALLOC_STATS)
+ * -------------------------
+ * Best-effort counters, acceptable races, approximate values.
+ * - alloc_calls     : successful allocation calls
+ * - alloc_failures  : failed allocation attempts
+ * - free_calls      : frees observed
+ * - realloc_calls   : realloc operations performed
+ * - alloc_bytes     : sum of requested allocation sizes
+ * - freed_bytes     : sum of freed user lengths
+ * - guard_allocs    : allocations made with guard pages enabled
+ * - cache_hits      : page cache reuse hits
+ * - cache_inserts   : successful page cache insertions
+ * - cache_rejects   : page cache insertions refused due to capacity
+ * - cache_trims     : number of trim passes run
+ * - canary_failures : heap canary mismatches on free
+ * - uaf_detected    : UAF detected by delayed checker (pattern mismatch)
+ * - quarantine_*    : counts for guard quarantine state */
 static struct __malloc_stats {
 	uint64_t alloc_calls;
 	uint64_t alloc_failures;
@@ -123,6 +238,8 @@ static inline int page_cache_bucket_count(void)
 
 static void page_cache_trim(void)
 {
+	/* Trim page cache entries (across buckets) to fit capacity.
+	 * Note: __page_cache_bytes is approximate; trimming is best-effort. */
 	size_t cap = page_cache_capacity();
 	if (__page_cache_bytes <= cap) return;
 	/* Global lock to serialize trimming across buckets */
@@ -156,7 +273,24 @@ static inline void warn_malloc_options(char c)
 
 void check_malloc_options_once()
 {
-	// idempotent init; simple parsing from MALLOC_OPTIONS or malloc_options if present
+	/* Parse options once, honoring letter-order precedence:
+	 * later letters override earlier ones.
+	 * Supported letters (OBSD-inspired):
+	 *   + / - : increase/decrease shard exponent (mo_mutexes)
+	 *   < / > : halve/double page cache capacity exponent (1KB units)
+	 *   C / c : canaries on/off
+	 *   D / d : dump stats at exit on/off (if MALLOC_STATS)
+	 *   F / f : freecheck on/off (see divergence note in 'F' handler)
+	 *   G / g : guard pages for eligible allocations on/off
+	 *   J / j : junk level ++/-- (bounded 0..2)
+	 *   R / r : realloc policy always reallocate on/off
+	 *   S / s : macro-like “hardening preset”: enable/disable a group
+	 *            (implemented here as direct toggles; no sysctl; see code)
+	 *   U / u : unmap/protect larger frees on/off
+	 *   X / x : xmalloc crash-on-OOM on/off
+	 * Unknown letters produce a warning. */
+
+	/* Idempotent init; simple parsing from MALLOC_OPTIONS or malloc_options if present */
 	if (a_cas(&mallocopts_initialized, 0, 1) != 0) return;
 
 	const char *env = getenv("MALLOC_OPTIONS"), *p;
@@ -186,6 +320,9 @@ void check_malloc_options_once()
 			__mallocopts.mo_dump = 1;
 			break;
 		case 'F':
+			/* Divergence from OBSD doc: we engage page protection for UAF
+			 * only when both F (freecheck) and U (freeunmap) are enabled.
+			 * This reduces overhead while keeping UAF detection robust. */
 			__mallocopts.mo_freecheck = 1;
 			__mallocopts.mo_freeunmap = 1;
 			break;
@@ -257,7 +394,7 @@ void check_malloc_options_once()
 	}
 
 	/* Adjust page cache if capacity changed due to < or > (or mo_mutexes changed).
-           We do not re-bucket existing cached entries; future puts/gets use new bucket count. */
+         * We do not re-bucket existing cached entries; future puts/gets use new bucket count. */
 	size_t cap = page_cache_capacity();
 	if (__page_cache_last_capacity && cap < __page_cache_last_capacity) page_cache_trim();
 	__page_cache_last_capacity = cap;
@@ -289,14 +426,14 @@ static inline void m_warn(const char *const msg)
 
 static inline void lock(int (*arr)[2])
 {
-	// wait: CAS on element 0, and wait on (addr0, addr1) as original futex helpers expect
+	/* wait: CAS on element 0, and wait on (addr0, addr1) as original futex helpers expect */
 	while (a_cas(&(*arr)[0], 0, 1)) __wait(&(*arr)[0], &(*arr)[1], 1, 1);
 }
 
 static inline void unlock(int (*arr)[2])
 {
-	// swap element0 back to 0; if previous value was 1 wake sleepers.
-	// a_swap returns the *previous* value. wake only if previous == 1.
+	/* swap element0 back to 0; if previous value was 1 wake sleepers.
+	 * a_swap returns the *previous* value. wake only if previous == 1. */
 	if (a_swap(&(*arr)[0], 0) == 1) __wake(&(*arr)[0], 1, 1);
 }
 
@@ -304,12 +441,12 @@ static int add_guard_entry(void *base, size_t total)
 {
 	struct __guard_entry *g = mmap(NULL, sizeof(*g), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (g == MAP_FAILED) return -1;
-	// explicit init to avoid any uninitialized fields/races
+	/* Explicit init to avoid any uninitialized fields/races */
 	g->base = base;
 	g->total = total;
 	g->next = NULL;
 	g->removed = 0;
-	g->ref = 1; // list itself holds one reference
+	g->ref = 1; /* List itself holds one reference */
 	lock(&__guard_list_lock);
 	g->next = __guard_list;
 	__guard_list = g;
@@ -320,6 +457,9 @@ static int add_guard_entry(void *base, size_t total)
 #ifdef MALLOC_STATS
 static void dump_malloc_stats(void)
 {
+	/* Dump statistics at process exit if ./malloc.out exists and D is set.
+	 * Note: This function is a best-effort snapshot and does not block
+	 * allocations/frees to “freeze” counters. */
 	check_malloc_options_once();
 	if (!__mallocopts.mo_dump) return;
 	if (access("./malloc.out", F_OK) != 0) return;
@@ -381,9 +521,11 @@ static void dump_malloc_stats(void)
 
 static inline uint64_t monotonic_seconds(void)
 {
+	/* Monotonic time (seconds) for delayed-chunk scheduling and sweeps.
+	 * Fallback to wall clock if MONOTONIC is unavailable. */
 	struct timespec ts;
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
-		/* Fall back to wall clock to avoid indefinite suppression of checks. */
+		/* Fall back to wall clock to avoid indefinite suppression of checks */
 		time_t t = time(NULL);
 		return (uint64_t)(t >= 0 ? t : 0);
 	}
@@ -392,6 +534,8 @@ static inline uint64_t monotonic_seconds(void)
 
 static void guard_quarantine_add(void *base, size_t total)
 {
+	/* Add a guarded region to quarantine.
+	 * On failure to allocate the node, warn and skip quarantine. */
 	struct __guard_quarantine *n = mmap(NULL, sizeof(*n), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (n == MAP_FAILED) {
 		m_warn("free() [guard_quarantine_add]: failed to add guard quarantine node\n");
@@ -411,6 +555,8 @@ static void guard_quarantine_add(void *base, size_t total)
 
 static void guard_quarantine_sweep(uint64_t now)
 {
+	/* Sweep quarantine: unlink, drop metadata, sanity-check size, unmap.
+	 * Attempt to remove guard entry before unmapping to avoid stale UAF. */
 	lock(&__guard_q_lock);
 	struct __guard_quarantine **pp = &__guard_q;
 	while (*pp) {
@@ -419,12 +565,12 @@ static void guard_quarantine_sweep(uint64_t now)
 			*pp = q->next;
 			unlock(&__guard_q_lock);
 
-			// remove guard list entry before unmapping to prevent stale list UAF
+			/* Remove guard list entry before unmapping to prevent stale list UAF */
 			if (remove_guard_entry(q->base) != 0) {
 				m_warn("free() [guard_quarantine_sweep]: quarantine sweep could not remove guard entry\n");
 			}
 
-			// sanity check on size: skip absurd totals or non-page-aligned sizes
+			/* Sanity check on size: skip absurd totals or non-page-aligned sizes */
 			if (q->total == 0 || q->total > SIZE_MAX / 2 || (q->total & (PAGE_SIZE - 1)) != 0) {
 				m_crash("free() [guard_quarantine_sweep]: corrupted guard quarantine size\n");
 			}
@@ -445,12 +591,21 @@ static void guard_quarantine_sweep(uint64_t now)
 
 static void check_delayed_chunks()
 {
-	// Strategy: gather candidates under lock (and remove them from the
-	// shared array), then perform mprotect/inspection *without* holding the lock.
-	// This avoids doing slow or re-entrant ops while the list lock is held.
+	/* UAF Checker (delayed) Strategy
+	 * --------------------------------
+	 * 1) Snapshot eligible delayed chunks under lock, remove them from list.
+	 * 2) Optionally make pages readable for inspection (if protected).
+	 * 3) Validate head/tail/middle (or full up to 4KB) against FREE junk pattern.
+	 * 4) Re-protect pages (PROT_NONE) if they were temporarily relaxed.
+	 * 5) Crash on first deviation (“use-after-free detected”).
+	 * Note: This path is intentionally best-effort and non-blocking. */
+
+	/* Strategy: gather candidates under lock (and remove them from the
+	 * shared array), then perform mprotect/inspection *without* holding the lock.
+	 * This avoids doing slow or re-entrant ops while the list lock is held. */
 	uint64_t now = monotonic_seconds();
 
-	// local snapshot buffer (small, MAX_DELAYED_CHUNKS constant)
+	/* Local snapshot buffer (small, MAX_DELAYED_CHUNKS constant) */
 	struct __delayed_chunk snap[MAX_DELAYED_CHUNKS];
 	int snap_count = 0;
 
@@ -461,28 +616,29 @@ static void check_delayed_chunks()
 			i++;
 			continue;
 		}
-		// snapshot the chunk now
+		/* Snapshot the chunk now */
 		snap[snap_count++] = *d;
-		// remove entry by swapping with last and shrink count
+		/* Remove entry by swapping with last and shrink count */
 		__delayed_chunks[i] = __delayed_chunks[--__delayed_count];
-		// do NOT increment i because we swapped a new element into i
+		/* Do NOT increment i because we swapped a new element into i */
 	}
 	unlock(&__delayed_list_lock);
 
-	// process snapshots without holding the list lock
+	/* Process snapshots without holding the list lock */
 	for (int s = 0; s < snap_count; s++) {
 		unsigned char *ptr = (unsigned char *)snap[s].addr;
 		size_t check_len = snap[s].len > 4096 ? 4096 : snap[s].len;
 		int need_reprotect = 0;
 
 		if (__mallocopts.mo_freecheck && __mallocopts.mo_freeunmap && snap[s].len >= DELAYED_PROTECT_THRESHOLD) {
+			/* Divergence: require F+U for page protection on delayed chunks */
 			uintptr_t page_base = (uintptr_t)ptr & ~(PAGE_SIZE - 1);
 			if (snap[s].len > SIZE_MAX - (uintptr_t)ptr - (PAGE_SIZE - 1)) {
 				/* Overflow scenario: treat as suspicious */
 				m_crash("free() [check_delayed_chunks]: delayed chunk length overflow\n");
 			}
 			size_t prot_len = ((((uintptr_t)ptr + snap[s].len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
-			/* If we cannot temporarily make it readable, skip inspection to avoid a crash. */
+			/* If we cannot temporarily make it readable, skip inspection to avoid a crash */
 			if (mprotect((void*)page_base, prot_len, PROT_READ) == 0) need_reprotect = 1;
 			else {
 				m_warn("free() [check_delayed_chunks]: skipped UAF check (mprotect failed)\n");
@@ -542,63 +698,70 @@ static void check_delayed_chunks()
 			m_crash("free() [check_delayed_chunks]: use-after-free detected\n");
 		}
 	}
-	// Sweep guarded quarantine after chunk checks
+	/* Sweep guarded quarantine after chunk checks */
 	guard_quarantine_sweep(now);
 }
 
 static inline void guard_hold(struct __guard_entry *g)
 {
-	// increment reference (atomic)
+	/* Increment guard metadata refcount (caller holds a stable reference) */
 	a_inc(&g->ref);
 }
 
 static void guard_release(struct __guard_entry *g)
 {
-	// Atomically decrement the refcount and free the list node only
-	// when the previous value was 1 *and* it has been marked removed.
-	// Using a_fetch_add keeps the behaviour consistent with the rest
-	// of the atomic helpers.
+	/* Drop guard metadata refcount and unmap node if removed and last ref. */
+
+	/* Atomically decrement the refcount and free the list node only
+	 * when the previous value was 1 *and* it has been marked removed.
+	 * Using a_fetch_add keeps the behaviour consistent with the rest
+	 * of the atomic helpers. */
 	int prev = a_fetch_add(&g->ref, -1);
 	if (prev <= 0) m_crash("malloc [guard_release]: the reference of guard is zero or negative\n");
-	// decrement and free only if previous value was 1 (so new becomes 0)
+	/* Decrement and free only if previous value was 1 (so new becomes 0) */
 	if (prev == 1 && g->removed) munmap(g, sizeof(*g));
 }
 
 static struct __guard_entry *find_guard_by_ptr(void *ptr)
 {
+	/* Locate guard metadata for a user pointer, with refcount discipline:
+	 * - Acquire list lock
+	 * - Skip removed nodes
+	 * - Take a temporary ref, verify not removed, compute user range
+	 * - Return node (caller holds a reference) or NULL */
 	if (!ptr) return NULL;
 	uintptr_t p = (uintptr_t)ptr;
 	lock(&__guard_list_lock);
 	struct __guard_entry *g = __guard_list;
 	while (g) {
-		// skip obviously removed nodes quickly
+		/* Skip obviously removed nodes quickly */
 		if (g->removed) {
 			g = g->next;
 			continue;
 		}
 
-		// take a stable reference
+		/* Take a stable reference */
 		a_inc(&g->ref);
 
-		// if removed raced in, drop it and restart scan from head
+		/* If removed raced in, drop it and restart scan from head */
 		if (g->removed) {
 			guard_release(g);
 			g = __guard_list;
 			continue;
 		}
 
-		// compute usable range while we still own g
+		/* Compute usable range while we still own g */
 		uintptr_t user_base = (uintptr_t)g->base + PAGE_SIZE;
-		size_t usable = g->total - 2*PAGE_SIZE; // usable, page-aligned
+		size_t usable = g->total - 2*PAGE_SIZE; /* Usable, page-aligned */
 		uintptr_t user_end = user_base + usable;
 
 		if (usable != 0 && user_end >= user_base && p >= user_base && p < user_end) {
-			// found: keep caller reference and return (unlock first)
+			/* Found: keep caller reference and return (unlock first) */
 			unlock(&__guard_list_lock);
 			return g;
 		}
 
-		// not ours: advance. capture next before releasing current reference
+		/* Not ours: advance. capture next before releasing current reference */
 		struct __guard_entry *next = g->next;
 		if (next) a_inc(&next->ref);
 		guard_release(g);
@@ -611,6 +774,10 @@ static struct __guard_entry *find_guard_by_ptr(void *ptr)
 /* Hash selection: use (len >> PAGE_SHIFT) xor pointer to reduce collisions */
 static inline int page_cache_pick_bucket(void *ptr, size_t len)
 {
+	/* Page cache hashing
+	 * put(): hashes pointer^size (pointer entropy available on free)
+	 * try_get(): hashes synthetic ptr from length (only size known).
+	 * Secondary scan recovers entries in other buckets. */
 	int buckets = page_cache_bucket_count();
 	uintptr_t h = ((uintptr_t)ptr >> 12) ^ (len >> 12);
 	return (int)(h & (buckets - 1));
@@ -618,6 +785,9 @@ static inline int page_cache_pick_bucket(void *ptr, size_t len)
 
 static void page_cache_put(void *ptr, size_t len)
 {
+	/* Insert a region into page cache (unguarded, page-aligned sizes only).
+	 * Best-effort capacity check: a fast non-locked reject and a locked
+	 * re-check (approximate __page_cache_bytes). */
 	if (!ptr || len == 0) {
 		munmap(ptr, len);
 		return;
@@ -673,13 +843,17 @@ static void page_cache_put(void *ptr, size_t len)
 #endif
 }
 
-static void *page_cache_try_get(size_t len) {
+static void *page_cache_try_get(size_t len)
+{
+	/* Attempt to reuse a region from page cache for given size.
+	 * Primary bucket is chosen by size (no pointer); full-bucket
+	 * scan fallback is implemented as a rare-path recovery. */
 	if (__mallocopts.mo_guard) return NULL;
 	if ((len & (PAGE_SIZE-1)) != 0) return NULL;
 	size_t cap = page_cache_capacity();
 	if (!cap) return NULL;
 	/* Primary bucket chosen using len only (no pointer yet); this differs from put()
-	   which hashes pointer^size. Secondary scan recovers entries in other buckets. */
+	 * which hashes pointer^size. Secondary scan recovers entries in other buckets. */
 	int primary = page_cache_pick_bucket((void*)(uintptr_t)len, len);
 	lock(&__page_cache_bucket_lock[primary]);
 	struct __page_cache_entry **pp = &__page_cache_heads[primary];
@@ -727,6 +901,9 @@ static void *page_cache_try_get(size_t len) {
 
 static int remove_guard_entry(void *base)
 {
+	/* Remove guard metadata list node by base pointer.
+	 * Mark as removed while holding list lock. Then drop the list’s reference;
+	 * the node will be unmapped when the last ref is released. */
 	if (!base) return -1;
 	lock(&__guard_list_lock);
 	struct __guard_entry **pp = &__guard_list;
@@ -734,11 +911,11 @@ static int remove_guard_entry(void *base)
 		if ((*pp)->base == base) {
 			struct __guard_entry *old = *pp;
 			*pp = old->next;
-			// mark removed while still holding lock to prevent races
+			/* Mark removed while still holding lock to prevent races */
 			old->removed = 1;
 			unlock(&__guard_list_lock);
 
-			// drop the list's reference
+			/* Drop the list's reference */
 			//if (a_fetch_add(&old->ref, -1) == 1) munmap(old, sizeof(*old));
 			guard_release(old);
 			return 0;
@@ -752,6 +929,7 @@ static int remove_guard_entry(void *base)
 /* Helper for overflow: check (base + add) ((PAGE_SIZE - 1) included) */
 static inline int plus_overflows_with_rounding(uintptr_t base, size_t add)
 {
+	/* Computes if base + add (+ rounding) overflows uintptr_t */
 	if (
 		(add > (SIZE_MAX - base))
 		|| ((PAGE_SIZE - 1) && add + (PAGE_SIZE - 1) > (SIZE_MAX - base))
@@ -761,6 +939,11 @@ static inline int plus_overflows_with_rounding(uintptr_t base, size_t add)
 
 void fill_junk(void *p, size_t len, int on_alloc)
 {
+	/* Junk fill policy:
+	 * Level 0: disabled
+	 * Level 1: fill up to 1 page (fast path)
+	 * Level 2: fill the entire region
+	 * Pattern values: allocation=JUNK_PATTERN_ALLOC, free=JUNK_PATTERN_FREE */
 	if (!p || len == 0) return;
 	check_malloc_options_once();
 	if (on_alloc && __mallocopts.mo_junklev < 2) return;
@@ -773,7 +956,7 @@ void fill_junk(void *p, size_t len, int on_alloc)
 		return;
 	}
 
-	// level 1: write up to a page for speed
+	/* Level 1: write up to a page for speed */
 	if (len < PAGE_SIZE) memset(p, val, len);
 	else memset(p, val, PAGE_SIZE);
 }
@@ -781,6 +964,8 @@ void fill_junk(void *p, size_t len, int on_alloc)
 /* freecheck: validate alignment only */
 void freecheck(void *p)
 {
+	/* Simple alignment validator:
+	 * NB: Actual double-free is caught via magic sentinel in free_chunk. */
 	if (!p) return;
 	check_malloc_options_once();
 	if (!__mallocopts.mo_freecheck) return;
@@ -791,6 +976,7 @@ void freecheck(void *p)
 
 static inline uint64_t make_canary(void *user_ptr, size_t user_len)
 {
+	/* Compute 8-byte canary from secret ^ ptr ^ len (mapped to a nonzero) */
 	return (__heap_canary_secret ^ (uint64_t)(uintptr_t)user_ptr ^ (uint64_t)user_len)
 		? (__heap_canary_secret ^ (uint64_t)(uintptr_t)user_ptr ^ (uint64_t)user_len)
 		: 0xF00DFACECAFEBEEFULL;
@@ -798,6 +984,7 @@ static inline uint64_t make_canary(void *user_ptr, size_t user_len)
 
 static inline void set_canary(void *p, size_t size)
 {
+	/* Write canary at end of user region; allocation/free paths re-arm it */
 	check_malloc_options_once();
 	if (__mallocopts.mo_canaries) {
 		unsigned char *end = (unsigned char*)p + size;
@@ -806,11 +993,15 @@ static inline void set_canary(void *p, size_t size)
 	}
 }
 
-// mguard: allocate region; if guard option enabled, create 2 guard pages
-// around an aligned interior region. Return pointer to user area (map + PAGE) on success.
-// For CONCEAL flag on supported OSes, attempt optimizations.
+/* mguard: allocate region; if guard option enabled, create 2 guard pages
+ * around an aligned interior region. Return pointer to user area (map + PAGE) on success.
+ * For CONCEAL flag on supported OSes, attempt optimizations. */
 void *mguard(size_t size, int flags)
 {
+	/* Guarded allocation policy:
+	 * - If mo_guard off, fallback to plain mmap (with conceal/OS hints).
+	 * - If mo_guard on, allocate [guard|user|guard], register metadata,
+	 *   and protect guard pages with PROT_NONE. */
 	if (size == 0) {
 		if (__mallocopts.mo_xmalloc) m_crash("malloc() [mguard]: allocation failed");
 		errno = ENOMEM;
@@ -819,7 +1010,7 @@ void *mguard(size_t size, int flags)
 
 	check_malloc_options_once();
 
-	// if guard pages disabled, fall back to plain mmap; but still honour CONCEAL on some OS
+	/* If guard pages disabled, fall back to plain mmap; but still honour CONCEAL on some OS */
 	if (!__mallocopts.mo_guard) {
 		if (flags & MCHUNK_FLAG_CONCEAL) {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
@@ -835,7 +1026,7 @@ void *mguard(size_t size, int flags)
 		return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	}
 
-	// aligned size to page
+	/* Aligned size to page */
 	size_t aligned = size;
 	if (size & (PAGE_SIZE - 1)) aligned = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 	if (aligned > SIZE_MAX - 2*PAGE_SIZE) {
@@ -876,10 +1067,14 @@ void *mguard(size_t size, int flags)
 	return map;
 }
 
-// munguard: given user pointer and size (user length), undo guard mapping and unmap
+/* munguard: given user pointer and size (user length), undo guard mapping and unmap */
 int munguard(void *ptr, size_t size)
 {
-	if (ptr == NULL || size == 0) return 0; // no-op
+	/* Undo guarded mapping for a user pointer and size (user length):
+	 * - Find and validate guard metadata
+	 * - Remove list entry and drop caller reference
+	 * - Relax guard pages to RW and unmap full region */
+	if (ptr == NULL || size == 0) return 0; /* No-op */
 
 	check_malloc_options_once();
 
@@ -901,9 +1096,9 @@ int munguard(void *ptr, size_t size)
 	void *base = g->base;
 	size_t total = g->total;
 
-	// remove from list first (this drops the list reference). Then
-	// release the caller reference. This avoids using g->base after g
-	// might have been destroyed.
+	/* Remove from list first (this drops the list reference). Then
+	 * release the caller reference. This avoids using g->base after g
+	 * might have been destroyed. */
 	if (remove_guard_entry(base) != 0) {
 		errno = EINVAL;
 		return -1;
@@ -918,9 +1113,13 @@ int munguard(void *ptr, size_t size)
 	return munmap(base, total);
 }
 
-// mreguard: resize guarded region. On Linux try mremap fast-path; otherwise allocate new guarded region, copy, replace list
+/* mreguard: resize guarded region. On Linux try mremap fast-path; otherwise allocate new guarded region, copy, replace list */
 void *mreguard(void *ptr, size_t old_size, size_t new_size)
 {
+	/* Resize guarded region:
+	 * - On Linux, try mremap fast-path (re-protect and update metadata)
+	 * - Else fallback to new guarded mapping + copy + remove old
+	 *   Inconsistent metadata during mremap is treated as fatal. */
 	if (!ptr || old_size == 0 || new_size == 0) {
 		m_crash("realloc() [mreguard]: allocation failed");
 		errno = EINVAL;
@@ -942,7 +1141,7 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 #endif
 	}
 
-	// must be a registered guard region
+	/* Must be a registered guard region */
 	struct __guard_entry *g = find_guard_by_ptr(ptr);
 	if (!g) {
 		errno = EINVAL;
@@ -952,9 +1151,9 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 	size_t old_aligned = g->total - 2*PAGE_SIZE;
 	size_t old_total = g->total;
 	char *old_base = g->base;
-	// keep caller ref 'g' while we update the guard list/entries
+	/* Keep caller ref 'g' while we update the guard list/entries */
 
-	// calculates align for new_size
+	/* Calculates align for new_size */
 	size_t new_aligned = (new_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
 	if (new_aligned > SIZE_MAX - 2*PAGE_SIZE) {
@@ -969,31 +1168,31 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 	}
 
 #if defined(__linux__)
-	// try mremap on the whole base region
+	/* Try mremap on the whole base region */
 	char *new_base = mremap(old_base, old_total, new_total, MREMAP_MAYMOVE);
 	if (new_base != MAP_FAILED) {
-		// protect new guard pages on the new mapping
+		/* Protect new guard pages on the new mapping */
 		(void)mprotect(new_base, PAGE_SIZE, PROT_NONE);
 		(void)mprotect(new_base + PAGE_SIZE + new_aligned, PAGE_SIZE, PROT_NONE);
 
-		// add the new guard entry first (so we don't lose metadata on failure)
+		/* Add the new guard entry first (so we don't lose metadata on failure) */
 		if (add_guard_entry(new_base, new_total) != 0) {
-			/* Mapping has been moved by mremap; cannot safely revert. */
+			/* Mapping has been moved by mremap; cannot safely revert */
 			m_crash("realloc() [mreguard]: guard metadata allocation failed after mremap\n");
 		}
 
-		// remove the old entry after successfully adding the new one
+		/* Remove the old entry after successfully adding the new one */
 		if (remove_guard_entry(old_base) != 0) {
-			/* Old entry should exist; inconsistent guard list. */
+			/* Old entry should exist; inconsistent guard list */
 			m_crash("realloc() [mreguard]: failed to remove old guard entry after mremap\n");
 		}
 
-		// release caller ref and return user pointer
+		/* Release caller ref and return user pointer */
 		guard_release(g);
 		return new_base + PAGE_SIZE;
 	}
 #endif
-	// fallback: allocate new guarded region, copy, register, remove old
+	/* Fallback: allocate new guarded region, copy, register, remove old */
 	char *new_base2 = mmap(NULL, new_total, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (new_base2 == MAP_FAILED) return MAP_FAILED;
 
@@ -1010,7 +1209,7 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 
 	if (add_guard_entry(new_base2, new_total) != 0) {
 		int serrno = errno;
-		// cleanup
+		/* Cleanup */
 		mprotect(new_base2, PAGE_SIZE, PROT_READ | PROT_WRITE);
 		mprotect(new_base2 + PAGE_SIZE + new_aligned, PAGE_SIZE, PROT_READ | PROT_WRITE);
 		munmap(new_base2, new_total);
@@ -1019,9 +1218,9 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 		return MAP_FAILED;
 	}
 
-	// remove old metadata and unmap old region. If removal fails, undo new entry
+	/* Remove old metadata and unmap old region. If removal fails, undo new entry */
 	if (remove_guard_entry(old_base) != 0) {
-		// best-effort: remove the new entry we added and cleanup
+		/* Best-effort: remove the new entry we added and cleanup */
 		remove_guard_entry(new_base2);
 		munmap(new_base2, new_total);
 		errno = EINVAL;
@@ -1036,19 +1235,23 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 
 void register_delayed_chunk(void *p, size_t len)
 {
+	/* Register a freed chunk for delayed UAF checks:
+	 * - Enqueue under lock (bounded array, opportunistic clean if full)
+	 * - If F+U and len≥threshold, mprotect to PROT_NONE
+	 * - Occasionally trigger cleaner probabilistically */
 	if (!p || len == 0) return;
 	check_malloc_options_once();
 	if (!__mallocopts.mo_junklev) return;
 	lock(&__delayed_list_lock);
 	if (__delayed_count >= MAX_DELAYED_CHUNKS) {
-		// Avoid deadlock: don't call check_delayed_chunks() while we
-		// hold __delayed_list_lock (that function acquires the same lock).
-		// Unlock, optionally run cleaner, then re-lock and re-check.
+		/* Avoid deadlock: don't call check_delayed_chunks() while we
+		 * hold __delayed_list_lock (that function acquires the same lock).
+		 * Unlock, optionally run cleaner, then re-lock and re-check. */
 		unlock(&__delayed_list_lock);
-		// Optional probabilistic cleanup to reduce contention:
-		// only run occasionally to avoid CPU storm.
+		/* Optional probabilistic cleanup to reduce contention:
+		 * only run occasionally to avoid CPU storm. */
 		if (arc4random_uniform(16) == 0) check_delayed_chunks();
-		// re-acquire lock and re-evaluate; if still full give up
+		/* Re-acquire lock and re-evaluate; if still full give up */
 		lock(&__delayed_list_lock);
 		if (__delayed_count >= MAX_DELAYED_CHUNKS) {
 			unlock(&__delayed_list_lock);
@@ -1074,6 +1277,8 @@ void register_delayed_chunk(void *p, size_t len)
 
 void protect_chunk(void *p, size_t size)
 {
+	/* For larger chunks and U enabled, protect region with PROT_NONE.
+	 * This accelerates UAF detection on guarded frees. */
 	if (!p || size == 0) return;
 	check_malloc_options_once();
 	if (!__mallocopts.mo_freeunmap) return;
@@ -1090,6 +1295,7 @@ void protect_chunk(void *p, size_t size)
 
 void unprotect_chunk(void *p, size_t size)
 {
+	/* Relax protections for a chunk previously protected by protect_chunk() */
 	if (!p || size == 0) return;
 	check_malloc_options_once();
 	if (!__mallocopts.mo_freeunmap) return;
@@ -1103,12 +1309,20 @@ void unprotect_chunk(void *p, size_t size)
 	}
 }
 
-// free_chunk: free an mchunk-allocated area (user pointer)
+/* free_chunk: free an mchunk-allocated area (user pointer) */
 void free_chunk(void *p)
 {
+	/* Free path:
+	 * 1) Validate pointer and magic; immediate double-free crash on FREED
+	 * 2) Canary check (if enabled), crash on mismatch with offset@length
+	 * 3) Mark magic FREED; wipe with explicit_bzero or junk fill
+	 * 4) Register delayed chunk (UAF checking / optional protection)
+	 * 5) For guarded allocations: protect user, quarantine full mapping
+	 *    Otherwise: try page cache insert (skip concealed), else unmap
+	 * 6) Update stats */
 	if (!p) return;
 
-	// try to see if this pointer is a 'mchunk' allocation
+	/* Try to see if this pointer is a 'mchunk' allocation */
 	struct __mchunk *m = mchunk_from_user(p);
 	if (!m) m_crash("free(): invalid pointer\n");
 	if (m->magic == MCHUNK_MAGIC_FREED) m_crash("free(): double free detected\n");
@@ -1142,10 +1356,10 @@ void free_chunk(void *p)
 	m->magic = MCHUNK_MAGIC_FREED;
 	if (m->flags & MCHUNK_FLAG_CONCEAL) explicit_bzero(p, m->user_len);
 	else fill_junk(p, m->user_len, 0);
-	// delayed free handling: register for delayed checking/protection
+	/* Delayed free handling: register for delayed checking/protection */
 	register_delayed_chunk(p, m->user_len);
 	if (m->flags & MCHUNK_FLAG_GUARD) {
-		// Mark freed, protect for UAF, then quarantine for delayed full unmap
+		/* Mark freed, protect for UAF, then quarantine for delayed full unmap */
 		protect_chunk(p, m->user_len);
 		guard_quarantine_add(m->base ? m->base : (void*)m, m->total_len);
 #ifdef MALLOC_STATS
@@ -1154,7 +1368,7 @@ void free_chunk(void *p)
 #endif
 		return;
 	}
-	// Attempt page cache; exclude concealed regions for security
+	/* Attempt page cache; exclude concealed regions for security */
 	if (!(m->flags & MCHUNK_FLAG_CONCEAL)) {
 		void *baseptr = m->base ? m->base : (void*)m;
 		page_cache_put(baseptr, m->total_len);
@@ -1167,12 +1381,17 @@ void free_chunk(void *p)
 #endif
 }
 
-// free_mchunk: attempt to free pointer if it's a mchunk; return 1 if handled
+/* free_mchunk: attempt to free pointer if it's a mchunk; return 1 if handled */
 int free_mchunk(void *p)
 {
+	/* Attempt to free pointer as an mchunk:
+	 * - free(NULL) is a no-op
+	 * - free valid mchunk => free_chunk()
+	 * - free freed mchunk => double-free crash
+	 * - else: not handled here (caller decides) */
 	if (!p) return 1; // free(NULL);
 
-	// try to see if this pointer is a 'mchunk' allocation
+	/* Try to see if this pointer is a 'mchunk' allocation */
 	struct __mchunk *m = mchunk_from_user(p);
 	if (m && m->magic == MCHUNK_MAGIC) {
 		free_chunk(p);
@@ -1182,9 +1401,16 @@ int free_mchunk(void *p)
 	return 0;
 }
 
-// malloc_chunk: allocate an mchunk (returns user pointer)
+/* malloc_chunk: allocate an mchunk (returns user pointer) */
 void *malloc_chunk(size_t size, int flags)
 {
+	/* Allocation path:
+	 * 1) Option check and overflow guard for metadata + canary
+	 * 2) Compute aligned size (guard policy influences alignment)
+	 * 3) Try page cache reuse if guard off and aligned is page-multiple
+	 * 4) Else mguard() (guard off => plain mmap path inside)
+	 * 5) Validate space for metadata; crash/errno on failure
+	 * 6) Initialize mchunk header; fill junk; set canary; stats update */
 	check_malloc_options_once();
 	size_t extra = (__mallocopts.mo_canaries ? CANARY_SIZE : 0);
 	if (size > SIZE_MAX - sizeof(struct __mchunk) - extra) {
@@ -1209,7 +1435,7 @@ void *malloc_chunk(size_t size, int flags)
 		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
 		return NULL;
 	}
-	// sanity: if metadata doesn't fit inside aligned region -> cleanup
+	/* Sanity: if metadata doesn't fit inside aligned region -> cleanup */
 	if (sizeof(struct __mchunk) + user_with_canary > aligned) {
 		int serrno = ENOMEM;
 		if (__mallocopts.mo_guard) {
@@ -1249,9 +1475,16 @@ void *malloc_chunk(size_t size, int flags)
 	return p;
 }
 
-// realloc_chunk: attempt to grow/shrink; uses mreguard fast-path for guarded regions
+/* realloc_chunk: attempt to grow/shrink; uses mreguard fast-path for guarded regions */
 void *realloc_chunk(void *old, size_t newlen, int flags)
 {
+	/* Realloc policy:
+	 * - realloc(NULL, n) => malloc(n)
+	 * - realloc(p, 0)    => free(p), return NULL
+	 * - Same size: if mo_realloc off return old; else force reallocate
+	 * - Shrink: wipe tail per policy, re-arm canary, in-place
+	 * - Grow guarded (Linux): try mreguard fast path
+	 * - Fallback: allocate new, copy, free old, stats update */
 	if (!old) return malloc_chunk(newlen, flags);
 	if (newlen == 0) {
 		free_chunk(old);
@@ -1270,14 +1503,14 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 	if (newlen == oldlen) {
 		check_malloc_options_once();
 		if (!__mallocopts.mo_realloc) return old;
-		// otherwise fall through and reallocate
+		/* Otherwise fall through and reallocate */
 	}
 
-	// shrink in-place
+	/* Shrink in-place */
 	if (newlen < oldlen) {
-		// wipe sensitive data first (CONCEAL must always zero)
+		/* Wipe sensitive data first (CONCEAL must always zero) */
 		if (old_flags & MCHUNK_FLAG_CONCEAL) explicit_bzero((char *)old + newlen, oldlen - newlen);
-		// then optionally fill with junk according to options
+		/* Then optionally fill with junk according to options */
 		else fill_junk((char *)old + newlen, oldlen - newlen, 0);
 		m->user_len = newlen;
 		/* Re-arm canary at new end */
@@ -1290,11 +1523,11 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 
 #if defined(__linux__)
 	if (old_flags & MCHUNK_FLAG_GUARD) {
-		// try to grow in-place for guarded regions on linux via mreguard (fast path)
+		/* Try to grow in-place for guarded regions on linux via mreguard (fast path) */
 		void *r = mreguard(old, m->user_len, newlen);
 		if (r != MAP_FAILED) {
-			// mreguard returns the user pointer (map + PAGE) on success in your design
-			// update m->user_len if metadata needs it: find new mchunk and set
+			/* mreguard returns the user pointer (map + PAGE) on success in your design
+			 * update m->user_len if metadata needs it: find new mchunk and set. */
 			struct __mchunk *nm = mchunk_from_user(r);
 			if (nm && nm->magic == MCHUNK_MAGIC) {
 				nm->user_len = newlen;
@@ -1306,7 +1539,7 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 	}
 #endif
 
-	// fallback: allocate, copy, free
+	/* Fallback: allocate, copy, free */
 	void *newp = malloc_chunk(newlen, old_flags);
 	/* malloc_chunk handles mo_xmalloc; this is a secondary guard. */
 	if (!newp) return NULL;
@@ -1315,7 +1548,7 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 	if (old_flags & MCHUNK_FLAG_CONCEAL) explicit_bzero((char*)old + ncopy, oldlen - ncopy);
 	memcpy(newp, old, ncopy);
 
-	// free will explicit_bzero if conceal flag set (free_chunk handles it)
+	/* Free will explicit_bzero if conceal flag set (free_chunk handles it) */
 	free_chunk(old);
 #ifdef MALLOC_STATS
 	++__mstats.realloc_calls;
