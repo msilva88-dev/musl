@@ -134,9 +134,12 @@ static volatile int __delayed_list_lock[2] = { 0, 0 };
 
 /* Guarded allocation metadata
  * ---------------------------
- * When guard pages are enabled, we surround the user mapping with two guard
- * pages (front/rear). __guard_list tracks active guarded regions, and a
- * quarantine list delays unmapping to help catch late UAF. */
+ * Guard pages are applied only for allocations whose total metadata+user
+ * length (mlen) is at least one page (PAGE_SIZE). For such “page-sized or
+ * larger” allocations, we surround the user mapping with two guard pages
+ * (front/rear). __guard_list tracks active guarded regions, and a quarantine
+ * list delays unmapping to help catch late UAF. Smaller allocations (mlen <
+ * PAGE_SIZE) are mapped without guard pages even when mo_guard is enabled. */
 static struct __guard_entry {
 	void *base; /* mmap base (include front guard) */
 	size_t total; /* Total mapped bytes = aligned + 2*PAGE_SIZE */
@@ -845,8 +848,8 @@ static void page_cache_put(void *ptr, size_t len)
 
 static void *page_cache_try_get(size_t len)
 {
-	/* Attempt to reuse a region from page cache for given size.
-	 * Primary bucket is chosen by size (no pointer); full-bucket
+	/* Attempt to reuse a region from page cache for a given size.
+	 * Primary bucket is chosen by size (no pointer yet); full-bucket
 	 * scan fallback is implemented as a rare-path recovery. */
 	if (__mallocopts.mo_guard) return NULL;
 	if ((len & (PAGE_SIZE-1)) != 0) return NULL;
@@ -993,15 +996,18 @@ static inline void set_canary(void *p, size_t size)
 	}
 }
 
-/* mguard: allocate region; if guard option enabled, create 2 guard pages
- * around an aligned interior region. Return pointer to user area (map + PAGE) on success.
- * For CONCEAL flag on supported OSes, attempt optimizations. */
+/* mguard: allocate a guarded region; when used, it creates 2 guard pages
+ * around a page-rounded interior region and returns the user pointer
+ * (map + PAGE) on success. This function is only called for “page-sized or
+ * larger” allocations when mo_guard is enabled. For CONCEAL flag on supported
+ * OSes, attempt optimizations in the non-guard path (handled elsewhere). */
 void *mguard(size_t size, int flags)
 {
 	/* Guarded allocation policy:
-	 * - If mo_guard off, fallback to plain mmap (with conceal/OS hints).
-	 * - If mo_guard on, allocate [guard|user|guard], register metadata,
-	 *   and protect guard pages with PROT_NONE. */
+	 * - If mo_guard is off: fallback to plain mmap (with conceal/OS hints).
+	 * - If mo_guard is on and mlen >= PAGE_SIZE (enforced in caller):
+	 *   allocate [guard|user|guard], register metadata, and protect guard
+	 *   pages with PROT_NONE. For mlen < PAGE_SIZE, caller uses plain mmap. */
 	if (size == 0) {
 		if (__mallocopts.mo_xmalloc) m_crash("malloc() [mguard]: allocation failed");
 		errno = ENOMEM;
@@ -1010,7 +1016,7 @@ void *mguard(size_t size, int flags)
 
 	check_malloc_options_once();
 
-	/* If guard pages disabled, fall back to plain mmap; but still honour CONCEAL on some OS */
+	/* If guard pages disabled, fall back to plain mmap; CONCEAL may be honoured on some OS */
 	if (!__mallocopts.mo_guard) {
 		if (flags & MCHUNK_FLAG_CONCEAL) {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
@@ -1067,7 +1073,9 @@ void *mguard(size_t size, int flags)
 	return map;
 }
 
-/* munguard: given user pointer and size (user length), undo guard mapping and unmap */
+/* munguard: given a guarded user pointer and size (user length), undo the
+ * guard mapping and unmap. For non-guarded allocations, the caller uses
+ * plain munmap instead and this function is bypassed. */
 int munguard(void *ptr, size_t size)
 {
 	/* Undo guarded mapping for a user pointer and size (user length):
@@ -1113,7 +1121,9 @@ int munguard(void *ptr, size_t size)
 	return munmap(base, total);
 }
 
-/* mreguard: resize guarded region. On Linux try mremap fast-path; otherwise allocate new guarded region, copy, replace list */
+/* mreguard: resize guarded region. On Linux, try mremap fast-path; otherwise
+ * allocate a new guarded region, copy, and replace list metadata. This is only
+ * applicable to guarded allocations (mlen >= PAGE_SIZE when created). */
 void *mreguard(void *ptr, size_t old_size, size_t new_size)
 {
 	/* Resize guarded region:
@@ -1237,7 +1247,7 @@ void register_delayed_chunk(void *p, size_t len)
 {
 	/* Register a freed chunk for delayed UAF checks:
 	 * - Enqueue under lock (bounded array, opportunistic clean if full)
-	 * - If F+U and len≥threshold, mprotect to PROT_NONE
+	 * - If F+U and len≥PAGE_SIZE (threshold), mprotect to PROT_NONE
 	 * - Occasionally trigger cleaner probabilistically */
 	if (!p || len == 0) return;
 	check_malloc_options_once();
@@ -1313,13 +1323,14 @@ void unprotect_chunk(void *p, size_t size)
 void free_chunk(void *p)
 {
 	/* Free path:
-	 * 1) Validate pointer and magic; immediate double-free crash on FREED
-	 * 2) Canary check (if enabled), crash on mismatch with offset@length
-	 * 3) Mark magic FREED; wipe with explicit_bzero or junk fill
-	 * 4) Register delayed chunk (UAF checking / optional protection)
-	 * 5) For guarded allocations: protect user, quarantine full mapping
-	 *    Otherwise: try page cache insert (skip concealed), else unmap
-	 * 6) Update stats */
+	 * 1) Validate pointer and magic; immediate double-free crash on FREED.
+	 * 2) Canary check (if enabled), crash on mismatch with offset@length.
+	 * 3) Mark magic FREED; wipe with explicit_bzero or junk fill.
+	 * 4) Register delayed chunk (UAF checking / optional protection).
+	 * 5) For guarded allocations (created with mlen >= PAGE_SIZE): protect user,
+	 *    then quarantine full mapping; otherwise: try page cache insert (skip
+	 *    concealed), else unmap.
+	 * 6) Update stats. */
 	if (!p) return;
 
 	/* Try to see if this pointer is a 'mchunk' allocation */
@@ -1405,12 +1416,12 @@ int free_mchunk(void *p)
 void *malloc_chunk(size_t size, int flags)
 {
 	/* Allocation path:
-	 * 1) Option check and overflow guard for metadata + canary
-	 * 2) Compute aligned size (guard policy influences alignment)
-	 * 3) Try page cache reuse if guard off and aligned is page-multiple
-	 * 4) Else mguard() (guard off => plain mmap path inside)
-	 * 5) Validate space for metadata; crash/errno on failure
-	 * 6) Initialize mchunk header; fill junk; set canary; stats update */
+	 * 1) Option check and overflow guard for metadata + canary.
+	 * 2) Compute mlen and, if mo_guard, aligned (page-rounded) size.
+	 * 3) Try page cache reuse if guard is off OR mlen < PAGE_SIZE (require aligned page-multiple).
+	 * 4) If mo_guard && mlen >= PAGE_SIZE: mguard(); else: plain mmap sized to mlen/aligned.
+	 * 5) Validate space for metadata; crash/errno on failure.
+	 * 6) Initialize mchunk header; fill junk; set canary; stats update. */
 	check_malloc_options_once();
 	size_t extra = (__mallocopts.mo_canaries ? CANARY_SIZE : 0);
 	if (size > SIZE_MAX - sizeof(struct __mchunk) - extra) {
@@ -1420,14 +1431,26 @@ void *malloc_chunk(size_t size, int flags)
 	}
 	size_t user_with_canary = size + extra;
 	size_t mlen = user_with_canary + sizeof(struct __mchunk);
-	size_t aligned = __mallocopts.mo_guard ? (mlen + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1) : mlen;
+	/* Compute page-rounded size only if guard pages may be used */
+	size_t aligned = __mallocopts.mo_guard ? ((mlen + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) : mlen;
+
 	void *map = NULL;
-	/* Try page cache reuse when not using guard pages; require page alignment */
-	if (!__mallocopts.mo_guard) {
+	/* Try page cache reuse when not using guard pages OR when guard is enabled but below
+	 * threshold (mlen < PAGE_SIZE). Require page alignment for cache use. */
+	if (!__mallocopts.mo_guard || mlen < PAGE_SIZE) {
 		size_t rounded = (aligned + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		if (rounded == aligned) map = page_cache_try_get(aligned);
 	}
-	if (!map) map = mguard(aligned, flags);
+	if (!map) {
+		if (__mallocopts.mo_guard && mlen >= PAGE_SIZE) {
+			/* Guard pages for page-sized-or-larger allocations */
+			map = mguard(aligned, flags);
+		} else {
+			/* Small allocations or guard disabled: plain mmap */
+			map = mmap(NULL, (__mallocopts.mo_guard ? mlen : aligned),
+				PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		}
+	}
 	if (map == MAP_FAILED) {
 #ifdef MALLOC_STATS
 		++__mstats.alloc_failures;
@@ -1435,33 +1458,44 @@ void *malloc_chunk(size_t size, int flags)
 		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
 		return NULL;
 	}
-	/* Sanity: if metadata doesn't fit inside aligned region -> cleanup */
-	if (sizeof(struct __mchunk) + user_with_canary > aligned) {
-		int serrno = ENOMEM;
-		if (__mallocopts.mo_guard) {
+	/* Sanity: ensure metadata+user fits inside the chosen mapping */
+	if (__mallocopts.mo_guard && mlen >= PAGE_SIZE) {
+		if (sizeof(struct __mchunk) + user_with_canary > aligned) {
+			int serrno = ENOMEM;
 			void *base = (char *)map - PAGE_SIZE;
 			size_t total = aligned + 2*PAGE_SIZE;
 			munmap(base, total);
-		} else {
-			munmap(map, aligned);
-		}
 #ifdef MALLOC_STATS
-		++__mstats.alloc_failures;
+			++__mstats.alloc_failures;
 #endif
-		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
-		errno = serrno;
-		return NULL;
+			if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
+			errno = serrno;
+			return NULL;
+		}
+	} else {
+		size_t maplen = (__mallocopts.mo_guard ? mlen : aligned);
+		if (sizeof(struct __mchunk) + user_with_canary > maplen) {
+			int serrno = ENOMEM;
+			munmap(map, maplen);
+#ifdef MALLOC_STATS
+			++__mstats.alloc_failures;
+#endif
+			if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
+			errno = serrno;
+			return NULL;
+		}
 	}
 	struct __mchunk *m = (struct __mchunk *)map;
 	m->magic = MCHUNK_MAGIC;
 	m->user_len = size;
-	if (__mallocopts.mo_guard) {
+	/* Guard metadata only for page-sized-or-larger allocations (mlen threshold) */
+	if (__mallocopts.mo_guard && mlen >= PAGE_SIZE) {
 		m->base = (char*)map - PAGE_SIZE;
 		m->total_len = aligned + 2*PAGE_SIZE;
 		m->flags |= MCHUNK_FLAG_GUARD;
 	} else {
 		m->base = map;
-		m->total_len = aligned;
+		m->total_len = (__mallocopts.mo_guard ? mlen : aligned);
 		m->flags &= ~MCHUNK_FLAG_GUARD;
 	}
 	void *p = (char *)m + sizeof(struct __mchunk);
@@ -1479,12 +1513,12 @@ void *malloc_chunk(size_t size, int flags)
 void *realloc_chunk(void *old, size_t newlen, int flags)
 {
 	/* Realloc policy:
-	 * - realloc(NULL, n) => malloc(n)
-	 * - realloc(p, 0)    => free(p), return NULL
-	 * - Same size: if mo_realloc off return old; else force reallocate
-	 * - Shrink: wipe tail per policy, re-arm canary, in-place
-	 * - Grow guarded (Linux): try mreguard fast path
-	 * - Fallback: allocate new, copy, free old, stats update */
+	 * - realloc(NULL, n) => malloc(n).
+	 * - realloc(p, 0)    => free(p), return NULL.
+	 * - Same size: if mo_realloc off return old; else force reallocate.
+	 * - Shrink: wipe tail per policy, re-arm canary, in-place.
+	 * - Grow guarded (Linux): try mreguard fast path (only for guarded allocations).
+	 * - Fallback: allocate new, copy, free old, stats update. */
 	if (!old) return malloc_chunk(newlen, flags);
 	if (newlen == 0) {
 		free_chunk(old);
