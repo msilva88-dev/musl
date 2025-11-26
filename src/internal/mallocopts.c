@@ -96,6 +96,8 @@ static struct __malloc_stats {
 	uint64_t guard_allocs;
 	uint64_t cache_hits;
 	uint64_t cache_inserts;
+	uint64_t cache_rejects;
+	uint64_t cache_trims;
 	uint64_t canary_failures;
 	uint64_t uaf_detected;
 	uint64_t quarantine_unmaps;
@@ -139,6 +141,17 @@ static void page_cache_trim(void)
 		unlock(&__page_cache_bucket_lock[b]);
 	}
 	unlock(&__page_cache_global_lock);
+#ifdef MALLOC_STATS
+	++__mstats.cache_trims;
+#endif
+}
+
+static inline warn_malloc_options(char c)
+{
+	char ubuf[64];
+	int ln = snprintf(ubuf, sizeof ubuf,
+		"malloc [check_malloc_options_once]: unknown char '%c' in MALLOC_OPTIONS\n", c);
+	if (ln > 0) write(2, ubuf, (size_t)ln);
 }
 
 void check_malloc_options_once()
@@ -230,6 +243,9 @@ void check_malloc_options_once()
 		case 'x':
 			__mallocopts.mo_xmalloc = 0;
 			break;
+		default:
+			warn_malloc_options(*p);
+			break;
 		}
 	}
 
@@ -320,6 +336,8 @@ static void dump_malloc_stats(void)
 		"guard_allocs: %" PRIu64 "\n"
 		"cache_hits: %" PRIu64 "\n"
 		"cache_inserts: %" PRIu64 "\n"
+		"cache_rejects: %" PRIu64 "\n"
+		"cache_trims: %" PRIu64 "\n"
 		"quarantine_pending: %" PRIu64 "\n"
 		"quarantine_unmaps: %" PRIu64 "\n"
 		"canary_failures: %" PRIu64 "\n"
@@ -341,6 +359,8 @@ static void dump_malloc_stats(void)
 		__mstats.guard_allocs,
 		__mstats.cache_hits,
 		__mstats.cache_inserts,
+		__mstats.cache_rejects,
+		__mstats.cache_trims,
 		__mstats.quarantine_pending,
 		__mstats.quarantine_unmaps,
 		__mstats.canary_failures,
@@ -374,7 +394,7 @@ static void guard_quarantine_add(void *base, size_t total)
 {
 	struct __guard_quarantine *n = mmap(NULL, sizeof(*n), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (n == MAP_FAILED) {
-		m_warn("malloc: failed to add guard quarantine node\n");
+		m_warn("free() [guard_quarantine_add]: failed to add guard quarantine node\n");
 		return;
 	}
 	n->base = base;
@@ -401,12 +421,12 @@ static void guard_quarantine_sweep(uint64_t now)
 
 			// remove guard list entry before unmapping to prevent stale list UAF
 			if (remove_guard_entry(q->base) != 0) {
-				m_warn("malloc: quarantine sweep could not remove guard entry\n");
+				m_warn("free() [guard_quarantine_sweep]: quarantine sweep could not remove guard entry\n");
 			}
 
 			// sanity check on size: skip absurd totals or non-page-aligned sizes
 			if (q->total == 0 || q->total > SIZE_MAX / 2 || (q->total & (PAGE_SIZE - 1)) != 0) {
-				m_crash("malloc: corrupted guard quarantine size\n");
+				m_crash("free() [guard_quarantine_sweep]: corrupted guard quarantine size\n");
 			}
 			munmap(q->base, q->total);
 
@@ -459,13 +479,13 @@ static void check_delayed_chunks()
 			uintptr_t page_base = (uintptr_t)ptr & ~(PAGE_SIZE - 1);
 			if (snap[s].len > SIZE_MAX - (uintptr_t)ptr - (PAGE_SIZE - 1)) {
 				/* Overflow scenario: treat as suspicious */
-				m_crash("malloc: delayed chunk length overflow\n");
+				m_crash("free() [check_delayed_chunks]: delayed chunk length overflow\n");
 			}
 			size_t prot_len = ((((uintptr_t)ptr + snap[s].len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 			/* If we cannot temporarily make it readable, skip inspection to avoid a crash. */
 			if (mprotect((void*)page_base, prot_len, PROT_READ) == 0) need_reprotect = 1;
 			else {
-				m_warn("malloc: skipped UAF check (mprotect failed)\n");
+				m_warn("free() [check_delayed_chunks]: skipped UAF check (mprotect failed)\n");
 				continue;
 			}
 		}
@@ -509,7 +529,7 @@ static void check_delayed_chunks()
 			uintptr_t page_base = (uintptr_t)ptr & ~(PAGE_SIZE - 1);
 			if (snap[s].len > SIZE_MAX - (uintptr_t)ptr - (PAGE_SIZE - 1)) {
 				/* Overflow scenario: treat as suspicious */
-				m_crash("malloc: delayed chunk length overflow\n");
+				m_crash("free() [check_delayed_chunks]: delayed chunk length overflow\n");
 			}
 			size_t prot_len = ((((uintptr_t)ptr + snap[s].len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 			(void)mprotect((void*)page_base, prot_len, PROT_NONE);
@@ -519,7 +539,7 @@ static void check_delayed_chunks()
 #ifdef MALLOC_STATS
 			++__mstats.uaf_detected;
 #endif
-			m_crash("malloc: use-after-free detected\n");
+			m_crash("free() [check_delayed_chunks]: use-after-free detected\n");
 		}
 	}
 	// Sweep guarded quarantine after chunk checks
@@ -539,7 +559,7 @@ static void guard_release(struct __guard_entry *g)
 	// Using a_fetch_add keeps the behaviour consistent with the rest
 	// of the atomic helpers.
 	int prev = a_fetch_add(&g->ref, -1);
-	if (prev <= 0) m_crash("guard_release (from malloc): the reference of guard is zero or negative\n");
+	if (prev <= 0) m_crash("malloc [guard_release]: the reference of guard is zero or negative\n");
 	// decrement and free only if previous value was 1 (so new becomes 0)
 	if (prev == 1 && g->removed) munmap(g, sizeof(*g));
 }
@@ -619,6 +639,9 @@ static void page_cache_put(void *ptr, size_t len)
 	/* Fast reject without global lock */
 	if (__page_cache_bytes + len > cap) {
 		munmap(ptr, len);
+#ifdef MALLOC_STATS
+		++__mstats.cache_rejects;
+#endif
 		return;
 	}
 	int bucket = page_cache_pick_bucket(ptr, len);
@@ -627,6 +650,9 @@ static void page_cache_put(void *ptr, size_t len)
 	if (__page_cache_bytes + len > cap) {
 		unlock(&__page_cache_bucket_lock[bucket]);
 		munmap(ptr, len);
+#ifdef MALLOC_STATS
+		++__mstats.cache_rejects;
+#endif
 		return;
 	}
 	struct __page_cache_entry *e =
@@ -652,7 +678,8 @@ static void *page_cache_try_get(size_t len) {
 	if ((len & (PAGE_SIZE-1)) != 0) return NULL;
 	size_t cap = page_cache_capacity();
 	if (!cap) return NULL;
-	/* Primary bucket chosen by synthetic hash of len to reduce collisions for identical sizes */
+	/* Primary bucket chosen using len only (no pointer yet); this differs from put()
+	   which hashes pointer^size. Secondary scan recovers entries in other buckets. */
 	int primary = page_cache_pick_bucket((void*)(uintptr_t)len, len);
 	lock(&__page_cache_bucket_lock[primary]);
 	struct __page_cache_entry **pp = &__page_cache_heads[primary];
@@ -759,7 +786,7 @@ void freecheck(void *p)
 	if (!__mallocopts.mo_freecheck) return;
 
 	uintptr_t addr = (uintptr_t)p;
-	if (addr % sizeof(void*) != 0) m_crash("free(): invalid pointer alignment\n");
+	if (addr % sizeof(void*) != 0) m_crash("free() [freecheck]: invalid pointer alignment\n");
 }
 
 static inline uint64_t make_canary(void *user_ptr, size_t user_len)
@@ -785,7 +812,7 @@ static inline void set_canary(void *p, size_t size)
 void *mguard(size_t size, int flags)
 {
 	if (size == 0) {
-		if (__mallocopts.mo_xmalloc) m_crash("malloc: mguard zero size");
+		if (__mallocopts.mo_xmalloc) m_crash("malloc() [mguard]: allocation failed");
 		errno = ENOMEM;
 		return MAP_FAILED;
 	}
@@ -895,7 +922,7 @@ int munguard(void *ptr, size_t size)
 void *mreguard(void *ptr, size_t old_size, size_t new_size)
 {
 	if (!ptr || old_size == 0 || new_size == 0) {
-		if (__mallocopts.mo_xmalloc) m_crash("malloc: mreguard zero size");
+		m_crash("realloc() [mreguard]: allocation failed");
 		errno = EINVAL;
 		return MAP_FAILED;
 	}
@@ -952,13 +979,13 @@ void *mreguard(void *ptr, size_t old_size, size_t new_size)
 		// add the new guard entry first (so we don't lose metadata on failure)
 		if (add_guard_entry(new_base, new_total) != 0) {
 			/* Mapping has been moved by mremap; cannot safely revert. */
-			m_crash("malloc: guard metadata allocation failed after mremap\n");
+			m_crash("realloc() [mreguard]: guard metadata allocation failed after mremap\n");
 		}
 
 		// remove the old entry after successfully adding the new one
 		if (remove_guard_entry(old_base) != 0) {
 			/* Old entry should exist; inconsistent guard list. */
-			m_crash("malloc: failed to remove old guard entry after mremap\n");
+			m_crash("realloc() [mreguard]: failed to remove old guard entry after mremap\n");
 		}
 
 		// release caller ref and return user pointer
@@ -1036,7 +1063,8 @@ void register_delayed_chunk(void *p, size_t len)
 	if (__mallocopts.mo_freecheck && __mallocopts.mo_freeunmap && len >= DELAYED_PROTECT_THRESHOLD) {
 		uintptr_t page_base = (uintptr_t)p & ~(PAGE_SIZE - 1);
 		/* Overflow check includes rounding addition (PAGE_SIZE - 1) */
-		if (len > SIZE_MAX - (uintptr_t)p - (PAGE_SIZE - 1)) m_crash("free(): overflow found in freecheck\n");
+		if (len > SIZE_MAX - (uintptr_t)p - (PAGE_SIZE - 1))
+			m_crash("free() [register_delayed_chunk]: overflow found in freecheck\n");
 		size_t prot_len = ((((uintptr_t)p + len) - page_base + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 		(void)mprotect((void*)page_base, prot_len, PROT_NONE);
 	}
@@ -1052,9 +1080,9 @@ void protect_chunk(void *p, size_t size)
 	if (size >= FREEUNMAP_THRESHOLD) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
 		/* Overflow check for end computation */
-		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("protect_chunk (from malloc): overflow\n");
+		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("malloc [protect_chunk]: overflow\n");
 		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-		if (end < (uintptr_t)p) m_crash("protect_chunk (from malloc): end < p overflow\n");
+		if (end < (uintptr_t)p) m_crash("malloc [protect_chunk]: end < p overflow\n");
 		size_t plen = end - base;
 		(void)mprotect((void*)base, plen, PROT_NONE);
 	}
@@ -1067,9 +1095,9 @@ void unprotect_chunk(void *p, size_t size)
 	if (!__mallocopts.mo_freeunmap) return;
 	if (size >= FREEUNMAP_THRESHOLD) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
-		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("unprotect_chunk (from malloc): overflow\n");
+		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("malloc [unprotect_chunk]: overflow\n");
 		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-		if (end < (uintptr_t)p) m_crash("unprotect_chunk (from malloc): end < p overflow\n");
+		if (end < (uintptr_t)p) m_crash("malloc [unprotect_chunk]: end < p overflow\n");
 		size_t plen = end - base;
 		(void)mprotect((void*)base, plen, PROT_READ | PROT_WRITE);
 	}
@@ -1089,14 +1117,25 @@ void free_chunk(void *p)
 	/* Canary check (before altering user region) */
 	if (__mallocopts.mo_canaries) {
 		unsigned char *end = (unsigned char*)p + m->user_len;
-		if (m->user_len > SIZE_MAX - CANARY_SIZE) m_crash("malloc: size overflow in canary check\n");
+		if (m->user_len > SIZE_MAX - CANARY_SIZE) m_crash("free(): size overflow in canary check\n");
 		uint64_t stored;
+		uint64_t expected = make_canary(p, m->user_len);
 		memcpy(&stored, end, CANARY_SIZE);
-		if (stored != make_canary(p, m->user_len)) {
+		if (stored != expected) {
 #ifdef MALLOC_STATS
 			++__mstats.canary_failures;
 #endif
-			m_crash("malloc: canary corrupted\n");
+			/* Compute first differing byte offset */
+			unsigned char sbytes[CANARY_SIZE], ebytes[CANARY_SIZE];
+			memcpy(sbytes, &stored, CANARY_SIZE);
+			memcpy(ebytes, &expected, CANARY_SIZE);
+			size_t off = 0;
+			while (off < CANARY_SIZE && sbytes[off] == ebytes[off]) off++;
+			char buf[128];
+			int n = snprintf(buf, sizeof buf, "free(): chunk canary corrupted %zu@%zu\n",
+				off, (size_t)m->user_len);
+			if (n > 0) write(2, buf, (size_t)n);
+			a_crash();
 		}
 	}
 	/* Mark as freed with a sentinel to allow double-free detection. */
@@ -1167,7 +1206,7 @@ void *malloc_chunk(size_t size, int flags)
 #ifdef MALLOC_STATS
 		++__mstats.alloc_failures;
 #endif
-		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed (mmap)\n");
+		if (__mallocopts.mo_xmalloc) m_crash("malloc(): allocation failed\n");
 		return NULL;
 	}
 	// sanity: if metadata doesn't fit inside aligned region -> cleanup
@@ -1190,13 +1229,14 @@ void *malloc_chunk(size_t size, int flags)
 	struct __mchunk *m = (struct __mchunk *)map;
 	m->magic = MCHUNK_MAGIC;
 	m->user_len = size;
-	m->flags = __mallocopts.mo_guard ? flags | MCHUNK_FLAG_GUARD : flags;
 	if (__mallocopts.mo_guard) {
 		m->base = (char*)map - PAGE_SIZE;
 		m->total_len = aligned + 2*PAGE_SIZE;
+		m->flags |= MCHUNK_FLAG_GUARD;
 	} else {
 		m->base = map;
 		m->total_len = aligned;
+		m->flags &= ~MCHUNK_FLAG_GUARD;
 	}
 	void *p = (char *)m + sizeof(struct __mchunk);
 	fill_junk(p, size, 1);
