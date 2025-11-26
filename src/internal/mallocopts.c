@@ -126,7 +126,7 @@ static void page_cache_trim(void)
 	/* Global lock to serialize trimming across buckets */
 	lock(&__page_cache_global_lock);
 	int buckets = page_cache_bucket_count();
-	for (int b = 0; b < page_cache_bucket_count() && __page_cache_bytes > cap; b++) {
+	for (int b = 0; b < buckets && __page_cache_bytes > cap; b++) {
 		lock(&__page_cache_bucket_lock[b]);
 		struct __page_cache_entry **pp = &__page_cache_heads[b];
 		while (*pp && __page_cache_bytes > cap) {
@@ -1205,8 +1205,6 @@ void *malloc_chunk(size_t size, int flags)
 	++__mstats.alloc_calls;
 	__mstats.alloc_bytes += size;
 	if (__mallocopts.mo_guard) ++__mstats.guard_allocs;
-	/* Record current mutex sharding level (overwrite each alloc; last value at dump time) */
-	__mstats.cache_inserts += 0; /* no-op to keep structure usage consistent; placeholder */
 #endif
 	return p;
 }
