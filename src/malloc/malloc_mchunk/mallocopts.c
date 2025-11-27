@@ -82,6 +82,18 @@ are provided for non-fatal situations.
 */
 
 hidden struct __mallocopts {
+	/* Bit layout for __mallocopts in a uint16_t storage unit (must total 16):
+	 * mo_cachesize: 4
+	 * mo_canaries:  1
+	 * mo_dump:      1
+	 * mo_freecheck: 1
+	 * mo_freeunmap: 1
+	 * mo_guard:     1
+	 * mo_junklev:   2
+	 * mo_mutexes:   3
+	 * mo_realloc:   1
+	 * mo_xmalloc:   1
+	 */
 	/* mo_cachesize: Free page cache capacity exponent (capacity = (1<<n)*1KB).
 	 * Adjusted via '<' (decrement) and '>' (increment).
 	 * Widened to 4 bits (0..8) to allow exponent=8 (256KB). */
@@ -109,6 +121,12 @@ hidden struct __mallocopts {
 	/* mo_xmalloc: 'X' enable / 'x' disable crash-on-OOM instead of returning NULL. */
 	uint16_t mo_xmalloc: 1;
 } __mallocopts = { .mo_cachesize = 6 /* 64KB (2**6) */, .mo_junklev = 1, .mo_mutexes = 3 /* 8 (2**3) */ };
+
+/* Compile-time sanity checks (requires C11) */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+_Static_assert(sizeof(uint16_t) == 2, "Expected 16-bit storage unit for __mallocopts fields");
+_Static_assert(sizeof(__mallocopts) == 2, "__mallocopts must remain 2 bytes; bitfield drift detected");
+#endif
 
 /* Canary support */
 #define CANARY_SIZE 8
