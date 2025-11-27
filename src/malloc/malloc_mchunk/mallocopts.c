@@ -83,8 +83,9 @@ are provided for non-fatal situations.
 
 hidden struct __mallocopts {
 	/* mo_cachesize: Free page cache capacity exponent (capacity = (1<<n)*1KB).
-	 * Adjusted via '<' (decrement) and '>' (increment). */
-	uint16_t mo_cachesize: 3;
+	 * Adjusted via '<' (decrement) and '>' (increment).
+	 * Widened to 4 bits (0..8) to allow exponent=8 (256KB). */
+	uint16_t mo_cachesize: 4;
 	/* mo_canaries: 'C' enable / 'c' disable heap canaries. */
 	uint16_t mo_canaries: 1;
 	/* mo_dump: 'D' enable / 'd' disable dump of stats to ./malloc.out at exit. */
@@ -107,7 +108,6 @@ hidden struct __mallocopts {
 	uint16_t mo_realloc: 1;
 	/* mo_xmalloc: 'X' enable / 'x' disable crash-on-OOM instead of returning NULL. */
 	uint16_t mo_xmalloc: 1;
-	uint16_t __pad: 1;
 } __mallocopts = { .mo_cachesize = 6 /* 64KB (2**6) */, .mo_junklev = 1, .mo_mutexes = 3 /* 8 (2**3) */ };
 
 /* Canary support */
@@ -308,12 +308,14 @@ void check_malloc_options_once()
 			if (__mallocopts.mo_mutexes > 0) --__mallocopts.mo_mutexes;
 			break;
 		case '+':
+			/* increment mutexes exponent up to 5 (3-bit field) */
 			if (__mallocopts.mo_mutexes < 5) ++__mallocopts.mo_mutexes;
 			break;
 		case '<':
 			if (__mallocopts.mo_cachesize > 0) --__mallocopts.mo_cachesize;
 			break;
 		case '>':
+			/* increment cache exponent up to 8 (4-bit field) */
 			if (__mallocopts.mo_cachesize < 8) ++__mallocopts.mo_cachesize;
 			break;
 		case 'C':
