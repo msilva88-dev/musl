@@ -266,7 +266,7 @@ static void page_cache_trim(void)
 #endif
 }
 
-static inline void warn_malloc_options(char c)
+static void warn_malloc_options(char c)
 {
 	char ubuf[64];
 	int ln = snprintf(ubuf, sizeof ubuf,
@@ -412,7 +412,7 @@ void check_malloc_options_once()
 #endif
 }
 
-static inline void m_crash(const char *const msg)
+static void m_crash(const char *const msg)
 {
 	size_t n = 0;
 	while (msg[n]) n++;
@@ -420,7 +420,7 @@ static inline void m_crash(const char *const msg)
 	a_crash();
 }
 
-static inline void m_warn(const char *const msg)
+static void m_warn(const char *const msg)
 {
 	size_t n = 0;
 	while (msg[n]) n++;
@@ -524,7 +524,7 @@ static void dump_malloc_stats(void)
 }
 #endif
 
-static inline uint64_t monotonic_seconds(void)
+static uint64_t monotonic_seconds(void)
 {
 	/* Monotonic time (seconds) for delayed-chunk scheduling and sweeps.
 	 * Fallback to wall clock if MONOTONIC is unavailable. */
