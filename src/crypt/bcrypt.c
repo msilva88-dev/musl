@@ -1,25 +1,47 @@
 /*
- * bcrypt wrappers for musl using existing crypt_blowfish integration.
- * This adapts OpenBSD 7.0 bcrypt interfaces without re-implementing Blowfish.
+ * bcrypt interface matching the OpenBSD crypt(3)/bcrypt(3) manual expectations.
  *
- * - Relies on crypt(3) supporting $2a$/$2b$/$2y$ prefixes via src/crypt/crypt_blowfish.c.
- * - Provides bcrypt_newhash and bcrypt_checkpass similar to OpenBSD.
- * - Uses arc4random_buf (available via include/stdlib.h) for salt.
+ * Provided functions:
+ *   char *bcrypt_gensalt(uint8_t log_rounds);
+ *       Generates a bcrypt salt string: "$2b$CC$22chars" (NUL-terminated).
+ *       Returns pointer to a static buffer (not thread-safe). NULL on error.
+ *
+ *   char *bcrypt(const char *key, const char *salt);
+ *       Hashes 'key' using the supplied bcrypt 'salt' (which includes version,
+ *       cost, and 22-char base64 salt) and returns the resulting bcrypt hash
+ *       string. Returns pointer to static buffer (or crypt(3)'s static buffer)
+ *       or NULL on error.
+ *
+ * Notes:
+ * - This implementation delegates hashing to crypt(3), which in musl routes
+ *   $2a$/$2b$/$2y$ salts to the existing Blowfish-based bcrypt logic.
+ * - Maximum password length enforced here is 72 bytes (bcrypt spec).
+ * - Salt generation uses arc4random_buf() for 128 bits of entropy.
+ * - The returned buffers are static; concurrent calls will race. This matches
+ *   documented historical behavior ("BUGS" in crypt.3). For thread safety,
+ *   applications should use (or you may later provide) crypt_newhash /
+ *   crypt_checkpass style reentrant APIs.
  */
 
+#define _BSD_SOURCE
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>   /* arc4random_buf */
+#include <stdlib.h> /* arc4random_buf */
 #include <string.h>
 #include <unistd.h>
-#include <crypt.h>    /* crypt(3) prototype */
+#include <crypt.h> /* crypt(3) prototype */
 
 /* Bcrypt base64 alphabet (standard) */
 static const char bcrypt_b64[] =
 	"./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-/* Encode 16-byte salt into 22-char bcrypt base64 (no padding) */
+/* Static buffers (not thread-safe) */
+static char __bcrypt_salt_buf[30]; /* "$2b$CC$22chars" + NUL => up to 29 chars + NUL */
+static char __bcrypt_hash_buf[80]; /* Enough for full bcrypt hash (60 chars) + extra margin */
+
+/* Encode 16-byte salt into 22-char bcrypt base64 (no padding).
+ * Returns 0 on success, -1 on failure. */
 static int bcrypt_base64_encode_16(const uint8_t in[16], char out[23])
 {
 	/* Bcrypt’s base64 encodes 128 bits -> 22 chars (no padding).
@@ -49,61 +71,88 @@ static int bcrypt_base64_encode_16(const uint8_t in[16], char out[23])
 	return 0;
 }
 
-/* Build bcrypt salt string: $2b$CC$<22chars> */
-static int bcrypt_make_salt_string(int log_rounds, const uint8_t salt16[16], char salt_out[30])
+/* Validate bcrypt version prefix in supplied salt:
+ * Accept $2a$, $2b$, $2y$, returning 1 if valid, 0 otherwise. */
+static int bcrypt_valid_version_prefix(const char *salt)
 {
-	if (log_rounds < 4 || log_rounds > 31) { errno = EINVAL; return -1; }
+	if (!salt) return 0;
+	/* Expect: $2x$ where x is a,b,y */
+	if (salt[0] != '$' || salt[1] != '2') return 0;
+	char v = salt[2];
+	if (v != 'a' && v != 'b' && v != 'y') return 0;
+	if (salt[3] != '$') return 0;
+	return 1;
+}
+
+/* Generate bcrypt salt string with given log_rounds (cost).
+ * Returns pointer to static buffer on success, NULL on error.
+ * log_rounds must be between 4 and 31 (inclusive). */
+char *bcrypt_gensalt(uint8_t log_rounds)
+{
+	if (log_rounds < 4 || log_rounds > 31) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	uint8_t raw[16];
+	arc4random_buf(raw, sizeof raw);
+
 	char enc[23];
-	if (bcrypt_base64_encode_16(salt16, enc) != 0) return -1;
-	int n = snprintf(salt_out, 30, "$2b$%02d$%s", log_rounds, enc);
-	return (n > 0 && n < 30) ? 0 : -1;
+	if (bcrypt_base64_encode_16(raw, enc) != 0) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	/* Format: $2b$CC$<22chars> */
+	int n = snprintf(__bcrypt_salt_buf, sizeof __bcrypt_salt_buf,
+	                 "$2b$%02u$%s", (unsigned)log_rounds, enc);
+	if (n <= 0 || (size_t)n >= sizeof __bcrypt_salt_buf) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	return __bcrypt_salt_buf;
 }
 
-/* Generate a bcrypt hash into out buffer. outlen should be >= 61 bytes. */
-int bcrypt_newhash(const char *pass, int log_rounds, char *out, size_t outlen)
+/* bcrypt: hash key with provided bcrypt salt.
+ * Returns pointer to static buffer containing the hash on success, NULL on failure.
+ * Enforces max password length 72 bytes (bcrypt specification).
+ *
+ * The salt should be a full bcrypt salt string ("$2b$CC$22chars" or $2a$/ $2y$ variant). */
+char *bcrypt(const char *key, const char *salt)
 {
-	if (!pass || !out) { errno = EINVAL; return -1; }
-	/* Typical bcrypt output length is 60 chars + NUL */
-	if (outlen < 61) { errno = ENOSPC; return -1; }
+	if (!key || !salt) {
+		errno = EINVAL;
+		return NULL;
+	}
 
-	uint8_t salt16[16];
-	arc4random_buf(salt16, 16);
+	size_t klen = strlen(key);
+	if (klen > 72) {
+		/* Specification limit: longer passwords are truncated internally by
+		 * some implementations; we choose to reject to avoid silent truncation. */
+		errno = EINVAL;
+		return NULL;
+	}
 
-	char saltstr[30];
-	if (bcrypt_make_salt_string(log_rounds, salt16, saltstr) != 0) return -1;
+	if (!bcrypt_valid_version_prefix(salt)) {
+		errno = EINVAL;
+		return NULL;
+	}
 
-	/* Delegate to musl’s crypt(), which routes to crypt_blowfish */
-	char *res = crypt(pass, saltstr);
-	if (!res) return -1;
+	/* Delegate to crypt(3); crypt already handles bcrypt salts internally */
+	char *res = crypt(key, salt);
+	if (!res) {
+		/* crypt sets errno appropriately; propagate NULL */
+		return NULL;
+	}
 
-	/* Copy result */
-	size_t n = strnlen(res, outlen);
-	if (n >= outlen) { errno = ENOSPC; return -1; }
-	memcpy(out, res, n+1);
-	return 0;
-}
-
-/* Verify password against bcrypt hash in constant time */
-int bcrypt_checkpass(const char *pass, const char *hash)
-{
-	if (!pass || !hash) { errno = EINVAL; return -1; }
-	/* crypt() with the stored hash as salt produces comparable output */
-	char *res = crypt(pass, hash);
-	if (!res) return -1;
-	/* Constant-time compare */
-	const unsigned char *a = (const unsigned char *)res;
-	const unsigned char *b = (const unsigned char *)hash;
-	size_t na = strlen(res), nb = strlen(hash);
-	if (na != nb) return -1;
-	unsigned diff = 0;
-	for (size_t i = 0; i < na; i++) diff |= (unsigned)(a[i] ^ b[i]);
-	return diff == 0 ? 0 : -1;
-}
-
-/* Optional: OpenBSD-like bcrypt_gensalt interface */
-int bcrypt_gensalt(int log_rounds, char out[30])
-{
-	uint8_t salt16[16];
-	arc4random_buf(salt16, 16);
-	return bcrypt_make_salt_string(log_rounds, salt16, out);
+	/* Copy to our static buffer (optional; we could return res directly).
+	 * This isolates from later crypt() calls if the application expects bcrypt()
+	 * buffer not to be clobbered by another crypt() usage immediately. */
+	size_t rlen = strnlen(res, sizeof __bcrypt_hash_buf);
+	if (rlen >= sizeof __bcrypt_hash_buf) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	memcpy(__bcrypt_hash_buf, res, rlen + 1);
+	return __bcrypt_hash_buf;
 }
