@@ -936,8 +936,8 @@ static inline int plus_overflows_with_rounding(uintptr_t base, size_t add)
 {
 	/* Computes if base + add (+ rounding) overflows uintptr_t */
 	if (
-		(add > (SIZE_MAX - base))
-		|| ((PAGE_SIZE - 1) && add + (PAGE_SIZE - 1) > (SIZE_MAX - base))
+		(add > (UINTPTR_MAX - base))
+		|| ((PAGE_SIZE - 1) && add + (PAGE_SIZE - 1) > (UINTPTR_MAX - base))
 	) return 1;
 	return 0;
 }
