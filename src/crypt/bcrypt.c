@@ -40,34 +40,60 @@ static const char bcrypt_b64[] =
 static char __bcrypt_salt_buf[30]; /* "$2b$CC$22chars" + NUL => up to 29 chars + NUL */
 static char __bcrypt_hash_buf[80]; /* Enough for full bcrypt hash (60 chars) + extra margin */
 
-/* Encode 16-byte salt into 22-char bcrypt base64 (no padding).
+/*
+ * Known-good bcrypt Radix-64 encoder for salts.
+ * Packs bits in the order expected by bcrypt ($2*), using "./A-Za-z0-9"
+ * alphabet. This implementation mirrors OpenBSD/libxcrypt behavior:
+ * - Input: arbitrary bytes
+ * - Output: len = floor(n * 8 / 6) characters, no padding
+ *
+ * For a 16-byte salt, output is exactly 22 characters.
+ */
+static int bcrypt_radix64_encode(const uint8_t *src, size_t n, char *dst, size_t dstsz)
+{
+	size_t i = 0, o = 0;
+	unsigned int c1, c2, c3;
+
+	/* Each loop consumes 3 bytes (24 bits) and emits 4 base64 chars (4*6 bits),
+	 * stopping early if input runs out; bcrypt's salt expects truncation without '=' padding. */
+	while (i < n) {
+		if (o + 4 > dstsz) return -1;
+
+		c1 = src[i++];
+		if (i < n) c2 = src[i++]; else c2 = 0;
+		if (i < n) c3 = src[i++]; else c3 = 0;
+
+		/* Note: pack as 6-bit chunks in bcrypt order (not MIME base64) */
+		dst[o++] = bcrypt_b64[(c1 >> 2) & 0x3f];
+		dst[o++] = bcrypt_b64[((c1 & 0x03) << 4) | ((c2 >> 4) & 0x0f)];
+		if ((i - 1) <= n) {
+			/* c2 was sourced from input */
+			dst[o++] = bcrypt_b64[((c2 & 0x0f) << 2) | ((c3 >> 6) & 0x03)];
+		} else {
+			/* No more input; stop emitting */
+			break;
+		}
+		if ((i) <= n) {
+			/* c3 was sourced from input */
+			dst[o++] = bcrypt_b64[c3 & 0x3f];
+		} else {
+			/* No more input; stop emitting */
+			break;
+		}
+	}
+
+	/* For 16 bytes, this should have produced 22 chars. Guard length if caller expects exact size. */
+	if (o >= dstsz) return -1;
+	dst[o] = '\0';
+	return (int)o;
+}
+
+/* Encode 16-byte salt into exactly 22 bcrypt base64 chars (no padding).
  * Returns 0 on success, -1 on failure. */
 static int bcrypt_base64_encode_16(const uint8_t in[16], char out[23])
 {
-	/* Bcrypt’s base64 encodes 128 bits -> 22 chars (no padding).
-	 * This routine follows the encoding used by bcrypt (not standard MIME base64). */
-	uint32_t v;
-	int i = 0, o = 0;
-	uint8_t buf[18];
-	/* Pad with zeros to simplify looping over 3-byte chunks */
-	memcpy(buf, in, 16);
-	buf[16] = 0;
-	buf[17] = 0;
-
-	while (i < 18 && o < 22) {
-		v = (uint32_t)buf[i] << 16;
-		v |= (uint32_t)buf[i+1] << 8;
-		v |= (uint32_t)buf[i+2];
-		i += 3;
-
-		out[o++] = bcrypt_b64[(v >> 18) & 0x3f];
-		out[o++] = bcrypt_b64[(v >> 12) & 0x3f];
-		out[o++] = bcrypt_b64[(v >> 6) & 0x3f];
-		out[o++] = bcrypt_b64[v & 0x3f];
-	}
-	/* Truncate to 22 characters */
-	if (o < 22) return -1;
-	out[22] = '\0';
+	int n = bcrypt_radix64_encode(in, 16, out, 23);
+	if (n != 22) return -1;
 	return 0;
 }
 
