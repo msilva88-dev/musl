@@ -212,6 +212,10 @@ int getservbyname_r(const char *, const char *, struct servent *, char *, size_t
 #define NI_MAXSERV 32
 #endif
 
+#ifdef _BSD_SOURCE
+void freerrset(struct rrsetinfo *);
+int getrrsetbyname(const char *, unsigned int, unsigned int, unsigned int, struct rrsetinfo **);
+#endif
 
 #ifdef __cplusplus
 }
