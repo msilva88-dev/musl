@@ -157,7 +157,7 @@ The implementation of gmon (src/bsd/gmon.c) is
 Copyright © 1983, 1992, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
-The implementation of mount_info (include/sys/mount_info.h) is
+The implementation of mount_info header (include/sys/mount_info.h) is
 Copyright © 1989, 1991, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
@@ -253,6 +253,21 @@ It is licensed under a ISC license.
 The implementation of readpassphrase (src/passwd/readpassphrase.c) is
 Copyright © 2000-2002, 2007, 2010 Todd C. Miller <millert@openbsd.org>.
 It is licensed under a ISC license.
+
+The implementation of asr header (include/asr.h) is
+Copyright © 2012-2014 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of getrrsetbyname (src/network/getrrsetbyname.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of getrrsetbyname_async (src/network/getrrsetbyname_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+Copyright © 1999-2001 Internet Software Consortium.
+It is licensed under a ISC license.
+Copyright © 2001 Jakob Schlyter.
+It is licensed under a two-clause BSD license.
 
 The implementation of blowfish crypt (src/crypt/crypt_blowfish.c) was
 originally written by Solar Designer and placed into the public
