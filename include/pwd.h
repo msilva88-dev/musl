@@ -44,6 +44,10 @@ int putpwent(const struct passwd *, FILE *);
 #endif
 
 #ifdef _BSD_SOURCE
+char *bcrypt(const char *, const char *);
+int bcrypt_checkpass(const char *, const char *);
+char *bcrypt_gensalt(uint8_t);
+int bcrypt_newhash(const char *, int, char *, size_t);
 struct passwd *pw_dup(const struct passwd *);
 const char *user_from_uid(uid_t, int);
 int uid_from_user(const char *, uid_t *);

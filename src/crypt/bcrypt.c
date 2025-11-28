@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <crypt.h> /* crypt(3) prototype */
+#include <ctype.h>
 
 /* Bcrypt base64 alphabet (standard) */
 static const char bcrypt_b64[] =
@@ -45,8 +46,7 @@ static char __bcrypt_hash_buf[80]; /* Enough for full bcrypt hash (60 chars) + e
  * Packs bits in 6-bit chunks using the bcrypt alphabet, without '=' padding.
  * For 16 input bytes, output length is exactly 22 characters.
  *
- * Returns number of characters written on success; -1 on failure.
- */
+ * Returns number of characters written on success; -1 on failure. */
 static int bcrypt_radix64_encode(const uint8_t *src, size_t n, char *dst, size_t dstsz)
 {
 	size_t i = 0, o = 0;
@@ -95,14 +95,13 @@ static int bcrypt_base64_encode_16(const uint8_t in[16], char out[23])
 }
 
 /* Validate bcrypt version prefix in supplied salt:
- * Accept $2a$, $2b$, $2y$, returning 1 if valid, 0 otherwise. */
+ * Accept $2a$, $2b$, $2y$, and optionally $2x$ for interoperability. */
 static int bcrypt_valid_version_prefix(const char *salt)
 {
 	if (!salt) return 0;
-	/* Expect: $2x$ where x is a,b,y */
+	/* Expect: $2x$ where x is a,b,y,x */
 	if (salt[0] != '$' || salt[1] != '2') return 0;
 	char v = salt[2];
-	/* Accept glibc historical variant 'x' for interoperability */
 	if (v != 'a' && v != 'b' && v != 'y' && v != 'x') return 0;
 	if (salt[3] != '$') return 0;
 	return 1;
@@ -141,7 +140,7 @@ char *bcrypt_gensalt(uint8_t log_rounds)
  * Returns pointer to static buffer containing the hash on success, NULL on failure.
  * Enforces max password length 72 bytes (bcrypt specification).
  *
- * The salt should be a full bcrypt salt string ("$2b$CC$22chars" or $2a$/ $2y$ variant). */
+ * The salt should be a full bcrypt salt string ("$2b$CC$22chars" or $2a$/$2y$/$2x$ variant). */
 char *bcrypt(const char *key, const char *salt)
 {
 	if (!key || !salt) {
@@ -179,4 +178,69 @@ char *bcrypt(const char *key, const char *salt)
 	}
 	memcpy(__bcrypt_hash_buf, res, rlen + 1);
 	return __bcrypt_hash_buf;
+}
+
+/* Reentrant-style helpers (not part of OpenBSD's documented API, provided for convenience):
+ *  - bcrypt_newhash(pass, log_rounds, out, outlen): generate a $2b$ hash into caller buffer
+ *  - bcrypt_checkpass(pass, hash): constant-time verification */
+
+/* Extract two-digit cost from a bcrypt hash: returns -1 on error */
+static int bcrypt_extract_cost(const char *hash)
+{
+	if (!bcrypt_valid_version_prefix(hash)) return -1;
+	const char *p = hash + 4; /* after "$2x$" or "$2b$" */
+	if (!isdigit((unsigned char)p[0]) || !isdigit((unsigned char)p[1])) return -1;
+	return (p[0]-'0')*10 + (p[1]-'0');
+}
+
+/* Generate a new bcrypt hash ($2b$) into out buffer.
+ * outlen must be >= 61 (60 chars + NUL). Returns 0 on success, -1 on error. */
+int bcrypt_newhash(const char *pass, int log_rounds, char *out, size_t outlen)
+{
+	if (!pass || !out) { errno = EINVAL; return -1; }
+	if (outlen < 61) { errno = ENOSPC; return -1; }
+	if (log_rounds < 4 || log_rounds > 31) { errno = EINVAL; return -1; }
+	size_t klen = strlen(pass);
+	if (klen > 72) { errno = EINVAL; return -1; }
+
+	/* Get a $2b$ salt string using existing gensalt */
+	char *salt = bcrypt_gensalt((uint8_t)log_rounds);
+	if (!salt) {
+		/* errno already set by bcrypt_gensalt */
+		return -1;
+	}
+
+	/* Compute hash using existing bcrypt wrapper (delegates to crypt()) */
+	char *res = bcrypt(pass, salt);
+	if (!res) {
+		/* errno set by bcrypt() or crypt() */
+		return -1;
+	}
+
+	/* Copy to user buffer (reentrant) */
+	size_t n = strnlen(res, outlen);
+	if (n >= outlen) { errno = ENOSPC; return -1; }
+	memcpy(out, res, n + 1);
+	return 0;
+}
+
+/* Verify password against a bcrypt hash in constant-time.
+ * Returns 0 on match, -1 on mismatch or error. */
+int bcrypt_checkpass(const char *pass, const char *hash)
+{
+	if (!pass || !hash) { errno = EINVAL; return -1; }
+	if (!bcrypt_valid_version_prefix(hash)) { errno = EINVAL; return -1; }
+	size_t klen = strlen(pass);
+	if (klen > 72) { errno = EINVAL; return -1; }
+
+	/* crypt() with stored hash as salt yields comparable output */
+	char *res = crypt(pass, hash);
+	if (!res) return -1;
+
+	/* Constant-time compare */
+	size_t na = strlen(res), nb = strlen(hash);
+	if (na != nb) return -1;
+	unsigned diff = 0;
+	for (size_t i = 0; i < na; i++) diff |= (unsigned)(res[i] ^ hash[i]);
+	return (diff == 0) ? 0 : -1;
 }
