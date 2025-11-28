@@ -28,6 +28,7 @@ struct passwd {
 };
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+int setpassent(int);
 void setpwent (void);
 void endpwent (void);
 struct passwd *getpwent (void);
