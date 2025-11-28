@@ -345,36 +345,40 @@ void Blowfish_expand0state(blf_ctx *c, const uint8_t *data, uint16_t len)
 	}
 }
 
-/* Expand state with two streams (salt then key alternating) */
+/* Expand state with two streams (salt and key), canonical Eksblowfish-style */
 void Blowfish_expandstate(blf_ctx *c,
 	const uint8_t *salt, uint16_t saltlen,
 	const uint8_t *key,  uint16_t keylen)
 {
 	uint16_t off_s = 0, off_k = 0;
-	uint32_t L = 0, R = 0;
+	uint32_t L, R;
 
-	/* XOR P-array with alternating salt/key words */
-	for (int i = 0; i < BLF_P_COUNT; i++) {
-		uint32_t sw = Blowfish_stream2word(salt, saltlen, &off_s);
-		uint32_t kw = Blowfish_stream2word(key,  keylen,  &off_k);
-		c->P[i] ^= sw ^ kw;
-	}
+	/* Start from zero block */
+	L = 0;
+	R = 0;
 
-	/* Replace P by enciphering block with XORed salt/key words each iteration */
+	/*
+	 * Replace P-array:
+	 * For each pair, XOR L and R with words derived from salt and key,
+	 * encrypt with current state, and store back to P.
+	 */
 	for (int i = 0; i < BLF_P_COUNT; i += 2) {
-		/* Mix in salt XOR key each iteration (bcrypt does integrated mixing) */
+		/* Mix salt, then key, into L and R */
 		L ^= Blowfish_stream2word(salt, saltlen, &off_s);
-		R ^= Blowfish_stream2word(key,  keylen,  &off_k);
+		R ^= Blowfish_stream2word(key, keylen, &off_k);
 		blf_encrypt_block(c, &L, &R);
 		c->P[i] = L;
 		c->P[i + 1] = R;
 	}
 
-	/* S-box replacement loop */
+	/*
+	 * Replace S-boxes:
+	 * Same approach as for P-array, writing pairs to S[box][i], S[box][i+1].
+	 */
 	for (int box = 0; box < 4; box++) {
 		for (int i = 0; i < 256; i += 2) {
 			L ^= Blowfish_stream2word(salt, saltlen, &off_s);
-			R ^= Blowfish_stream2word(key,  keylen,  &off_k);
+			R ^= Blowfish_stream2word(key, keylen, &off_k);
 			blf_encrypt_block(c, &L, &R);
 			c->S[box][i] = L;
 			c->S[box][i + 1] = R;
