@@ -102,7 +102,8 @@ static int bcrypt_valid_version_prefix(const char *salt)
 	/* Expect: $2x$ where x is a,b,y */
 	if (salt[0] != '$' || salt[1] != '2') return 0;
 	char v = salt[2];
-	if (v != 'a' && v != 'b' && v != 'y') return 0;
+	/* Accept glibc historical variant 'x' for interoperability */
+	if (v != 'a' && v != 'b' && v != 'y' && v != 'x') return 0;
 	if (salt[3] != '$') return 0;
 	return 1;
 }
