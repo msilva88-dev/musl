@@ -39,7 +39,7 @@ static void get_response(struct asr_result *, const char *, int);
 struct asr_query *__getrrsetbyname_async(const char *hostname, unsigned int rdclass,
 	unsigned int rdtype, unsigned int flags, void *asr)
 {
-	struct asr_ctx	 *ac;
+	struct asr_ctx *ac;
 	struct asr_query *as;
 
 	ac = _asr_use_resolver(asr);
@@ -243,10 +243,8 @@ struct dns_response {
 };
 
 static struct dns_response *parse_dns_response(const u_char *, int);
-static struct dns_query *parse_dns_qsection(const u_char *, int,
-    const u_char **, int);
-static struct dns_rr *parse_dns_rrsection(const u_char *, int, const u_char **,
-    int);
+static struct dns_query *parse_dns_qsection(const u_char *, int, const u_char **, int);
+static struct dns_rr *parse_dns_rrsection(const u_char *, int, const u_char **, int);
 
 static void free_dns_query(struct dns_query *);
 static void free_dns_rr(struct dns_rr *);

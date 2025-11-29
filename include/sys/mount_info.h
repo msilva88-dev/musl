@@ -29,7 +29,7 @@
  *      @(#)mount.h     8.15 (Berkeley) 7/14/94
  */
 
-/* mount_info from OpenBSD 7.0 source code: sys/sys/mount.h */
+/* mount_info header from OpenBSD 7.0 source code: sys/sys/mount.h */
 
 #ifndef _SYS_MOUNT_INFO_H
 #define _SYS_MOUNT_INFO_H

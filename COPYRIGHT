@@ -254,8 +254,40 @@ The implementation of readpassphrase (src/passwd/readpassphrase.c) is
 Copyright © 2000-2002, 2007, 2010 Todd C. Miller <millert@openbsd.org>.
 It is licensed under a ISC license.
 
+The implementation of asr (src/network/asr.c) is
+Copyright © 2010-2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of asr header (include/asr.h) is
 Copyright © 2012-2014 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of asr_debug (src/network/asr_debug.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of asr_private header (src/network/asr_private.h) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of asr_utils (src/network/asr_utils.c) is
+Copyright © 2009-2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of getaddrinfo_async (src/network/getaddrinfo_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of gethostnamadr_async (src/network/gethostnamadr_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of getnameinfo_async (src/network/getnameinfo_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of getnetnamadr_async (src/network/getnetnamadr_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
 
 The implementation of getrrsetbyname (src/network/getrrsetbyname.c) is
@@ -263,11 +295,19 @@ Copyright © 2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
 
 The implementation of getrrsetbyname_async (src/network/getrrsetbyname_async.c) is
-Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+Copyright © 2012 Eric Faurot <eric@openbsd.org>, and
 Copyright © 1999-2001 Internet Software Consortium.
 It is licensed under a ISC license.
 Copyright © 2001 Jakob Schlyter.
 It is licensed under a two-clause BSD license.
+
+The implementation of res_search_async (src/network/res_search_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of res_send_async (src/network/res_send_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>.
+It is licensed under a ISC license.
 
 The implementation of blowfish crypt (src/crypt/crypt_blowfish.c) was
 originally written by Solar Designer and placed into the public
