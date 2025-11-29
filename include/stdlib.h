@@ -163,6 +163,22 @@ unsigned short *seed48 (unsigned short [3]);
 void lcong48 (unsigned short [7]);
 #endif
 
+#if defined(_BSD_SOURCE)
+#define lcong48_deterministic(p) lcong48(p)
+#define seed48_deterministic(xseed) seed48(xseed)
+#define srand_deterministic(seed) srand(seed)
+#define srand48_deterministic(seed) srand48(seed)
+#define srandom_deterministic(seed) srandom(seed)
+
+void lcong48_non_deterministic (unsigned short [7]);
+unsigned short *seed48_non_deterministic (unsigned short [3]);
+void srand_non_deterministic (unsigned);
+void srand48_non_deterministic (long);
+void srandom_non_deterministic (unsigned int);
+
+void srandomdev (void); // non_deterministic
+#endif
+
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 #include <alloca.h>
 char *mktemp (char *);
