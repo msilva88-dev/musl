@@ -1686,3 +1686,15 @@ void __malloc_donate(char *start, char *end)
 
 	free_chunk(user_mem);
 }
+
+int __malloc_allzerop(void *p)
+{
+	if (!p) return 0;
+	struct __mchunk *c = mchunk_from_user(p);
+	if (!c || c->magic != MCHUNK_MAGIC) return 0;
+	size_t n = c->user_len;
+	unsigned char *s = (unsigned char *)p;
+	for (size_t i = 0; i < n; i++)
+		if (s[i]) return 0;
+	return 1;
+}
