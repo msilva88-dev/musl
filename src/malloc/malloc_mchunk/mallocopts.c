@@ -1658,3 +1658,31 @@ void *aligned_alloc_chunk(size_t align, size_t len, int flags)
 
 	return p;
 }
+
+void __malloc_donate(char *start, char *end)
+{
+	size_t len = (size_t)(end - start);
+	/* Not enough space for a chunk header */
+	if (len < sizeof(struct __mchunk)) return;
+
+	/* Align start pointer if needed for your chunk structure */
+	uintptr_t s = (uintptr_t)start;
+	/* HUNK_ALIGN typically sizeof(void*) */
+	uintptr_t aligned = (s + (sizeof(void*)-1)) & ~(sizeof(void*)-1);
+
+	len -= (aligned - s);
+	if (len < sizeof(struct __mchunk)) return;
+	start = (char *)aligned;
+
+	/* Initialize a free chunk in the donated region */
+	struct __mchunk *c = (struct __mchunk *)start;
+	c->magic = MCHUNK_MAGIC;
+	c->user_len = len - sizeof(struct __mchunk);
+	c->base = start;
+	c->total_len = len;
+	c->flags = 0;
+
+	void *user_mem = (char*)c + sizeof(struct __mchunk);
+
+	free_chunk(user_mem);
+}
