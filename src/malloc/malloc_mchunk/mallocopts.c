@@ -1344,19 +1344,6 @@ static void register_delayed_chunk(void *p, size_t len)
 	if (arc4random_uniform(16) == 0) check_delayed_chunks();
 }
 
-int check_xmalloc(void *mem, const char *msg)
-{
-	if (!mem) {
-		check_malloc_options_once();
-		if (__mallocopts.mo_xmalloc) {
-			if (!msg) msg = "malloc() [check_xmalloc]: allocation failed\n";
-			m_crash(msg);
-		}
-		return ENOMEM;
-	}
-	return 0;
-}
-
 /* free_chunk: free an mchunk-allocated area (user pointer) */
 void free_chunk(void *p)
 {
@@ -1629,4 +1616,39 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 	++__mstats.realloc_calls;
 #endif
 	return newp;
+}
+
+void *aligned_alloc_chunk(size_t align, size_t len, int flags)
+{
+	/* POSIX/ANSI alignment constraints */
+	if ((align & (align - 1)) || !align || align < sizeof(void*)) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	if (len % align) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	void *p;
+
+	/* If align <= default malloc alignment, just use malloc_chunk */
+	if (align <= sizeof(void*)) {
+		p = malloc_chunk(len, flags);
+	} else {
+		size_t extra = align - 1 + sizeof(void*);
+		if (len > SIZE_MAX - extra) {
+			errno = ENOMEM;
+			return NULL;
+		}
+		char *raw = malloc_chunk(len + extra, flags);
+		uintptr_t addr = (uintptr_t)raw + sizeof(void*);
+		uintptr_t aligned = (addr + (align - 1)) & ~(uintptr_t)(align - 1);
+		void **location = (void**)(aligned - sizeof(void*));
+		*location = raw;
+		p = (void*)aligned;
+	}
+
+	return p;
 }
