@@ -40,6 +40,7 @@ unsigned long long strtoull (const char *__restrict, char **__restrict, int);
 #ifdef _BSD_SOURCE
 quad_t strtoq (const char *__restrict, char **__restrict, int);
 u_quad_t strtouq (const char *__restrict, char **__restrict, int);
+long long strtonum(const char *, long long, long long, const char **)
 #endif
 
 int rand (void);
@@ -163,7 +164,7 @@ unsigned short *seed48 (unsigned short [3]);
 void lcong48 (unsigned short [7]);
 #endif
 
-#if defined(_BSD_SOURCE)
+#ifdef _BSD_SOURCE
 #define lcong48_deterministic(p) lcong48(p)
 #define seed48_deterministic(xseed) seed48(xseed)
 #define srand_deterministic(seed) srand(seed)
