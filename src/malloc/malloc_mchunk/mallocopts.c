@@ -1342,6 +1342,20 @@ static void register_delayed_chunk(void *p, size_t len)
 	if (arc4random_uniform(16) == 0) check_delayed_chunks();
 }
 
+int check_xmalloc(void *mem, const char *msg)
+{
+	if (!mem) {
+		check_malloc_options_once();
+		if (__mallocopts.mo_xmalloc) {
+			if (!msg) msg = "malloc() [check_xmalloc]: allocation failed\n";
+			write(2, msg, strlen(msg));
+			a_crash();
+		}
+		return ENOMEM;
+	}
+	return 0;
+}
+
 /* free_chunk: free an mchunk-allocated area (user pointer) */
 void free_chunk(void *p)
 {
