@@ -316,7 +316,7 @@ void *malloc(size_t n)
 		c->csize = len - (SIZE_ALIGN - OVERHEAD);
 		c->psize = SIZE_ALIGN - OVERHEAD;
 		void *mem = CHUNK_TO_MEM(c);
-		fill_junk(mem, len - OVERHEAD, 1);
+		//fill_junk(mem, len - OVERHEAD, 1);
 		return mem;
 	}
 
@@ -328,7 +328,7 @@ void *malloc(size_t n)
 			unbin(c, i);
 			unlock_bin(i);
 			void *mem = CHUNK_TO_MEM(c);
-			fill_junk(mem, n - OVERHEAD, 1);
+			//fill_junk(mem, n - OVERHEAD, 1);
 			return mem;
 		}
 		unlock_bin(i);
@@ -355,7 +355,7 @@ void *malloc(size_t n)
 	trim(c, n);
 	unlock(mal.split_merge_lock);
 	void *mem = CHUNK_TO_MEM(c);
-	fill_junk(mem, n - OVERHEAD, 1);
+	//fill_junk(mem, n - OVERHEAD, 1);
 	//unprotect_chunk(mem, CHUNK_SIZE(c) - OVERHEAD);
 	return mem;
 }
@@ -427,7 +427,7 @@ void *realloc(void *p, size_t n)
 		self = (void *)(base + extra);
 		self->csize = newlen - extra;
 		void *mem = CHUNK_TO_MEM(self);
-		fill_junk(mem, n - OVERHEAD, 1);
+		//fill_junk(mem, n - OVERHEAD, 1);
 		return mem;
 	}
 
@@ -446,7 +446,7 @@ void *realloc(void *p, size_t n)
 		split->csize = next->psize = n0-n | C_INUSE;
 		__bin_chunk(split);
 		void *mem = CHUNK_TO_MEM(self);
-		fill_junk(mem, n - OVERHEAD, 1);
+		//fill_junk(mem, n - OVERHEAD, 1);
 		return mem;
 	}
 
@@ -464,7 +464,7 @@ void *realloc(void *p, size_t n)
 			trim(self, n);
 			unlock(mal.split_merge_lock);
 			void *mem = CHUNK_TO_MEM(self);
-			fill_junk(mem, n - OVERHEAD, 1);
+			//fill_junk(mem, n - OVERHEAD, 1);
 			return mem;
 		}
 		unlock_bin(i);
@@ -488,6 +488,7 @@ void __bin_chunk(struct chunk *self)
 	/* Crash on corrupted footer (likely from buffer overflow) */
 	if (next->psize != self->csize) a_crash();
 
+/*
 	// ensure options parsed once before any checks that depend on them
 	check_malloc_options_once();
 
@@ -498,6 +499,7 @@ void __bin_chunk(struct chunk *self)
 			if (u[i] != 0xDF) a_crash();
 		}
 	}
+*/
 
 	lock(mal.split_merge_lock);
 
@@ -573,7 +575,7 @@ void free(void *p)
 {
 	if (!p) return;
 
-	if (free_mchunk(p)) return;
+	//if (free_mchunk(p)) return;
 
 	struct chunk *self = MEM_TO_CHUNK(p);
 

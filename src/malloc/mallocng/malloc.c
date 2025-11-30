@@ -380,7 +380,7 @@ success:
 	unlock();
 	void *q = enframe(g, idx, n, ctr);
 	//unprotect_chunk(q, n);
-	fill_junk(q, n, 1);
+	//fill_junk(q, n, 1);
 	//protect_chunk(q, n);
 	return q;
 }
