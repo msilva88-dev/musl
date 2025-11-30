@@ -10,6 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "atomic.h"
+#include "dynlink.h"
 #include "libc.h"
 #include "mchunk.h"
 #include "mallocopts.h"
@@ -1620,6 +1621,11 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 
 void *aligned_alloc_chunk(size_t align, size_t len, int flags)
 {
+	if (__malloc_replaced && !__aligned_alloc_replaced) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
 	/* POSIX/ANSI alignment constraints */
 	if ((align & (align - 1)) || !align || align < sizeof(void*)) {
 		errno = EINVAL;
