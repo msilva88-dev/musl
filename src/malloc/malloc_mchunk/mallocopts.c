@@ -9,7 +9,9 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include "atomic.h"
 #include "libc.h"
+#include "mchunk.h"
 #include "mallocopts.h"
 
 /*
@@ -89,7 +91,7 @@ are provided for non-fatal situations.
 #define JUNK_PATTERN_ALLOC 0xDB
 #define JUNK_PATTERN_FREE 0xDF
 
-hidden struct __mallocopts {
+static struct __mallocopts {
 	/* Bit layout for __mallocopts in a uint16_t storage unit (must total 16):
 	 * mo_cachesize: 4
 	 * mo_canaries:  1
@@ -300,7 +302,7 @@ static void warn_malloc_options(char c)
 	if (ln > 0) write(2, ubuf, (size_t)ln);
 }
 
-void check_malloc_options_once()
+static void check_malloc_options_once()
 {
 	/* Parse options once, honoring letter-order precedence:
 	 * later letters override earlier ones.
@@ -1348,8 +1350,7 @@ int check_xmalloc(void *mem, const char *msg)
 		check_malloc_options_once();
 		if (__mallocopts.mo_xmalloc) {
 			if (!msg) msg = "malloc() [check_xmalloc]: allocation failed\n";
-			write(2, msg, strlen(msg));
-			a_crash();
+			m_crash(msg);
 		}
 		return ENOMEM;
 	}
