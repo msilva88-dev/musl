@@ -33,7 +33,9 @@
 /* getcap (cget) without BSD db from OpenBSD 7.0 source code: lib/libc/gen/getcap.c */
 
 #include <ctype.h>
-//#include <db.h> /* the BSD db is not implemented yet */
+#if 0 /* The BSD db is not implemented yet */
+#include <db.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -52,29 +54,48 @@
 #define TCERR	(char)1
 #define	SHADOW	(char)2
 
+#if 0 /* The BSD db is not implemented yet */
+#ifdef __GNUC__
+#define UNUSED_A __attribute__((unused))
+#else
+#define UNUSED_A
+#endif /* __GNUC__ */
+#else
+#define UNUSED_A
+#endif /* 0 */
+
 static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-//static int	cdbget(DB *, char **, const char *);
-//static int 	getent(char **, unsigned int *, char **, FILE *, const char *, int, char *);
+#if 0 /* The BSD db is not implemented yet */
+static int	cdbget(DB *, char **, const char *);
+static int 	getent(char **, unsigned int *, char **, FILE *, const char *, int, char *);
+#endif
 static int	nfcmp(const char *, char *);
 
-//static int	usedb = 1;
-static int	usedb = 0; // always disabled
+#if 0 /* The BSD db is not implemented yet */
+static int	usedb = 1; /* Enabled by default */
+#else
+static int	usedb = 0; /* Always disabled */
+#endif
 
 /*
  * Cgetusedb() allows the user to specify whether or not to use a .db
  * version of the database file (if it exists) in preference to the
  * text version.  By default, the getcap(3) routines will use a .db file.
  */
-int __cgetusedb(int new_usedb)
+int __cgetusedb(int new_usedb UNUSED_A)
 {
 	int old_usedb = usedb;
-	(void)new_usedb; // unused
 
-//	usedb = new_usedb;
-	usedb = 0; // always disabled
+#if 0 /* The BSD db is not implemented yet */
+	usedb = new_usedb;
+#else
+	(void)new_usedb; /* Argument unused */
+
+	usedb = 0; /* Always disabled */
+#endif
 	return old_usedb;
 }
 weak_alias(__cgetusedb, cgetusedb);
@@ -193,7 +214,9 @@ weak_alias(__cgetent, cgetent);
 static int getent(char **cap, unsigned int *len, char **db_array, FILE *fp,
 	const char *name, int depth, char *nfield)
 {
-//	DB *capdbp;
+#if 0 /* The BSD db is not implemented yet */
+	DB *capdbp;
+#endif
 	char *r_end, *rp, **db_p;
 	int myfd, eof, foundit, opened, retval, clen;
 	char *record, *cbuf;
@@ -248,18 +271,19 @@ static int getent(char **cap, unsigned int *len, char **db_array, FILE *fp,
 			char *dbrecord;
 
 			clen = snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
-/*			if (clen >= 0 && clen < sizeof(pbuf) && usedb &&
+#if 0 /* The BSD db is not implemented yet */
+			if (clen >= 0 && clen < sizeof(pbuf) && usedb &&
 			    (capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))) {
 				opened++;
 				retval = cdbget(capdbp, &dbrecord, name);
 				if (retval < 0) {
 					/* no record available */
-/*					(void)capdbp->close(capdbp);
+					(void)capdbp->close(capdbp);
 					continue;
 				}
 				free(record);
 				/* save the data; close frees it */
-/*				clen = strlen(dbrecord);
+				clen = strlen(dbrecord);
 				if ((cbuf = malloc(clen + 1)) == NULL)
 					return -2;
 				memcpy(cbuf, dbrecord, clen + 1);
@@ -268,18 +292,21 @@ static int getent(char **cap, unsigned int *len, char **db_array, FILE *fp,
 					return -2;
 				}
 				/* assume tc='s have been expanded??? */
-/*				*len = clen;
+				*len = clen;
 				*cap = cbuf;
 				return retval;
 			} else {
-*/				fp = fopen(*db_p, "re");
+#else
+			{
+#endif
+				fp = fopen(*db_p, "re");
 				if (fp == NULL) {
 					/* No error on unfound file. */
 					continue;
 				}
 				myfd = 1;
 				opened++;
-//			}
+			}
 		}
 		/*
 		 * Find the requested capability record ...
@@ -547,7 +574,7 @@ tc_exp:	{
 	return 0;
 }
 
-/*
+#if 0 /* The BSD db is not implemented yet */
 static int cdbget(DB *capdbp, char **bp, const char *name)
 {
 	DBT key, data;
@@ -557,7 +584,7 @@ static int cdbget(DB *capdbp, char **bp, const char *name)
 
 	for (;;) {
 		/* Get the reference. */
-/*		switch(capdbp->get(capdbp, &key, &data, 0)) {
+		switch(capdbp->get(capdbp, &key, &data, 0)) {
 		case -1:
 			return -2;
 		case 1:
@@ -565,7 +592,7 @@ static int cdbget(DB *capdbp, char **bp, const char *name)
 		}
 
 		/* If not an index to another record, leave. */
-/*		if (((char *)data.data)[0] != SHADOW)
+		if (((char *)data.data)[0] != SHADOW)
 			break;
 
 		key.data = (char *)data.data + 1;
@@ -575,7 +602,7 @@ static int cdbget(DB *capdbp, char **bp, const char *name)
 	*bp = (char *)data.data + 1;
 	return ((char *)(data.data))[0] == TCERR ? 1 : 0;
 }
-*/
+#endif
 
 /*
  * Cgetmatch will return 0 if name is one of the names of the capability
