@@ -32,7 +32,7 @@
 
 /* heapsort from OpenBSD 7.0 source code: lib/libc/stdlib/heapsort.c */
 
-#include <sys/types.h>
+#define _BSD_SOURCE
 #include <errno.h>
 #include <stdlib.h>
 

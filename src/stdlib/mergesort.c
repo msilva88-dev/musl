@@ -46,8 +46,7 @@
  * (The default is pairwise merging.)
  */
 
-#include <sys/types.h>
-
+#define _BSD_SOURCE
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>

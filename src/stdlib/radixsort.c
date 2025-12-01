@@ -45,7 +45,7 @@
  * "Engineering Radix Sort".
  */
 
-#include <sys/types.h>
+#define _BSD_SOURCE
 #include <stdlib.h>
 #include <errno.h>
 
