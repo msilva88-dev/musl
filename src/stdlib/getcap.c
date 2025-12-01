@@ -30,12 +30,10 @@
  * SUCH DAMAGE.
  */
 
-/* getcap (cget) from OpenBSD 7.0 source code: lib/libc/gen/getcap.c */
-
-#include <sys/types.h>
+/* getcap (cget) without BSD db from OpenBSD 7.0 source code: lib/libc/gen/getcap.c */
 
 #include <ctype.h>
-#include <db.h>
+//#include <db.h> /* the BSD db is not implemented yet */
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -58,11 +56,12 @@ static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-static int	cdbget(DB *, char **, const char *);
-static int 	getent(char **, u_int *, char **, FILE *, const char *, int, char *);
+//static int	cdbget(DB *, char **, const char *);
+//static int 	getent(char **, unsigned int *, char **, FILE *, const char *, int, char *);
 static int	nfcmp(const char *, char *);
 
-static int	usedb = 1;
+//static int	usedb = 1;
+static int	usedb = 0; // always disabled
 
 /*
  * Cgetusedb() allows the user to specify whether or not to use a .db
@@ -72,8 +71,10 @@ static int	usedb = 1;
 int __cgetusedb(int new_usedb)
 {
 	int old_usedb = usedb;
+	(void)new_usedb; // unused
 
-	usedb = new_usedb;
+//	usedb = new_usedb;
+	usedb = 0; // always disabled
 	return old_usedb;
 }
 weak_alias(__cgetusedb, cgetusedb);
@@ -165,7 +166,7 @@ weak_alias(__cgetcap, cgetcap);
  */
 int __cgetent(char **buf, char **db_array, const char *name)
 {
-	u_int dummy;
+	unsigned int dummy;
 
 	return getent(buf, &dummy, db_array, NULL, name, 0, NULL);
 }
@@ -189,10 +190,10 @@ weak_alias(__cgetent, cgetent);
  *	  names interpolated, a name can't be found, or depth exceeds
  *	  MAX_RECURSION.
  */
-static int getent(char **cap, u_int *len, char **db_array, FILE *fp,
+static int getent(char **cap, unsigned int *len, char **db_array, FILE *fp,
 	const char *name, int depth, char *nfield)
 {
-	DB *capdbp;
+//	DB *capdbp;
 	char *r_end, *rp, **db_p;
 	int myfd, eof, foundit, opened, retval, clen;
 	char *record, *cbuf;
@@ -247,18 +248,18 @@ static int getent(char **cap, u_int *len, char **db_array, FILE *fp,
 			char *dbrecord;
 
 			clen = snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
-			if (clen >= 0 && clen < sizeof(pbuf) && usedb &&
+/*			if (clen >= 0 && clen < sizeof(pbuf) && usedb &&
 			    (capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))) {
 				opened++;
 				retval = cdbget(capdbp, &dbrecord, name);
 				if (retval < 0) {
 					/* no record available */
-					(void)capdbp->close(capdbp);
+/*					(void)capdbp->close(capdbp);
 					continue;
 				}
 				free(record);
 				/* save the data; close frees it */
-				clen = strlen(dbrecord);
+/*				clen = strlen(dbrecord);
 				if ((cbuf = malloc(clen + 1)) == NULL)
 					return -2;
 				memcpy(cbuf, dbrecord, clen + 1);
@@ -267,18 +268,18 @@ static int getent(char **cap, u_int *len, char **db_array, FILE *fp,
 					return -2;
 				}
 				/* assume tc='s have been expanded??? */
-				*len = clen;
+/*				*len = clen;
 				*cap = cbuf;
 				return retval;
 			} else {
-				fp = fopen(*db_p, "re");
+*/				fp = fopen(*db_p, "re");
 				if (fp == NULL) {
 					/* No error on unfound file. */
 					continue;
 				}
 				myfd = 1;
 				opened++;
-			}
+//			}
 		}
 		/*
 		 * Find the requested capability record ...
@@ -401,7 +402,7 @@ static int getent(char **cap, u_int *len, char **db_array, FILE *fp,
 	 */
 tc_exp:	{
 		char *s;
-		u_int ilen;
+		unsigned int ilen;
 		int diff, iret, tclen;
 		char *ibuf, *icap, *scan, *tc, *tcstart, *tcend;
 
@@ -482,7 +483,7 @@ tc_exp:	{
 			 */
 			diff = ilen - tclen;
 			if (diff >= r_end - rp) {
-				u_int pos, tcpos, tcposend;
+				unsigned int pos, tcpos, tcposend;
 				size_t newsize;
 				char *nrecord;
 
@@ -546,6 +547,7 @@ tc_exp:	{
 	return 0;
 }
 
+/*
 static int cdbget(DB *capdbp, char **bp, const char *name)
 {
 	DBT key, data;
@@ -555,7 +557,7 @@ static int cdbget(DB *capdbp, char **bp, const char *name)
 
 	for (;;) {
 		/* Get the reference. */
-		switch(capdbp->get(capdbp, &key, &data, 0)) {
+/*		switch(capdbp->get(capdbp, &key, &data, 0)) {
 		case -1:
 			return -2;
 		case 1:
@@ -563,7 +565,7 @@ static int cdbget(DB *capdbp, char **bp, const char *name)
 		}
 
 		/* If not an index to another record, leave. */
-		if (((char *)data.data)[0] != SHADOW)
+/*		if (((char *)data.data)[0] != SHADOW)
 			break;
 
 		key.data = (char *)data.data + 1;
@@ -573,6 +575,7 @@ static int cdbget(DB *capdbp, char **bp, const char *name)
 	*bp = (char *)data.data + 1;
 	return ((char *)(data.data))[0] == TCERR ? 1 : 0;
 }
+*/
 
 /*
  * Cgetmatch will return 0 if name is one of the names of the capability
@@ -657,7 +660,7 @@ int __cgetnext(char **cap, char **db_array)
 	char *b_end, *bp, *r_end, *rp;
 	char *record = NULL;
 	char *otoprec = toprec;
-	u_int dummy;
+	unsigned int dummy;
 	off_t pos;
 
 	if (dbp == NULL)
@@ -805,7 +808,7 @@ weak_alias(__cgetnext, cgetnext);
  */
 int __cgetstr(char *buf, const char *cap, char **str)
 {
-	u_int m_room;
+	unsigned int m_room;
 	char *bp, *mp;
 	int len;
 	char *mem;
@@ -936,7 +939,7 @@ weak_alias(__cgetstr, cgetstr);
  */
 int __cgetustr(char *buf, const char *cap, char **str)
 {
-	u_int m_room;
+	unsigned int m_room;
 	char *bp, *mp;
 	int len;
 	char *mem;
