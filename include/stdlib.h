@@ -151,8 +151,12 @@ char *devname(dev_t, mode_t);
 void freezero(void *, size_t);
 char *getbsize(int *, long *);
 const char *getprogname(void);
-void setprogname(const char *);
+int heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
+int mergesort(void *, size_t, size_t, int (*)(const void *, const void *));
+int radixsort(const unsigned char **, int, const unsigned char *, unsigned int);
 void *recallocarray(void *, size_t, size_t, size_t);
+void setprogname(const char *);
+int sradixsort(const unsigned char **, int, const unsigned char *, unsigned int);
 #endif
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \

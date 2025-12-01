@@ -165,6 +165,14 @@ The implementation of gmon (src/bsd/gmon.c) is
 Copyright © 1983, 1992, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of heapsort (src/stdlib/heapsort.c) is
+Copyright © 1991, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of mergesort (src/stdlib/mergesort.c) is
+Copyright © 1992, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of mount_info header (include/sys/mount_info.h) is
 Copyright © 1989, 1991, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
@@ -176,6 +184,10 @@ It is licensed under a three-clause BSD license.
 The implementation of pwcache (src/passwd/pwcache.c) is
 Copyright © 1992 Keith Muller.
 Copyright © 1992, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of radixsort (src/stdlib/radixsort.c) is
+Copyright © 1990, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
 The implementation of strmode (src/string/strmode.c) is
