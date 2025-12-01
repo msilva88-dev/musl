@@ -78,6 +78,11 @@ div_t div (int, int);
 ldiv_t ldiv (long, long);
 lldiv_t lldiv (long long, long long);
 
+#ifdef _BSD_SOURCE
+quad_t qabs (quad_t);
+qdiv_t qdiv (quad_t, quad_t);
+#endif
+
 int mblen (const char *, size_t);
 int mbtowc (wchar_t *__restrict, const char *__restrict, size_t);
 int wctomb (char *, wchar_t);
