@@ -7,6 +7,12 @@ extern "C" {
 
 #include <features.h>
 
+#ifdef __GNUC__
+#define DEPREC_A(msg) __attribute__((deprecated((msg))))
+#else
+#define DEPREC_A(msg)
+#endif
+
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -256,6 +262,10 @@ pid_t getthrid(void);
 #endif
 #if defined(__HyperbolaBSD__) || defined(__linux__)
 pid_t gettid(void);
+#endif
+
+#ifdef _BSD_SOURCE
+char *getwd(char *buf) DEPREC_A("getwd is obsolete and unsafe, use getcwd instead");
 #endif
 
 #if defined(_LARGEFILE64_SOURCE)
