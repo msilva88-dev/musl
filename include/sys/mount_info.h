@@ -25,8 +25,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *      @(#)mount.h     8.15 (Berkeley) 7/14/94
  */
 
 /* mount_info header from OpenBSD 7.0 source code: sys/sys/mount.h */
