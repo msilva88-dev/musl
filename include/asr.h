@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* asr from OpenBSD 7.0 source code: include/asr.h */
+/* asr header from OpenBSD 7.0 source code: include/asr.h */
 
 #ifndef _ASR_H
 #define _ASR_H
