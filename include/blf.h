@@ -41,18 +41,18 @@ void bsdbf_init(bsdbf_ctx_t *);
 void bsdbf_key(bsdbf_ctx_t *, const uint8_t *, uint16_t);
 uint32_t bsdbf_strtowrd(const uint8_t *, uint16_t, uint16_t *);
 
-#define blf_cbc_decrypt(ctx, iv, dat, len) (bsdbf_cbc_dec((ctx), (iv), (dat), (len)))
-#define blf_cbc_encrypt(ctx, iv, dat, len) (bsdbf_cbc_enc((ctx), (iv), (dat), (len)))
-#define blf_dec(ctx, dat, blk) (bsdbf_dec((ctx), (dat), (blk)))
-#define blf_ecb_decrypt(ctx, dat, len) (bsdbf_ecb_dec((ctx), (dat), (len)))
-#define blf_ecb_encrypt(ctx, dat, len) (bsdbf_ecb_enc((ctx), (dat), (len)))
-#define blf_enc(ctx, dat, blk) (bsdbf_enc((ctx), (dat), (blk)))
-#define blf_key(ctx, key, len) (bsdbf_key((ctx), (key), (len)))
-#define Blowfish_decipher(ctx, l, r) (bsdbf_deciph((ctx), (l), (r)))
-#define Blowfish_encipher(ctx, l, r) (bsdbf_enciph((ctx), (l), (r)))
-#define Blowfish_expand0state(ctx, dat, len) (bsdbf_expst3((ctx), (dat), (len)))
-#define Blowfish_expandstate(ctx, slt, sl, key, kl) (bsdbf_expst((ctx), (slt), (sl), (key), (kl)))
-#define Blowfish_initstate(ctx) (bsdbf_init((ctx)))
+#define blf_cbc_decrypt(ctx, iv, dat, len) (bsdbf_cbc_dec((bsdbf_ctx_t)(ctx), (iv), (dat), (len)))
+#define blf_cbc_encrypt(ctx, iv, dat, len) (bsdbf_cbc_enc((bsdbf_ctx_t)(ctx), (iv), (dat), (len)))
+#define blf_dec(ctx, dat, blk) (bsdbf_dec((bsdbf_ctx_t)(ctx), (dat), (blk)))
+#define blf_ecb_decrypt(ctx, dat, len) (bsdbf_ecb_dec((bsdbf_ctx_t)(ctx), (dat), (len)))
+#define blf_ecb_encrypt(ctx, dat, len) (bsdbf_ecb_enc((bsdbf_ctx_t)(ctx), (dat), (len)))
+#define blf_enc(ctx, dat, blk) (bsdbf_enc((bsdbf_ctx_t)(ctx), (dat), (blk)))
+#define blf_key(ctx, key, len) (bsdbf_key((bsdbf_ctx_t)(ctx), (key), (len)))
+#define Blowfish_decipher(ctx, l, r) (bsdbf_deciph((bsdbf_ctx_t)(ctx), (l), (r)))
+#define Blowfish_encipher(ctx, l, r) (bsdbf_enciph((bsdbf_ctx_t)(ctx), (l), (r)))
+#define Blowfish_expand0state(ctx, dat, len) (bsdbf_expst3((bsdbf_ctx_t)(ctx), (dat), (len)))
+#define Blowfish_expandstate(ctx, slt, sl, key, kl) (bsdbf_expst((bsdbf_ctx_t)(ctx), (slt), (sl), (key), (kl)))
+#define Blowfish_initstate(ctx) (bsdbf_init((bsdbf_ctx_t)(ctx)))
 #define Blowfish_stream2word(dat, len, off) (bsdbf_strtowrd((dat), (len), (off)))
 #endif
 
