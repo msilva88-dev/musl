@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+#include <sys/types.h>
+
 /*
  * Expected fd conditions
  */

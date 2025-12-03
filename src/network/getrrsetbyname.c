@@ -53,7 +53,7 @@ int getrrsetbyname(const char *name, unsigned int class, unsigned int type,
 /* from net/getrrsetbyname.c */
 void __freerrset(struct rrsetinfo *rrset)
 {
-	u_int16_t i;
+	uint16_t i;
 
 	if (rrset == NULL)
 		return;

@@ -219,17 +219,17 @@ static int getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 
 struct dns_query {
 	char			*name;
-	u_int16_t		type;
-	u_int16_t		class;
+	uint16_t		type;
+	uint16_t		class;
 	struct dns_query	*next;
 };
 
 struct dns_rr {
 	char			*name;
-	u_int16_t		type;
-	u_int16_t		class;
-	u_int16_t		ttl;
-	u_int16_t		size;
+	uint16_t		type;
+	uint16_t		class;
+	uint16_t		ttl;
+	uint16_t		size;
 	void			*rdata;
 	struct dns_rr		*next;
 };
@@ -242,15 +242,15 @@ struct dns_response {
 	struct dns_rr		*additional;
 };
 
-static struct dns_response *parse_dns_response(const u_char *, int);
-static struct dns_query *parse_dns_qsection(const u_char *, int, const u_char **, int);
-static struct dns_rr *parse_dns_rrsection(const u_char *, int, const u_char **, int);
+static struct dns_response *parse_dns_response(const unsigned char *, int);
+static struct dns_query *parse_dns_qsection(const unsigned char *, int, const unsigned char **, int);
+static struct dns_rr *parse_dns_rrsection(const unsigned char *, int, const unsigned char **, int);
 
 static void free_dns_query(struct dns_query *);
 static void free_dns_rr(struct dns_rr *);
 static void free_dns_response(struct dns_response *);
 
-static int count_dns_rr(struct dns_rr *, u_int16_t, u_int16_t);
+static int count_dns_rr(struct dns_rr *, uint16_t, uint16_t);
 
 static void get_response(struct asr_result *ar, const char *pkt, int pktlen)
 {
@@ -356,10 +356,10 @@ fail:
 /*
  * DNS response parsing routines
  */
-static struct dns_response *parse_dns_response(const u_char *answer, int size)
+static struct dns_response *parse_dns_response(const unsigned char *answer, int size)
 {
 	struct dns_response *resp;
-	const u_char *cp;
+	const unsigned char *cp;
 
 	/* allocate memory for the response */
 	resp = calloc(1, sizeof(*resp));
@@ -420,7 +420,7 @@ static struct dns_response *parse_dns_response(const u_char *answer, int size)
 	return resp;
 }
 
-static struct dns_query *parse_dns_qsection(const u_char *answer, int size, const u_char **cp, int count)
+static struct dns_query *parse_dns_qsection(const unsigned char *answer, int size, const unsigned char **cp, int count)
 {
 	struct dns_query *head, *curr, *prev;
 	int i, length;
@@ -465,7 +465,7 @@ static struct dns_query *parse_dns_qsection(const u_char *answer, int size, cons
 	return head;
 }
 
-static struct dns_rr *parse_dns_rrsection(const u_char *answer, int size, const u_char **cp, int count)
+static struct dns_rr *parse_dns_rrsection(const unsigned char *answer, int size, const unsigned char **cp, int count)
 {
 	struct dns_rr *head, *curr, *prev;
 	int i, length;
@@ -563,7 +563,7 @@ static void free_dns_response(struct dns_response *p)
 	free(p);
 }
 
-static int count_dns_rr(struct dns_rr *p, u_int16_t class, u_int16_t type)
+static int count_dns_rr(struct dns_rr *p, uint16_t class, uint16_t type)
 {
 	int n = 0;
 
