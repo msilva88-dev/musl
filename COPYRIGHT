@@ -198,6 +198,22 @@ The implementation of radixsort (src/stdlib/radixsort.c) is
 Copyright © 1990, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of sha2 (src/crypt/hash_sha2.c) is
+Copyright © 2000-2001, Aaron D. Gifford.
+It is licensed under a three-clause BSD license.
+
+The implementation of sha2 header (include/sha2.h) is
+Copyright © 2000-2001, Aaron D. Gifford.
+It is licensed under a three-clause BSD license.
+
+The implementation of siphash (src/crypt/hash_siphash.c) is
+Copyright © 2013 Andre Oppermann.
+It is licensed under a three-clause BSD license.
+
+The implementation of siphash header (include/siphash.h) is
+Copyright © 2013 Andre Oppermann.
+It is licensed under a three-clause BSD license.
+
 The implementation of strmode (src/string/strmode.c) is
 Copyright © 1990 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
@@ -213,6 +229,14 @@ It is licensed under a three-clause BSD license.
 The implementation of vis (src/misc/vis.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
+
+The implementation of rmd160 (src/crypt/hash_rmd160.c) is
+Copyright © 2001 Markus Friedl.
+It is licensed under a two-clause BSD license.
+
+The implementation of rmd160 header (include/rmd160.h) is
+Copyright © 2001 Markus Friedl.
+It is licensed under a two-clause BSD license.
 
 The implementation of setproctitle (src/bsd/setproctitle.c) is
 Copyright © 1995 Peter Wemm.
@@ -348,6 +372,22 @@ in jurisdictions that may not recognize the public domain.
 
 The implementation of ChaCha crypt (src/crypt/crypt_chacha.c) was
 originally written by D. J. Bernstein and placed into the public
+domain.
+
+The implementation of MD5 hash (src/crypt/hash_md5.c) was
+originally written by Colin Plumb and placed into the public
+domain.
+
+The implementation of MD5 hash header (include/md5.h) was
+originally written by Colin Plumb and placed into the public
+domain.
+
+The implementation of SHA1 hash (src/crypt/hash_sha1.c) was
+originally written by Steve Reid and placed into the public
+domain.
+
+The implementation of SHA1 hash header (include/sha1.h) was
+originally written by Steve Reid and placed into the public
 domain.
 
 The smoothsort implementation (src/stdlib/qsort.c) is Copyright © 2011
