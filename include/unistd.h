@@ -265,7 +265,18 @@ pid_t gettid(void);
 #endif
 
 #ifdef _BSD_SOURCE
-char *getwd(char *buf) DEPREC_A("getwd is obsolete and unsafe, use getcwd instead");
+char *fflagstostr(uint32_t);
+mode_t getmode(const void *, mode_t);
+char *getwd(char *) DEPREC_A("getwd is obsolete and unsafe, use getcwd instead");
+int rcmd(char **, int, const char *, const char *, const char *, int *);
+int rcmd_af(char **, int, const char *, const char *, const char *, int *, int);
+int rcmdsh(char **, int, const char *, const char *, const char *, char *);
+int rresvport(int *);
+int rresvport_af(int *, int);
+int ruserok(const char *, int, const char *, const char *);
+void *setmode(const char *);
+int strtofflags(char **stringp, uint32_t *, uint32_t *);
+int ttyslot(void);
 #endif
 
 #if defined(_LARGEFILE64_SOURCE)

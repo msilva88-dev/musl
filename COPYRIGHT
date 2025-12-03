@@ -198,6 +198,29 @@ The implementation of radixsort (src/stdlib/radixsort.c) is
 Copyright © 1990, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of rcmd (src/unistd/rcmd.c) is
+Copyright © 1995, 1996, 1998 Theo de Raadt.
+Copyright © 1983, 1993, 1994 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of rcmdsh (src/unistd/rcmdsh.c) is
+Copyright © 2001 MagniComp.
+It is licensed under a three-clause BSD license.
+
+The implementation of rresvport (src/unistd/rresvport.c) is
+Copyright © 1995, 1996, 1998 Theo de Raadt.
+Copyright © 1983, 1993, 1994 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of ruserok (src/unistd/ruserok.c) is
+Copyright © 1995, 1996, 1998 Theo de Raadt.
+Copyright © 1983, 1993, 1994 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of setmode/getmode (src/unistd/setmode.c) is
+Copyright © 1989, 1993, 1994 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of sha2 (src/crypt/hash_sha2.c) is
 Copyright © 2000-2001, Aaron D. Gifford.
 It is licensed under a three-clause BSD license.
@@ -218,8 +241,16 @@ The implementation of strmode (src/string/strmode.c) is
 Copyright © 1990 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of strtofflags/fflagstostr (src/unistd/strtofflags.c) is
+Copyright © 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of ttyname (src/misc/ttyname.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of ttyslot (src/unistd/ttyslot.c) is
+Copyright © 1988, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
 The implementation of unvis (src/misc/unvis.c) is
