@@ -21,11 +21,8 @@
 #include <stdint.h>
 #include <string.h>
 
-/* Local macro for P-array size (consistency with blf_ctx, must match <blf.h>) */
-#define BLF_P_COUNT (BLF_N + 2)
-
 /* Initial state (digits of Pi) as per the Blowfish standard */
-static const blf_ctx blf_init_state = {
+static const bsdbf_ctx_t blf_init_state = {
 	{
 		0x243f6a88,0x85a308d3,0x13198a2e,0x03707344,
 		0xa4093822,0x299f31d0,0x082efa98,0xec4e6c89,
@@ -92,7 +89,7 @@ static const blf_ctx blf_init_state = {
 };
 
 /* Blowfish round function: combines the current input with all four S-boxes */
-static inline uint32_t blf_F(blf_ctx *c, uint32_t x)
+static inline uint32_t blf_F(bsdbf_ctx_t *c, uint32_t x)
 {
 	uint32_t a = (x >> 24) & 0xFF;
 	uint32_t b = (x >> 16) & 0xFF;
@@ -105,25 +102,25 @@ static inline uint32_t blf_F(blf_ctx *c, uint32_t x)
 }
 
 /* Single-block encryption (in-place, two 32-bit words, Blowfish Feistel rounds) */
-static inline void blf_encrypt_block(blf_ctx *c, uint32_t *L, uint32_t *R)
+static inline void blf_encrypt_block(bsdbf_ctx_t *c, uint32_t *L, uint32_t *R)
 {
 	uint32_t l = *L, r = *R;
-	for (int i = 0; i < BLF_N; i++) {
+	for (int i = 0; i < BSDBF_ROUNDS; i++) {
 		l ^= c->P[i];
 		r ^= blf_F(c, l);
 		uint32_t t = l; l = r; r = t;
 	}
 	uint32_t t = l; l = r; r = t;
-	r ^= c->P[BLF_N];
-	l ^= c->P[BLF_N + 1];
+	r ^= c->P[BSDBF_ROUNDS];
+	l ^= c->P[BSDBF_ROUNDS + 1];
 	*L = l; *R = r;
 }
 
 /* Single-block decryption (in-place, two 32-bit words, reverse Feistel) */
-static inline void blf_decrypt_block(blf_ctx *c, uint32_t *L, uint32_t *R)
+static inline void blf_decrypt_block(bsdbf_ctx_t *c, uint32_t *L, uint32_t *R)
 {
 	uint32_t l = *L, r = *R;
-	for (int i = BLF_N + 1; i > 1; i--) {
+	for (int i = BSDBF_ROUNDS + 1; i > 1; i--) {
 		l ^= c->P[i];
 		r ^= blf_F(c, l);
 		uint32_t t = l; l = r; r = t;
@@ -138,20 +135,20 @@ static inline void blf_decrypt_block(blf_ctx *c, uint32_t *L, uint32_t *R)
  * Blowfish key schedule (key expansion)
  *  - Initializes state->P/S from digits of Pi, XORs P cyclically with key bytes,
  *    then iteratively encrypts a zero block to fill P and S.
- *  - keylen is clamped to BLF_MAXKEYLEN (56 bytes/448 bits).
+ *  - keylen is clamped to BSDBF_KEY_BYTES_MAX (56 bytes/448 bits).
  */
-void blf_key(blf_ctx *state, const uint8_t *key, uint16_t keylen)
+void bsdbf_key(const uint8_t *key, uint16_t keylen, bsdbf_ctx_t *state)
 {
 	/* Initialize with constant tables */
 	memcpy(state, &blf_init_state, sizeof(blf_init_state));
 
 	if (!keylen) return;
-	if (keylen > BLF_MAXKEYLEN) keylen = BLF_MAXKEYLEN; /* Clamp to 56 bytes (448 bits) */
+	if (keylen > BSDBF_KEY_BYTES_MAX) keylen = BSDBF_KEY_BYTES_MAX; /* Clamp to 56 bytes (448 bits) */
 
 	/* XOR P-array with cyclic key bytes */
 	uint32_t combined = 0;
 	int j = 0;
-	for (int i = 0; i < BLF_P_COUNT; i++) {
+	for (int i = 0; i < BSDBF_P_COUNT; i++) {
 		combined = 0;
 		for (int k = 0; k < 4; k++) {
 			combined = (combined << 8) | key[j];
@@ -163,7 +160,7 @@ void blf_key(blf_ctx *state, const uint8_t *key, uint16_t keylen)
 
 	/* Expand key into P and S by encrypting zero block repeatedly */
 	uint32_t L = 0, R = 0;
-	for (int i = 0; i < BLF_P_COUNT; i += 2) {
+	for (int i = 0; i < BSDBF_P_COUNT; i += 2) {
 		blf_encrypt_block(state, &L, &R);
 		state->P[i] = L;
 		state->P[i + 1] = R;
@@ -178,10 +175,10 @@ void blf_key(blf_ctx *state, const uint8_t *key, uint16_t keylen)
 }
 
 /*
- * Encrypt (blf_enc) / decrypt (blf_dec) an array of 64-bit blocks in-place.
+ * Encrypt (bsdbf_enc) / decrypt (bsdbf_dec) an array of 64-bit blocks in-place.
  * Data should point to 2*blocks words.
  */
-void blf_enc(blf_ctx *state, uint32_t *data, uint16_t blocks)
+void bsdbf_enc(bsdbf_ctx_t *state, uint32_t *data, uint16_t blocks)
 {
 	while (blocks--) {
 		blf_encrypt_block(state, &data[0], &data[1]);
@@ -189,7 +186,7 @@ void blf_enc(blf_ctx *state, uint32_t *data, uint16_t blocks)
 	}
 }
 
-void blf_dec(blf_ctx *state, uint32_t *data, uint16_t blocks)
+void bsdbf_dec(bsdbf_ctx_t *state, uint32_t *data, uint16_t blocks)
 {
 	while (blocks--) {
 		blf_decrypt_block(state, &data[0], &data[1]);
@@ -225,7 +222,7 @@ static inline void blf_store_be(uint8_t *dst, uint32_t L, uint32_t R)
  * ECB (Electronic Codebook) mode encryption/decryption, based on byte array.
  * datalen MUST be a multiple of 8; input/output is big-endian block order.
  */
-void blf_ecb_encrypt(blf_ctx *state, uint8_t *data, uint32_t datalen)
+void bsdbf_ecb_enc(bsdbf_ctx_t *state, uint8_t *data, uint32_t datalen)
 {
 	if (datalen % 8) return;
 	while (datalen) {
@@ -238,7 +235,7 @@ void blf_ecb_encrypt(blf_ctx *state, uint8_t *data, uint32_t datalen)
 	}
 }
 
-void blf_ecb_decrypt(blf_ctx *state, uint8_t *data, uint32_t datalen)
+void bsdbf_ecb_dec(bsdbf_ctx_t *state, uint8_t *data, uint32_t datalen)
 {
 	if (datalen % 8) return;
 	while (datalen) {
@@ -256,7 +253,7 @@ void blf_ecb_decrypt(blf_ctx *state, uint8_t *data, uint32_t datalen)
  * datalen MUST be a multiple of 8. iv is 8 bytes and is updated on return.
  * Input/output is big-endian block order.
  */
-void blf_cbc_encrypt(blf_ctx *state, uint8_t *iv, uint8_t *data, uint32_t datalen)
+void bsdbf_cbc_enc(bsdbf_ctx_t *state, uint8_t *iv, uint8_t *data, uint32_t datalen)
 {
 	if (datalen % 8) return;
 	uint32_t IVL, IVR;
@@ -275,7 +272,7 @@ void blf_cbc_encrypt(blf_ctx *state, uint8_t *iv, uint8_t *data, uint32_t datale
 	blf_store_be(iv, IVL, IVR);
 }
 
-void blf_cbc_decrypt(blf_ctx *state, uint8_t *iv, uint8_t *data, uint32_t datalen)
+void bsdbf_cbc_dec(bsdbf_ctx_t *state, uint8_t *iv, uint8_t *data, uint32_t datalen)
 {
 	if (datalen % 8) return;
 	uint32_t IVL, IVR;
@@ -301,35 +298,35 @@ void blf_cbc_decrypt(blf_ctx *state, uint8_t *iv, uint8_t *data, uint32_t datale
  * (e.g., bcrypt), matching the OpenBSD/Eksblowfish approach.
  *
  * Calling sequence for bcrypt/Eksblowfish:
- *     Blowfish_initstate(ctx);
- *     Blowfish_expandstate(ctx, salt, saltlen, key, keylen);
+ *     bsdbf_init(ctx);
+ *     bsdbf_expst5(key, keylen, salt, saltlen, ctx);
  *     repeat cost times:
- *         Blowfish_expand0state(ctx, key, keylen);
- *         Blowfish_expand0state(ctx, salt, saltlen);
- * After expansion, use Blowfish_encipher on blocks from the magic string
+ *         bsdbf_expst3(key, keylen, ctx);
+ *         bsdbf_expst3(salt, saltlen, ctx);
+ * After expansion, use bsdbf_enciph on blocks from the magic string
  * "OrpheanBeholderScryDoubt" (see bcrypt spec).
  */
 
 /* Fill cipher context with Pi digits (standard initialization, no key material) */
-void Blowfish_initstate(blf_ctx *c)
+void bsdbf_init(bsdbf_ctx_t *c)
 {
 	memcpy(c, &blf_init_state, sizeof(blf_init_state));
 }
 
 /* Encipher one 64-bit block (same as blf_encrypt_block, needed for API) */
-void Blowfish_encipher(blf_ctx *c, uint32_t *L, uint32_t *R)
+void bsdbf_enciph(bsdbf_ctx_t *c, uint32_t *L, uint32_t *R)
 {
 	blf_encrypt_block(c, L, R);
 }
 
 /* Decipher one 64-bit block (same as blf_decrypt_block, needed for API) */
-void Blowfish_decipher(blf_ctx *c, uint32_t *L, uint32_t *R)
+void bsdbf_deciph(bsdbf_ctx_t *c, uint32_t *L, uint32_t *R)
 {
 	blf_decrypt_block(c, L, R);
 }
 
 /* Extract 32 bits from input stream in big-endian order, wrapping as needed */
-uint32_t Blowfish_stream2word(const uint8_t *data, uint16_t len, uint16_t *offset)
+uint32_t bsdbf_strtowrd(const uint8_t *data, uint16_t len, uint16_t *offset)
 {
 	uint32_t word = 0;
 	for (int i = 0; i < 4; i++) {
@@ -341,18 +338,18 @@ uint32_t Blowfish_stream2word(const uint8_t *data, uint16_t len, uint16_t *offse
 }
 
 /* Expand state with a single stream (key or salt); classic Eksblowfish helper */
-void Blowfish_expand0state(blf_ctx *c, const uint8_t *data, uint16_t len)
+void bsdbf_expst3(bsdbf_ctx_t *c, const uint8_t *data, uint16_t len)
 {
 	uint16_t off = 0;
 	uint32_t L = 0, R = 0;
 
 	/* XOR each P-array entry with 32-bit words from input stream */
-	for (int i = 0; i < BLF_P_COUNT; i++) {
-		c->P[i] ^= Blowfish_stream2word(data, len, &off);
+	for (int i = 0; i < BSDBF_P_COUNT; i++) {
+		c->P[i] ^= bsdbf_strtowrd(data, len, &off);
 	}
 
 	/* Encrypt the evolving 64-bit block, overwrite P-array with outputs */
-	for (int i = 0; i < BLF_P_COUNT; i += 2) {
+	for (int i = 0; i < BSDBF_P_COUNT; i += 2) {
 		blf_encrypt_block(c, &L, &R);
 		c->P[i] = L;
 		c->P[i + 1] = R;
@@ -373,7 +370,7 @@ void Blowfish_expand0state(blf_ctx *c, const uint8_t *data, uint16_t len)
  * Alternately XOR salt and key words into L and R, encipher, overwrite
  * P-array and S-box entries.
  */
-void Blowfish_expandstate(blf_ctx *c,
+void bsdbf_expst5(bsdbf_ctx_t *c,
 	const uint8_t *salt, uint16_t saltlen,
 	const uint8_t *key,  uint16_t keylen)
 {
@@ -381,9 +378,9 @@ void Blowfish_expandstate(blf_ctx *c,
 	uint32_t L = 0, R = 0;
 
 	/* P-array update: traverse by pairs, alternately mixing salt and key */
-	for (int i = 0; i < BLF_P_COUNT; i += 2) {
-		L ^= Blowfish_stream2word(salt, saltlen, &off_s);
-		R ^= Blowfish_stream2word(key, keylen, &off_k);
+	for (int i = 0; i < BSDBF_P_COUNT; i += 2) {
+		L ^= bsdbf_strtowrd(salt, saltlen, &off_s);
+		R ^= bsdbf_strtowrd(key, keylen, &off_k);
 		blf_encrypt_block(c, &L, &R);
 		c->P[i] = L;
 		c->P[i + 1] = R;
@@ -392,8 +389,8 @@ void Blowfish_expandstate(blf_ctx *c,
 	/* S-box update: exactly same pattern as P-array */
 	for (int box = 0; box < 4; box++) {
 		for (int i = 0; i < 256; i += 2) {
-			L ^= Blowfish_stream2word(salt, saltlen, &off_s);
-			R ^= Blowfish_stream2word(key, keylen, &off_k);
+			L ^= bsdbf_strtowrd(salt, saltlen, &off_s);
+			R ^= bsdbf_strtowrd(key, keylen, &off_k);
 			blf_encrypt_block(c, &L, &R);
 			c->S[box][i] = L;
 			c->S[box][i + 1] = R;
