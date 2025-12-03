@@ -96,7 +96,7 @@ static void convert_ioctl_struct(const struct ioctl_compat_map *map, char *old, 
 		convert_ioctl_struct(map+2, old+4, new+8, dir);
 		/* snd_pcm_mmap_control, special-cased due to kernel
 		 * type definition having been botched. */
-		int adj = BYTE_ORDER==BIG_ENDIAN ? 4 : 0;
+		int adj = (__BYTE_ORDER == __BIG_ENDIAN) ? 4 : 0;
 		convert_ioctl_struct(map+3, old+68, new+72+adj, dir);
 		convert_ioctl_struct(map+3, old+72, new+76+3*adj, dir);
 		return;
