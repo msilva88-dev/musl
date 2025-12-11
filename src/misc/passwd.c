@@ -286,12 +286,12 @@ static int pw_write_entry(FILE *to, const struct passwd *pw)
 	if (pw->pw_gid == (gid_t)-1)
 		strlcpy(gidstr, "-1", sizeof(gidstr));
 	else
-		snprintf(gidstr, sizeof(gidstr), "%u", (u_int)pw->pw_gid);
+		snprintf(gidstr, sizeof(gidstr), "%u", (unsigned int)pw->pw_gid);
 
 	if (pw->pw_uid == (uid_t)-1)
 		strlcpy(uidstr, "-1", sizeof(uidstr));
 	else
-		snprintf(uidstr, sizeof(uidstr), "%u", (u_int)pw->pw_uid);
+		snprintf(uidstr, sizeof(uidstr), "%u", (unsigned int)pw->pw_uid);
 
 	return fprintf(to, "%s:%s:%s:%s:%s:%lld:%lld:%s:%s:%s\n",
 	    pw->pw_name, pw->pw_passwd, uidstr, gidstr, pw->pw_class,
