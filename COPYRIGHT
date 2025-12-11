@@ -398,6 +398,10 @@ The implementation of icdb (src/misc/icdb.c) is
 Copyright © 2015 Ted Unangst <tedu@openbsd.org>
 It is licensed under a ISC license.
 
+The implementation of duid (src/misc/duid.c) is
+Copyright © 2015 Joel Sing <jsing@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of res_search_async (src/network/res_search_async.c) is
 Copyright © 2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
