@@ -194,7 +194,7 @@ Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
 The implementation of pwcache (src/passwd/pwcache.c) is
-Copyright © 1992 Keith Muller.
+Copyright © 1992 Keith Muller, and
 Copyright © 1992, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
@@ -203,7 +203,7 @@ Copyright © 1990, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
 The implementation of rcmd (src/unistd/rcmd.c) is
-Copyright © 1995, 1996, 1998 Theo de Raadt.
+Copyright © 1995, 1996, 1998 Theo de Raadt, and
 Copyright © 1983, 1993, 1994 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
@@ -212,12 +212,12 @@ Copyright © 2001 MagniComp.
 It is licensed under a three-clause BSD license.
 
 The implementation of rresvport (src/unistd/rresvport.c) is
-Copyright © 1995, 1996, 1998 Theo de Raadt.
+Copyright © 1995, 1996, 1998 Theo de Raadt, and
 Copyright © 1983, 1993, 1994 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
 The implementation of ruserok (src/unistd/ruserok.c) is
-Copyright © 1995, 1996, 1998 Theo de Raadt.
+Copyright © 1995, 1996, 1998 Theo de Raadt, and
 Copyright © 1983, 1993, 1994 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
@@ -265,18 +265,18 @@ The implementation of vis (src/misc/vis.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of pidfile (src/misc/pidfile.c) is
+Copyright © 1999 The NetBSD Foundation, Inc.
+It is derived from software contributed to The NetBSD Foundation
+by Jason R. Thorpe.
+It is licensed under a two-clause BSD license.
+
 The implementation of rmd160 (src/crypt/hash_rmd160.c) is
 Copyright © 2001 Markus Friedl.
 It is licensed under a two-clause BSD license.
 
 The implementation of rmd160 header (include/rmd160.h) is
 Copyright © 2001 Markus Friedl.
-It is licensed under a two-clause BSD license.
-
-The implementation of pidfile (src/misc/pidfile.c) is
-Copyright © 1999 The NetBSD Foundation, Inc.
-It is derived from software contributed to The NetBSD Foundation
-by Jason R. Thorpe.
 It is licensed under a two-clause BSD license.
 
 The implementation of setproctitle (src/bsd/setproctitle.c) is
@@ -395,7 +395,7 @@ Copyright © 2001 Jakob Schlyter.
 It is licensed under a two-clause BSD license.
 
 The implementation of icdb (src/misc/icdb.c) is
-Copyright © 2015 Ted Unangst <tedu@openbsd.org>
+Copyright © 2015 Ted Unangst <tedu@openbsd.org>.
 It is licensed under a ISC license.
 
 The implementation of duid (src/misc/duid.c) is
