@@ -269,6 +269,12 @@ The implementation of rmd160 header (include/rmd160.h) is
 Copyright © 2001 Markus Friedl.
 It is licensed under a two-clause BSD license.
 
+The implementation of pidfile (src/misc/pidfile.c) is
+Copyright © 1999 The NetBSD Foundation, Inc.
+It is derived from software contributed to The NetBSD Foundation
+by Jason R. Thorpe.
+It is licensed under a two-clause BSD license.
+
 The implementation of setproctitle (src/bsd/setproctitle.c) is
 Copyright © 1995 Peter Wemm.
 It is licensed under a two-clause BSD license.
