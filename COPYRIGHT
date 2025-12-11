@@ -241,6 +241,10 @@ The implementation of siphash header (include/siphash.h) is
 Copyright © 2013 Andre Oppermann.
 It is licensed under a three-clause BSD license.
 
+The implementation of fmt_scaled and scan_scaled (src/misc/fmt_scaled.c) is
+Copyright © 2001, 2002, 2003 Ian F. Darwin.
+It is licensed under a three-clause BSD license.
+
 The implementation of strmode (src/string/strmode.c) is
 Copyright © 1990 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
