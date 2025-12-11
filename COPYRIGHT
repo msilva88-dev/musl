@@ -193,6 +193,10 @@ The implementation of nlist (src/misc/nlist.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of passwd (src/misc/passwd.c) is
+Copyright © 1987, 1993, 1994, 1995 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of pwcache (src/passwd/pwcache.c) is
 Copyright © 1992 Keith Muller, and
 Copyright © 1992, 1993 The Regents of the University of California.
