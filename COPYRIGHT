@@ -375,14 +375,6 @@ The implementation of arc4random_uniform (src/stdlib/arc4random_uniform.c) is
 Copyright © 2008 Damien Miller <djm@openbsd.org>.
 It is licensed under a ISC license.
 
-The implementation of pw_dup (src/passwd/pw_dup.c) is
-Copyright © 2000, 2002 Todd C. Miller <millert@openbsd.org>.
-It is licensed under a ISC license.
-
-The implementation of readpassphrase (src/passwd/readpassphrase.c) is
-Copyright © 2000-2002, 2007, 2010 Todd C. Miller <millert@openbsd.org>.
-It is licensed under a ISC license.
-
 The implementation of asr (src/network/asr.c) is
 Copyright © 2010-2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
@@ -407,6 +399,10 @@ The implementation of bcrypt pbkdf (src/misc/bcrypt_pbkdf.c) is
 Copyright © 2013 Ted Unangst <tedu@openbsd.org>.
 It is licensed under a ISC license.
 
+The implementation of duid (src/misc/duid.c) is
+Copyright © 2015 Joel Sing <jsing@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of getaddrinfo_async (src/network/getaddrinfo_async.c) is
 Copyright © 2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
@@ -427,23 +423,20 @@ The implementation of getrrsetbyname (src/network/getrrsetbyname.c) is
 Copyright © 2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
 
-The implementation of getrrsetbyname_async (src/network/getrrsetbyname_async.c) is
-Copyright © 2012 Eric Faurot <eric@openbsd.org>, and
-Copyright © 1999-2001 Internet Software Consortium.
-It is licensed under a ISC license.
-Copyright © 2001 Jakob Schlyter.
-It is licensed under a two-clause BSD license.
-
 The implementation of icdb (src/misc/icdb.c) is
 Copyright © 2015 Ted Unangst <tedu@openbsd.org>.
 It is licensed under a ISC license.
 
-The implementation of duid (src/misc/duid.c) is
-Copyright © 2015 Joel Sing <jsing@openbsd.org>.
-It is licensed under a ISC license.
-
 The implementation of pkcs5 pbkdf2 (src/misc/pkcs5_pbkdf2.c) is
 Copyright © 2008 Damien Bergamini <damien.bergamini@free.fr>.
+It is licensed under a ISC license.
+
+The implementation of pw_dup (src/passwd/pw_dup.c) is
+Copyright © 2000, 2002 Todd C. Miller <millert@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of readpassphrase (src/passwd/readpassphrase.c) is
+Copyright © 2000-2002, 2007, 2010 Todd C. Miller <millert@openbsd.org>.
 It is licensed under a ISC license.
 
 The implementation of res_search_async (src/network/res_search_async.c) is
@@ -453,6 +446,13 @@ It is licensed under a ISC license.
 The implementation of res_send_async (src/network/res_send_async.c) is
 Copyright © 2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
+
+The implementation of getrrsetbyname_async (src/network/getrrsetbyname_async.c) is
+Copyright © 2012 Eric Faurot <eric@openbsd.org>, and
+Copyright © 1999-2001 Internet Software Consortium.
+It is licensed under a ISC license.
+Copyright © 2001 Jakob Schlyter.
+It is licensed under a two-clause BSD license.
 
 The implementation of blowfish crypt (src/crypt/crypt_blowfish.c) was
 originally written by Solar Designer and placed into the public
