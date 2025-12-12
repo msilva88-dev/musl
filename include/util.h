@@ -15,6 +15,7 @@ int getptmfd(void);
 int isduid(const char *, int);
 void login(struct utmp *);
 int logout(const char *);
+void logwtmp(const char *, const char *, const char *);
 int pidfile(const char *);
 int pw_abort(void);
 void pw_copy(int, int, const struct passwd *, const struct passwd *);
