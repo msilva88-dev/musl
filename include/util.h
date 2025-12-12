@@ -17,6 +17,7 @@ int getptmfd(void);
 int getrawpartition(void);
 int isduid(const char *, int);
 void login(struct utmp *);
+void login_fbtab(const char *, uid_t, gid_t);
 int logout(const char *);
 void logwtmp(const char *, const char *, const char *);
 int pidfile(const char *);

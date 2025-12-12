@@ -137,6 +137,11 @@ Copyright © 1999-2019, Arm Limited.
 The implementation of DES for crypt (src/crypt/crypt_des.c) is
 Copyright © 1994 David Burren. It is licensed under a BSD license.
 
+The implementation in src/misc/login_fbtab.c is derived from code
+by Wietse Venema, licensed under permissive terms allowing redistribution
+and modification with preservation of copyright notice.
+See the file itself for details.
+
 The implementation of bsdlabel [disklabel] (src/bsd/bsdlabel.c) is
 Copyright © 1983, 1987, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
