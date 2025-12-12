@@ -438,6 +438,20 @@ The implementation of icdb (src/misc/icdb.c) is
 Copyright © 2015 Ted Unangst <tedu@openbsd.org>.
 It is licensed under a ISC license.
 
+The implementation of imsg (src/misc/imsg.c) is
+Copyright © 2003, 2004 Henning Brauer <henning@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of imsg-buffer (src/misc/imsg-buffer.c) is
+Copyright © 2003, 2004 Henning Brauer <henning@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of imsg header (include/imsg.h) is
+Copyright © 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>,
+Copyright © 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>, and
+Copyright © 2003, 2004 Henning Brauer <henning@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of ohash (src/misc/ohash.c) is
 Copyright © 1999, 2004 Marc Espie <espie@openbsd.org>.
 It is licensed under a ISC license.
