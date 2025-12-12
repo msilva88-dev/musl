@@ -399,6 +399,17 @@ The implementation of bcrypt pbkdf (src/misc/bcrypt_pbkdf.c) is
 Copyright © 2013 Ted Unangst <tedu@openbsd.org>.
 It is licensed under a ISC license.
 
+The implementation of ber (src/misc/ber.c) is
+Copyright © 2007, 2012 Reyk Floeter <reyk@openbsd.org>,
+Copyright © 2006, 2007 Claudio Jeker <claudio@openbsd.org>, and
+Copyright © 2006, 2007 Marc Balmer <mbalmer@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of ber header (include/ber.h) is
+Copyright © 2007, 2012 Reyk Floeter <reyk@openbsd.org>, and
+Copyright © 2006, 2007 Claudio Jeker <claudio@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of duid (src/misc/duid.c) is
 Copyright © 2015 Joel Sing <jsing@openbsd.org>.
 It is licensed under a ISC license.
