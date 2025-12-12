@@ -14,6 +14,7 @@ int fmt_scaled(long long, char *);
 int getptmfd(void);
 int isduid(const char *, int);
 void login(struct utmp *);
+int logout(const char *);
 int pidfile(const char *);
 int pw_abort(void);
 void pw_copy(int, int, const struct passwd *, const struct passwd *);
