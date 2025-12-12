@@ -11,7 +11,9 @@ extern "C" {
 pid_t fdforkpty(int, int *, char *, struct termios *, struct winsize *);
 int fdopenpty(int, int *, int *, char *, struct termios *, struct winsize *);
 int fmt_scaled(long long, char *);
+int getmaxpartitions(void);
 int getptmfd(void);
+int getrawpartition(void);
 int isduid(const char *, int);
 void login(struct utmp *);
 int logout(const char *);

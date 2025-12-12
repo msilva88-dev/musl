@@ -289,6 +289,18 @@ The implementation of vis (src/misc/vis.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of getmaxpartitions (src/misc/getmaxpartitions.c) is
+Copyright © 1996 The NetBSD Foundation, Inc.
+It is derived from software contributed to The NetBSD Foundation
+by Jason R. Thorpe.
+It is licensed under a two-clause BSD license.
+
+The implementation of getrawpartition (src/misc/getrawpartition.c) is
+Copyright © 1996 The NetBSD Foundation, Inc.
+It is derived from software contributed to The NetBSD Foundation
+by Jason R. Thorpe.
+It is licensed under a two-clause BSD license.
+
 The implementation of pidfile (src/misc/pidfile.c) is
 Copyright © 1999 The NetBSD Foundation, Inc.
 It is derived from software contributed to The NetBSD Foundation
