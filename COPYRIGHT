@@ -181,6 +181,10 @@ The implementation of heapsort (src/stdlib/heapsort.c) is
 Copyright © 1991, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of mergesort (src/misc/login.c) is
+Copyright © 1988, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of mergesort (src/stdlib/mergesort.c) is
 Copyright © 1992, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
