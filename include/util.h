@@ -8,6 +8,7 @@ extern "C" {
 #include <pty.h>
 #include <utmp.h>
 
+int bcrypt_pbkdf(const char *, size_t, const uint8_t *, size_t, uint8_t *, size_t, unsigned int);
 pid_t fdforkpty(int, int *, char *, struct termios *, struct winsize *);
 int fdopenpty(int, int *, int *, char *, struct termios *, struct winsize *);
 int fmt_scaled(long long, char *);
@@ -19,6 +20,7 @@ void login(struct utmp *);
 int logout(const char *);
 void logwtmp(const char *, const char *, const char *);
 int pidfile(const char *);
+int pkcs5_pbkdf2(const char *, size_t, const uint8_t *, size_t, uint8_t *, size_t, unsigned int);
 int pw_abort(void);
 void pw_copy(int, int, const struct passwd *, const struct passwd *);
 void pw_edit(int, const char *);

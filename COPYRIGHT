@@ -403,6 +403,10 @@ The implementation of asr_utils (src/network/asr_utils.c) is
 Copyright © 2009-2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
 
+The implementation of bcrypt pbkdf (src/misc/bcrypt_pbkdf.c) is
+Copyright © 2013 Ted Unangst <tedu@openbsd.org>.
+It is licensed under a ISC license.
+
 The implementation of getaddrinfo_async (src/network/getaddrinfo_async.c) is
 Copyright © 2012 Eric Faurot <eric@openbsd.org>.
 It is licensed under a ISC license.
@@ -436,6 +440,10 @@ It is licensed under a ISC license.
 
 The implementation of duid (src/misc/duid.c) is
 Copyright © 2015 Joel Sing <jsing@openbsd.org>.
+It is licensed under a ISC license.
+
+The implementation of pkcs5 pbkdf2 (src/misc/pkcs5_pbkdf2.c) is
+Copyright © 2008 Damien Bergamini <damien.bergamini@free.fr>.
 It is licensed under a ISC license.
 
 The implementation of res_search_async (src/network/res_search_async.c) is
