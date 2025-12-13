@@ -29,6 +29,7 @@
 
 /* login from OpenBSD 7.0 source code: lib/libutil/login.c */
 
+#define _BSD_SOURCE
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>

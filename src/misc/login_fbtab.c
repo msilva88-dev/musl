@@ -58,6 +58,7 @@
 	The Netherlands
  */
 
+#define _BSD_SOURCE
 #include <sys/stat.h>
 #include <errno.h>
 #include <dirent.h>

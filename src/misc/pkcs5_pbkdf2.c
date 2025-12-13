@@ -16,6 +16,7 @@
 
 /* pkcs5 pbkdf2 from OpenBSD 7.0 source code: lib/libutil/pkcs5_pbkdf2.c */
 
+#define _BSD_SOURCE
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>

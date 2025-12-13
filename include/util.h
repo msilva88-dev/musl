@@ -8,6 +8,7 @@ extern "C" {
 #include <pty.h>
 #include <utmp.h>
 
+#ifdef _BSD_SOURCE
 int bcrypt_pbkdf(const char *, size_t, const uint8_t *, size_t, uint8_t *, size_t, unsigned int);
 pid_t fdforkpty(int, int *, char *, struct termios *, struct winsize *);
 int fdopenpty(int, int *, int *, char *, struct termios *, struct winsize *);
@@ -38,6 +39,7 @@ int uu_lock(const char *);
 int uu_lock_txfr(const char *, pid_t);
 const char *uu_lockerr(int);
 int uu_unlock(const char *);
+#endif
 
 #ifdef __cplusplus
 }

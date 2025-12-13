@@ -29,6 +29,7 @@
 
 /* passwd from OpenBSD 7.0 source code: lib/libutil/passwd.c */
 
+#define _BSD_SOURCE
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>

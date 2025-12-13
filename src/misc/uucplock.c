@@ -29,6 +29,7 @@
 
 /* uucplock from OpenBSD 7.0 source code: lib/libutil/uucplock.c */
 
+#define _BSD_SOURCE
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>

@@ -29,6 +29,7 @@
 
 /* getmaxpartitions from OpenBSD 7.0 source code: lib/libutil/getmaxpartitions.c */
 
+#define _BSD_SOURCE
 #include <sys/sysctl.h>
 #include <stdio.h> /* for NULL */
 #include <util.h>

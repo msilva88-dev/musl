@@ -16,6 +16,7 @@
 
 /* bcrypt pbkdf from OpenBSD 7.0 source code: lib/libutil/bcrypt_pbkdf.c */
 
+#define _BSD_SOURCE
 #include <stdint.h>
 #include <stdlib.h>
 #include <blf.h>

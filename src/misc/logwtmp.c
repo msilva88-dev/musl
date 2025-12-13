@@ -29,6 +29,7 @@
 
 /* logwtmp from OpenBSD 7.0 source code: lib/libutil/logwtmp.c */
 
+#define _BSD_SOURCE
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>

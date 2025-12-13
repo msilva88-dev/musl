@@ -29,6 +29,7 @@
 
 /* pidfile from OpenBSD 7.0 source code: lib/libutil/pidfile.c */
 
+#define _BSD_SOURCE
 #include <errno.h>
 #include <paths.h>
 #include <stdio.h>
