@@ -412,18 +412,20 @@ struct ip6_mtuinfo {
 #define __UAPI_DEF_IP6_MTUINFO  0
 
 #ifdef _BSD_SOURCE
-int inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type, socklen_t len, u_int8_t align, void **databufp);
-int inet6_opt_find(void *extbuf, socklen_t extlen, int offset, u_int8_t type, socklen_t *lenp, void **databufp);
+int inet6_opt_append(void *extbuf, socklen_t extlen, int offset, uint8_t type, socklen_t len, uint8_t align, void **databufp);
+int inet6_opt_find(void *extbuf, socklen_t extlen, int offset, uint8_t type, socklen_t *lenp, void **databufp);
 int inet6_opt_finish(void *extbuf, socklen_t extlen, int offset);
 int inet6_opt_get_val(void *databuf, socklen_t offset, void *val, socklen_t vallen);
 int inet6_opt_init(void *extbuf, socklen_t extlen);
-int inet6_opt_next(void *extbuf, socklen_t extlen, int offset, u_int8_t *typep, socklen_t *lenp, void **databufp);
+int inet6_opt_next(void *extbuf, socklen_t extlen, int offset, uint8_t *typep, socklen_t *lenp, void **databufp);
 socklen_t inet6_rth_space(int, int);
 int inet6_opt_set_val(void *databuf, int offset, void *val, socklen_t vallen);
 void *inet6_rth_init(void *, socklen_t, int, int);
 int inet6_rth_add(void *, const struct in6_addr *);
 int inet6_rth_reverse(const void *, void *);
 int inet6_rth_segments(const void *);
+int bindresvport(int, struct sockaddr_in *);
+int bindresvport_sa(int, struct sockaddr *);
 #endif
 
 #ifdef __cplusplus
