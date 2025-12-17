@@ -286,7 +286,11 @@ The implementation of RPC client header (include/rpc/clnt.h) is
 Copyright © 2010 Oracle America, Inc.
 It is licensed under a three-clause BSD license.
 
-The implementation of RPC header (include/rpc/rpc.h) is
+The implementation of RPC pmap protocol header (include/rpc/pmap_prot.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC pmap remote header (include/rpc/pmap_rmt.h) is
 Copyright © 2010 Oracle America, Inc.
 It is licensed under a three-clause BSD license.
 
@@ -295,6 +299,10 @@ Copyright © 2010 Oracle America, Inc.
 It is licensed under a three-clause BSD license.
 
 The implementation of RPC server-side header (include/rpc/svc.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR header (include/rpc/xdr.h) is
 Copyright © 2010 Oracle America, Inc.
 It is licensed under a three-clause BSD license.
 

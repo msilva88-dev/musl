@@ -30,54 +30,35 @@
  */
 
 /*
- * auth_unix.h, Protocol for UNIX style authentication parameters for RPC
+ * Structures and XDR routines for parameters to and replies from
+ * the portmapper remote-call-service.
  */
 
-/*
- * The system is very weak.  The client uses no encryption for  it
- * credentials and only sends null verifiers.  The server sends backs
- * null verifiers or optionally a verifier that suggests a new short hand
- * for the credentials.
- */
-
-#ifndef _RPC_AUTH_UNIX_H
-#define _RPC_AUTH_UNIX_H
+#ifndef _RPC_PMAPRMT_H
+#define _RPC_PMAPRMT_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* The machine name is part of a credential; it may not exceed 255 bytes */
-#define MAX_MACHINE_NAME 255
-
-/* gids compose part of a credential; there may not be more than 16 of them */
-#define NGRPS 16
-
-/*
- * Unix style credentials.
- */
-struct authunix_parms {
-	unsigned long aup_time;
-	char *aup_machname;
-	int aup_uid;
-	int aup_gid;
-	unsigned int aup_len;
-	int *aup_gids;
+struct rmtcallargs {
+	unsigned long prog, vers, proc, arglen;
+	caddr_t args_ptr;
+	xdrproc_t xdr_args;
 };
 
-bool_t xdr_authunix_parms(XDR *, struct authunix_parms *);
-
-/*
- * If a response verifier has flavor AUTH_SHORT,
- * then the body of the response verifier encapsulates the following structure;
- * again it is serialized in the obvious fashion.
- */
-struct short_hand_verf {
-	struct opaque_auth new_cred;
+struct rmtcallres {
+	unsigned long *port_ptr;
+	unsigned long resultslen;
+	caddr_t results_ptr;
+	xdrproc_t xdr_results;
 };
+
+bool_t xdr_rmtcall_args(XDR *, struct rmtcallargs *);
+bool_t xdr_rmtcallres(XDR *, struct rmtcallres *);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* !_RPC_AUTH_UNIX_H */
+#endif /* !_RPC_PMAPRMT_H */
