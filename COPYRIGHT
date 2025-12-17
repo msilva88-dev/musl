@@ -274,6 +274,174 @@ The implementation of fmt_scaled and scan_scaled (src/misc/fmt_scaled.c) is
 Copyright © 2001, 2002, 2003 Ian F. Darwin.
 It is licensed under a three-clause BSD license.
 
+The implementation of RPC auth header (include/rpc/auth.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC auth unix header (include/rpc/auth_unix.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC client header (include/rpc/clnt.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC header (include/rpc/rpc.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC message header (include/rpc/rpc_msg.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side header (include/rpc/svc.h) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC auth none (src/network/rpc_auth_none.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC auth unix (src/network/rpc_auth_unix.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC auth unix protection (src/network/rpc_authunix_prot.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC call message (src/network/rpc_callmsg.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC client generic (src/network/rpc_clnt_generic.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC client print error (src/network/rpc_clnt_perror.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC client RAW (src/network/rpc_clnt_raw.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC client simple (src/network/rpc_clnt_simple.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC client TCP (src/network/rpc_clnt_tcp.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC client UDP (src/network/rpc_clnt_udp.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC common data (src/network/rpc_commondata.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC get my address (src/network/rpc_get_myaddress.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC get RPC ent (src/network/rpc_getrpcent.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC get RPC port (src/network/rpc_getrpcport.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC pmap client (src/network/rpc_pmap_clnt.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC pmap get maps (src/network/rpc_pmap_getmaps.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC pmap get port (src/network/rpc_pmap_getport.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC pmap protocol (src/network/rpc_pmap_prot.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC pmap protocol 2 (src/network/rpc_pmap_prot2.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC pmap remote (src/network/rpc_pmap_rmt.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC protection (src/network/rpc_prot.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side (src/network/rpc_svc.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side auth (src/network/rpc_svc_auth.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side auth unix (src/network/rpc_svc_auth_unix.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side RAW (src/network/rpc_svc_raw.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side run (src/network/rpc_svc_run.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side simple (src/network/rpc_svc_simple.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side TCP (src/network/rpc_svc_tcp.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC server-side UDP (src/network/rpc_svc_udp.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR (src/network/rpc_xdr.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR array (src/network/rpc_xdr_array.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR float (src/network/rpc_xdr_float.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR memory (src/network/rpc_xdr_mem.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR record (src/network/rpc_xdr_rec.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR reference (src/network/rpc_xdr_reference.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
+The implementation of RPC XDR standard I/O (src/network/rpc_xdr_stdio.c) is
+Copyright © 2010 Oracle America, Inc.
+It is licensed under a three-clause BSD license.
+
 The implementation of strmode (src/string/strmode.c) is
 Copyright © 1990 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
@@ -302,11 +470,6 @@ The implementation of vis (src/misc/vis.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
-The implementation of bindresvport (src/network/bindresvport.c) is
-Copyright © 1996 Jason Downs, and
-Copyright © 1998 Theo de Raadt.
-It is licensed under a two-clause BSD license.
-
 The implementation of getmaxpartitions (src/misc/getmaxpartitions.c) is
 Copyright © 1996 The NetBSD Foundation, Inc.
 It is derived from software contributed to The NetBSD Foundation
@@ -331,6 +494,11 @@ It is licensed under a two-clause BSD license.
 
 The implementation of rmd160 header (include/rmd160.h) is
 Copyright © 2001 Markus Friedl.
+It is licensed under a two-clause BSD license.
+
+The implementation of RPC bindresvport (src/network/rpc_bindresvport.c) is
+Copyright © 1996 Jason Downs, and
+Copyright © 1998 Theo de Raadt.
 It is licensed under a two-clause BSD license.
 
 The implementation of setproctitle (src/bsd/setproctitle.c) is

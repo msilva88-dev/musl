@@ -35,23 +35,23 @@
 /*
  * Bind a socket to a privileged IP port
  */
-int bindresvport(int sd, struct sockaddr_in *sin)
+int __bindresvport(int sd, struct sockaddr_in *sin)
 {
 	return bindresvport_sa(sd, (struct sockaddr *)sin);
 }
-DEF_WEAK(bindresvport);
+weak_alias(__bindresvport, bindresvport);
 
 /*
  * Bind a socket to a privileged port for whatever protocol.
  */
-int bindresvport_sa(int sd, struct sockaddr *sa)
+int __bindresvport_sa(int sd, struct sockaddr *sa)
 {
 	int old, error, af;
 	struct sockaddr_storage myaddr;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 	int proto, portrange, portlow;
-	u_int16_t port;
+	uint16_t port;
 	socklen_t salen;
 
 	if (sa == NULL) {
@@ -121,4 +121,4 @@ int bindresvport_sa(int sd, struct sockaddr *sa)
 	}
 	return error;
 }
-DEF_WEAK(bindresvport_sa);
+weak_alias(__bindresvport_sa, bindresvport_sa);
