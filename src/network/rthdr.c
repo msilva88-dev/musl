@@ -40,7 +40,7 @@
  * RFC3542 (2292bis) API
  */
 
-socklen_t inet6_rth_space(int type, int segments)
+socklen_t __inet6_rth_space(int type, int segments)
 {
 	switch (type) {
 	case IPV6_RTHDR_TYPE_0:
@@ -49,7 +49,7 @@ socklen_t inet6_rth_space(int type, int segments)
 		return 0; /* type not suppported */
 	}
 }
-DEF_WEAK(inet6_rth_space);
+weak_alias(__inet6_rth_space, inet6_rth_space);
 
 void *inet6_rth_init(void *bp, socklen_t bp_len, int type, int segments)
 {
