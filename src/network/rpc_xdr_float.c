@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* xdr_float from OpenBSD 7.0 source code: lib/libc/rpc/xdr_float.c */
+
 /*
  * xdr_float.c, Generic XDR routines implementation.
  *

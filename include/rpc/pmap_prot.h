@@ -30,6 +30,11 @@
  */
 
 /*
+ * pmap_prot (rpc) header from OpenBSD 7.0 source code:
+ * include/rpc/pmap_prot.h
+ */
+
+/*
  * pmap_prot.h
  * Protocol for the local binder service, or pmap.
  *

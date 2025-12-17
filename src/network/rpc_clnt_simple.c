@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* clnt_simple from OpenBSD 7.0 source code: lib/libc/rpc/clnt_simple.c */
+
 /*
  * clnt_simple.c
  * Simplified front end to rpc.

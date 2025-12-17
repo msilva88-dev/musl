@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc_auth from OpenBSD 7.0 source code: lib/libc/rpc/svc_auth.c */
+
 /*
  * svc_auth_nodes.c, Server-side rpc authenticator interface,
  * *WITHOUT* DES authentication.

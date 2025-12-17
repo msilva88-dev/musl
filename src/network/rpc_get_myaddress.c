@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* get_myaddress from OpenBSD 7.0 source code: lib/libc/rpc/get_myaddress.c */
+
 /*
  * get_myaddress.c
  *

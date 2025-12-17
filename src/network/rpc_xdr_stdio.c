@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* xdr_stdio from OpenBSD 7.0 source code: lib/libc/rpc/xdr_stdio.c */
+
 /*
  * xdr_stdio.c, XDR implementation on standard i/o file.
  *

@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* auth (rpc) header from OpenBSD 7.0 source code: include/rpc/auth.h */
+
 /*
  * auth.h, Authentication interface.
  *

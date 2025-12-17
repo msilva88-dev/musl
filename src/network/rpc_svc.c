@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc from OpenBSD 7.0 source code: lib/libc/rpc/svc.c */
+
 /*
  * svc.c, Server-side remote procedure call interface.
  *

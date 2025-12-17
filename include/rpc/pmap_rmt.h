@@ -30,6 +30,11 @@
  */
 
 /*
+ * pmap_rmt (rpc) header from OpenBSD 7.0 source code:
+ * include/rpc/pmap_rmt.h
+ */
+
+/*
  * Structures and XDR routines for parameters to and replies from
  * the portmapper remote-call-service.
  */

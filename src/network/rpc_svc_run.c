@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc_run from OpenBSD 7.0 source code: lib/libc/rpc/svc_run.c */
+
 /*
  * This is the rpc server side idle loop
  * Wait for input, call server program.

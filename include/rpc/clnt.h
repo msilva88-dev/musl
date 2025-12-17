@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* clnt (rpc) header from OpenBSD 7.0 source code: include/rpc/clnt.h */
+
 /*
  * clnt.h - Client side remote procedure call interface.
  */

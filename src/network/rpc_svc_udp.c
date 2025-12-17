@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc_udp from OpenBSD 7.0 source code: lib/libc/rpc/svc_udp.c */
+
 /*
  * svc_udp.c,
  * Server side for UDP/IP based RPC.  (Does some caching in the hopes of

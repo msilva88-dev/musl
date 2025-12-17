@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc_auth_unix from OpenBSD 7.0 source code: lib/libc/rpc/svc_auth_unix.c */
+
 /*
  * svc_auth_unix.c
  * Handles UNIX flavor authentication parameters on the service side of rpc.

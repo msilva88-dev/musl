@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* getrpcent from OpenBSD 7.0 source code: lib/libc/rpc/getrpcent.c */
+
 #define _BSD_SOURCE
 #include <stdio.h>
 #include <stdlib.h>

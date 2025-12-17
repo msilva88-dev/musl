@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* pmap_rmt from OpenBSD 7.0 source code: lib/libc/rpc/pmap_rmt.c */
+
 /*
  * pmap_rmt.c
  * Client interface to pmap rpc service.

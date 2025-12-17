@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc_raw from OpenBSD 7.0 source code: lib/libc/rpc/svc_raw.c */
+
 /*
  * svc_raw.c,   This a toy for simple testing and timing.
  * Interface to create an rpc client and server in the same UNIX process.

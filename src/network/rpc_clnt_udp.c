@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* clnt_udp from OpenBSD 7.0 source code: lib/libc/rpc/clnt_udp.c */
+
 /*
  * clnt_udp.c, Implements a UDP/IP based, client side RPC.
  */

@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* xdr (rpc) header from OpenBSD 7.0 source code: include/rpc/xdr.h */
+
 /*
  * xdr.h, External Data Representation Serialization Routines.
  */

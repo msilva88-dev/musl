@@ -30,6 +30,11 @@
  */
 
 /*
+ * auth_unix (rpc) header from OpenBSD 7.0 source code:
+ * include/rpc/auth_unix.h
+ */
+
+/*
  * auth_unix.h, Protocol for UNIX style authentication parameters for RPC
  */
 

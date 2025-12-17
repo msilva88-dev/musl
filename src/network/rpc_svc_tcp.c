@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc_tcp from OpenBSD 7.0 source code: lib/libc/rpc/svc_tcp.c */
+
 /*
  * svc_tcp.c, Server side for TCP/IP based RPC.
  *

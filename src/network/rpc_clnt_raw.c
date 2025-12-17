@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* clnt_raw from OpenBSD 7.0 source code: lib/libc/rpc/clnt_raw.c */
+
 /*
  * clnt_raw.c
  *

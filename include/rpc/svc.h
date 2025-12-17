@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc (rpc) header from OpenBSD 7.0 source code: include/rpc/svc.h */
+
 /*
  * svc.h, Server-side remote procedure call interface.
  */

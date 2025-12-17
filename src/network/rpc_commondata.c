@@ -29,6 +29,11 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * rpc_commondata from OpenBSD 7.0 source code:
+ * lib/libc/rpc/rpc_commondata.c
+ */
+
 #define _BSD_SOURCE
 #include <rpc/rpc.h>
 /*

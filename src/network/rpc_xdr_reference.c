@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* xdr_reference from OpenBSD 7.0 source code: lib/libc/rpc/xdr_reference.c */
+
 /*
  * xdr_reference.c, Generic XDR routines implementation.
  *

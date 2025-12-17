@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* clnt_perror from OpenBSD 7.0 source code: lib/libc/rpc/clnt_perror.c */
+
 #define _BSD_SOURCE
 #include <stdio.h>
 #include <stdlib.h>

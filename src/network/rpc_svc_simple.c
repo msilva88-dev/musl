@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* svc_simple from OpenBSD 7.0 source code: lib/libc/rpc/svc_simple.c */
+
 /*
  * svc_simple.c
  * Simplified front end to rpc.

@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* rpc_msg (rpc) header from OpenBSD 7.0 source code: include/rpc/rpc_msg.h */
+
 /*
  * rpc_msg.h
  * rpc message definition

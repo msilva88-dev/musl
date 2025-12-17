@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* getrpcport from OpenBSD 7.0 source code: lib/libc/rpc/getrpcport.c */
+
 #define _BSD_SOURCE
 #include <stdio.h>
 #include <string.h>

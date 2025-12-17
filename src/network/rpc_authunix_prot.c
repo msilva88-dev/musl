@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* authunix_prot from OpenBSD 7.0 source code: lib/libc/rpc/authunix_prot.c */
+
 /*
  * authunix_prot.c
  * XDR for UNIX style authentication parameters for RPC

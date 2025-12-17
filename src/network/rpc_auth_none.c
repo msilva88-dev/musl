@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* auth_none from OpenBSD 7.0 source code: lib/libc/rpc/auth_none.c */
+
 /*
  * auth_none.c
  * Creates a client authentication handle for passing "null"

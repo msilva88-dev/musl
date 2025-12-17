@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* auth_unix from OpenBSD 7.0 source code: lib/libc/rpc/auth_unix.c */
+
 /*
  * auth_unix.c, Implements UNIX style authentication parameters.
  *

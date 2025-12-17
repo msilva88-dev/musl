@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* xdr_rec from OpenBSD 7.0 source code: lib/libc/rpc/xdr_rec.c */
+
 /*
  * xdr_rec.c, Implements TCP/IP based XDR streams with a "record marking"
  * layer above tcp (for rpc's use).

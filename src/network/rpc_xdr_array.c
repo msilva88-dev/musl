@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* xdr_array from OpenBSD 7.0 source code: lib/libc/rpc/xdr_array.c */
+
 /*
  * xdr_array.c, Generic XDR routines implementation.
  *

@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* rpc_callmsg from OpenBSD 7.0 source code: lib/libc/rpc/rpc_callmsg.c */
+
 #define _BSD_SOURCE
 #include <stdlib.h>
 #include <string.h>

@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* pmap_prot2 from OpenBSD 7.0 source code: lib/libc/rpc/pmap_prot2.c */
+
 /*
  * pmap_prot2.c
  * Protocol for the local binder service, or pmap.

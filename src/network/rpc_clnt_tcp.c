@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* clnt_tcp from OpenBSD 7.0 source code: lib/libc/rpc/clnt_tcp.c */
+
 /*
  * clnt_tcp.c, Implements a TCP/IP based, client side RPC.
  *

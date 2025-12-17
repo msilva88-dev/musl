@@ -29,6 +29,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* rpc_prot from OpenBSD 7.0 source code: lib/libc/rpc/rpc_prot.c */
+
 /*
  * rpc_prot.c
  *
