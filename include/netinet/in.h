@@ -424,8 +424,6 @@ void *inet6_rth_init(void *, socklen_t, int, int);
 int inet6_rth_add(void *, const struct in6_addr *);
 int inet6_rth_reverse(const void *, void *);
 int inet6_rth_segments(const void *);
-int bindresvport(int, struct sockaddr_in *);
-int bindresvport_sa(int, struct sockaddr *);
 #endif
 
 #ifdef __cplusplus

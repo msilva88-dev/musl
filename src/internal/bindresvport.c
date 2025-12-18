@@ -23,7 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* bindresvport from OpenBSD 7.0 source code: lib/libc/rpc/bindresvport.c */
+/*
+ * Internal bindresvport from OpenBSD 7.0 source code:
+ * lib/libc/rpc/bindresvport.c
+ */
 
 #define _BSD_SOURCE
 #include <errno.h>
@@ -31,15 +34,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
-/*
- * Bind a socket to a privileged IP port
- */
-int __bindresvport(int sd, struct sockaddr_in *sin)
-{
-	return bindresvport_sa(sd, (struct sockaddr *)sin);
-}
-weak_alias(__bindresvport, bindresvport);
 
 /*
  * Bind a socket to a privileged port for whatever protocol.
@@ -121,4 +115,3 @@ int __bindresvport_sa(int sd, struct sockaddr *sa)
 	}
 	return error;
 }
-weak_alias(__bindresvport_sa, bindresvport_sa);

@@ -49,6 +49,8 @@
 #include <stdlib.h>
 #include <netgroup.h>
 
+#include "bindresvport.h"
+
 int rresvport(int *alport)
 {
 	return rresvport_af(alport, AF_INET);
@@ -95,11 +97,11 @@ int __rresvport_af(int *alport, int af)
 
 	*portp = 0;
 	sa->sa_family = af;
-	if (bindresvport_sa(s, sa) == -1) {
+	if (__bindresvport_sa(s, sa) == -1) {
 		(void)close(s);
 		return -1;
 	}
 	*alport = ntohs(*portp);
 	return s;
 }
-weak_alias(rresvport_af, rresvport_af);
+weak_alias(__rresvport_af, rresvport_af);
