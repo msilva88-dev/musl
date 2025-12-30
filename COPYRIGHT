@@ -314,10 +314,25 @@ It is derived from software contributed to The NetBSD Foundation
 by Jason R. Thorpe.
 It is licensed under a two-clause BSD license.
 
+The implementation of openblkdev (src/misc/openblkdev.c) is
+Copyright © 1997 The NetBSD Foundation, Inc.
+It is derived from software contributed to The NetBSD Foundation
+by Luke Mewburn.
+It is licensed under a two-clause BSD license.
+
+The implementation of opendev (src/bsd/opendev.c) is
+Copyright © 2000 Todd C. Miller, and
+Copyright © 1996 Jason Downs.
+It is licensed under a two-clause BSD license.
+
 The implementation of pidfile (src/misc/pidfile.c) is
 Copyright © 1999 The NetBSD Foundation, Inc.
 It is derived from software contributed to The NetBSD Foundation
 by Jason R. Thorpe.
+It is licensed under a two-clause BSD license.
+
+The implementation of readlabels (src/bsd/readlabels.c) is
+Copyright © 1996 Jason Downs.
 It is licensed under a two-clause BSD license.
 
 The implementation of rmd160 (src/crypt/hash_rmd160.c) is
