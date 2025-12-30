@@ -21,6 +21,14 @@ void login(struct utmp *);
 void login_fbtab(const char *, uid_t, gid_t);
 int logout(const char *);
 void logwtmp(const char *, const char *, const char *);
+int openblkdev(const char *, int, char *, size_t, int);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+int opendev(const char *, int, int, char **);
+#endif
+int opendisk(const char *, int, char *, size_t, int);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+char *readlabelfs(char *, int);
+#endif
 int pidfile(const char *);
 int pkcs5_pbkdf2(const char *, size_t, const uint8_t *, size_t, uint8_t *, size_t, unsigned int);
 int pw_abort(void);
