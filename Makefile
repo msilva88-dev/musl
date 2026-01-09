@@ -9476,28 +9476,21 @@ $(DESTDIR)$(libdir)/rcrt1.o: $(libbuilddir)/rcrt1.o
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
 
-$(DESTDIR)$(includedir)/bits/alltypes.h.in: \
-  $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in
-	mkdir -p $$(dirname $@) 2>/dev/null || true
-	cp $< $@ && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/errno.h: \
-  $(srcdir)/arch/generic/bits/errno.h $(srcdir)/arch/$(ARCH)/bits/errno.h
+$(DESTDIR)$(includedir)/bits/errno.h: $(srcdir)/arch/generic/bits/errno.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/errno.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/errno.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/errno.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/fcntl.h: \
-  $(srcdir)/arch/generic/bits/fcntl.h $(srcdir)/arch/$(ARCH)/bits/fcntl.h
+$(DESTDIR)$(includedir)/bits/fcntl.h: $(srcdir)/arch/generic/bits/fcntl.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/fcntl.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/fcntl.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/fcntl.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/fenv.h: \
-  $(srcdir)/arch/generic/bits/fenv.h $(srcdir)/arch/$(ARCH)/bits/fenv.h
+$(DESTDIR)$(includedir)/bits/fenv.h: $(srcdir)/arch/generic/bits/fenv.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/fenv.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/fenv.h" "$@"; \
@@ -9507,24 +9500,21 @@ $(DESTDIR)$(includedir)/bits/fenv.h: \
 $(DESTDIR)$(includedir)/bits/float.h: $(srcdir)/arch/$(ARCH)/bits/float.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/hwcap.h: \
-  $(srcdir)/arch/generic/bits/hwcap.h $(srcdir)/arch/$(ARCH)/bits/hwcap.h
+$(DESTDIR)$(includedir)/bits/hwcap.h: $(srcdir)/arch/generic/bits/hwcap.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/hwcap.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/hwcap.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/hwcap.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/io.h: \
-  $(srcdir)/arch/generic/bits/io.h $(srcdir)/arch/$(ARCH)/bits/io.h
+$(DESTDIR)$(includedir)/bits/io.h: $(srcdir)/arch/generic/bits/io.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/io.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/io.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/io.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/ioctl.h: \
-  $(srcdir)/arch/generic/bits/ioctl.h $(srcdir)/arch/$(ARCH)/bits/ioctl.h
+$(DESTDIR)$(includedir)/bits/ioctl.h: $(srcdir)/arch/generic/bits/ioctl.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/ioctl.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/ioctl.h" "$@"; \
@@ -9532,80 +9522,70 @@ $(DESTDIR)$(includedir)/bits/ioctl.h: \
 	    cp "$(srcdir)/arch/generic/bits/ioctl.h" "$@"; \
 	fi && chmod 644 $@
 $(DESTDIR)$(includedir)/bits/ioctl_fix.h: \
-  $(srcdir)/arch/generic/bits/ioctl_fix.h \
-  $(srcdir)/arch/$(ARCH)/bits/ioctl_fix.h
+  $(srcdir)/arch/generic/bits/ioctl_fix.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/ioctl_fix.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/ioctl_fix.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/ioctl_fix.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/ipc.h: \
-  $(srcdir)/arch/generic/bits/ipc.h $(srcdir)/arch/$(ARCH)/bits/ipc.h
+$(DESTDIR)$(includedir)/bits/ipc.h: $(srcdir)/arch/generic/bits/ipc.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/ipc.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/ipc.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/ipc.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/ipcstat.h: \
-  $(srcdir)/arch/generic/bits/ipcstat.h $(srcdir)/arch/$(ARCH)/bits/ipcstat.h
+$(DESTDIR)$(includedir)/bits/ipcstat.h: $(srcdir)/arch/generic/bits/ipcstat.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/ipcstat.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/ipcstat.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/ipcstat.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/limits.h: \
-  $(srcdir)/arch/generic/bits/limits.h $(srcdir)/arch/$(ARCH)/bits/limits.h
+$(DESTDIR)$(includedir)/bits/limits.h: $(srcdir)/arch/generic/bits/limits.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/limits.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/limits.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/limits.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/link.h: \
-  $(srcdir)/arch/generic/bits/link.h $(srcdir)/arch/$(ARCH)/bits/link.h
+$(DESTDIR)$(includedir)/bits/link.h: $(srcdir)/arch/generic/bits/link.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/link.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/link.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/link.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/mman.h: \
-  $(srcdir)/arch/generic/bits/mman.h $(srcdir)/arch/$(ARCH)/bits/mman.h
+$(DESTDIR)$(includedir)/bits/mman.h: $(srcdir)/arch/generic/bits/mman.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/mman.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/mman.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/mman.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/msg.h: \
-  $(srcdir)/arch/generic/bits/msg.h $(srcdir)/arch/$(ARCH)/bits/msg.h
+$(DESTDIR)$(includedir)/bits/msg.h: $(srcdir)/arch/generic/bits/msg.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/msg.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/msg.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/msg.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/poll.h: \
-  $(srcdir)/arch/generic/bits/poll.h $(srcdir)/arch/$(ARCH)/bits/poll.h
+$(DESTDIR)$(includedir)/bits/poll.h: $(srcdir)/arch/generic/bits/poll.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/poll.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/poll.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/poll.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/ptrace.h: \
-  $(srcdir)/arch/generic/bits/ptrace.h $(srcdir)/arch/$(ARCH)/bits/ptrace.h
+$(DESTDIR)$(includedir)/bits/ptrace.h: $(srcdir)/arch/generic/bits/ptrace.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/ptrace.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/ptrace.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/ptrace.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/reg.h: \
-  $(srcdir)/arch/generic/bits/reg.h $(srcdir)/arch/$(ARCH)/bits/reg.h
+$(DESTDIR)$(includedir)/bits/reg.h: $(srcdir)/arch/generic/bits/reg.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/reg.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/reg.h" "$@"; \
@@ -9613,16 +9593,14 @@ $(DESTDIR)$(includedir)/bits/reg.h: \
 	    cp "$(srcdir)/arch/generic/bits/reg.h" "$@"; \
 	fi && chmod 644 $@
 $(DESTDIR)$(includedir)/bits/resource.h: \
-  $(srcdir)/arch/generic/bits/resource.h \
-  $(srcdir)/arch/$(ARCH)/bits/resource.h
+  $(srcdir)/arch/generic/bits/resource.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/resource.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/resource.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/resource.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/sem.h: \
-  $(srcdir)/arch/generic/bits/sem.h $(srcdir)/arch/$(ARCH)/bits/sem.h
+$(DESTDIR)$(includedir)/bits/sem.h: $(srcdir)/arch/generic/bits/sem.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/sem.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/sem.h" "$@"; \
@@ -9632,8 +9610,7 @@ $(DESTDIR)$(includedir)/bits/sem.h: \
 $(DESTDIR)$(includedir)/bits/setjmp.h: $(srcdir)/arch/$(ARCH)/bits/setjmp.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/shm.h: \
-  $(srcdir)/arch/generic/bits/shm.h $(srcdir)/arch/$(ARCH)/bits/shm.h
+$(DESTDIR)$(includedir)/bits/shm.h: $(srcdir)/arch/generic/bits/shm.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/shm.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/shm.h" "$@"; \
@@ -9643,36 +9620,28 @@ $(DESTDIR)$(includedir)/bits/shm.h: \
 $(DESTDIR)$(includedir)/bits/signal.h: $(srcdir)/arch/$(ARCH)/bits/signal.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/socket.h: \
-  $(srcdir)/arch/generic/bits/socket.h $(srcdir)/arch/$(ARCH)/bits/socket.h
+$(DESTDIR)$(includedir)/bits/socket.h: $(srcdir)/arch/generic/bits/socket.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/socket.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/socket.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/socket.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/stat.h: \
-  $(srcdir)/arch/generic/bits/stat.h $(srcdir)/arch/$(ARCH)/bits/stat.h
+$(DESTDIR)$(includedir)/bits/stat.h: $(srcdir)/arch/generic/bits/stat.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/stat.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/stat.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/stat.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/statfs.h: \
-  $(srcdir)/arch/generic/bits/statfs.h $(srcdir)/arch/$(ARCH)/bits/statfs.h
+$(DESTDIR)$(includedir)/bits/statfs.h: $(srcdir)/arch/generic/bits/statfs.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/statfs.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/statfs.h" "$@"; \
 	else \
 	    cp "$(srcdir)/arch/generic/bits/statfs.h" "$@"; \
 	fi && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/syscall.h.in: \
-  $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
-	mkdir -p $$(dirname $@) 2>/dev/null || true
-	cp $< $@ && chmod 644 $@
-$(DESTDIR)$(includedir)/bits/termios.h: \
-  $(srcdir)/arch/generic/bits/termios.h $(srcdir)/arch/$(ARCH)/bits/termios.h
+$(DESTDIR)$(includedir)/bits/termios.h: $(srcdir)/arch/generic/bits/termios.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	if [ -f "$(srcdir)/arch/$(ARCH)/bits/termios.h" ]; then \
 	    cp "$(srcdir)/arch/$(ARCH)/bits/termios.h" "$@"; \
@@ -9711,9 +9680,6 @@ $(DESTDIR)$(includedir)/aio.h: $(srcdir)/include/aio.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
 $(DESTDIR)$(includedir)/alloca.h: $(srcdir)/include/alloca.h
-	mkdir -p $$(dirname $@) 2>/dev/null || true
-	cp $< $@ && chmod 644 $@
-$(DESTDIR)$(includedir)/alltypes.h.in: $(srcdir)/include/alltypes.h.in
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
 $(DESTDIR)$(includedir)/ar.h: $(srcdir)/include/ar.h
@@ -10200,7 +10166,7 @@ $(DESTDIR)$(includedir)/sys/vt.h: $(srcdir)/include/sys/vt.h
 $(DESTDIR)$(includedir)/sys/wait.h: $(srcdir)/include/sys/wait.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
-$(DESTDIR)$(includedir)/xattr.h: $(srcdir)/include/sys/xattr.h
+$(DESTDIR)$(includedir)/sys/xattr.h: $(srcdir)/include/sys/xattr.h
 	mkdir -p $$(dirname $@) 2>/dev/null || true
 	cp $< $@ && chmod 644 $@
 $(DESTDIR)$(includedir)/syscall.h: $(srcdir)/include/syscall.h
@@ -10266,7 +10232,7 @@ $(DESTDIR)$(includedir)/wordexp.h: $(srcdir)/include/wordexp.h
 
 $(DESTDIR)$(LDSO_PATHNAME): $(DESTDIR)$(libdir)/libc.so
 	mkdir -p $$(dirname $@) 2>/dev/null || true
-	ln $(libdir)/libc.so $@ || true
+	ln $(DESTDIR)$(libdir)/libc.so $@ || true
 
 INSTALL_LIBS != \
 if [ "$(SHARED_LIBS)" ]; then \
