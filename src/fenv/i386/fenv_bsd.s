@@ -3,12 +3,12 @@
 .global feenableexcept
 .type feenableexcept,@function
 feenableexcept:
-	sub $4, %esp
-	mov 4(%esp), %eax
+	sub $8, %esp
+	mov %ebx, 4(%esp)
+	mov 12(%esp), %eax
 	and $0x3f, %eax
 	mov %eax, %ecx
-	call 1f
-1:	mov $1, %eax
+	mov $1, %eax
 	cpuid
 	test $0x02000000, %edx
 	jz 1f
@@ -35,18 +35,19 @@ feenableexcept:
 	orw %cx, %dx
 	movw %dx, 0(%esp)
 	fldcw 0(%esp)
-2:	add $4, %esp
+2:	mov 4(%esp), %ebx
+	add $8, %esp
 	ret
 
 .global fedisableexcept
 .type fedisableexcept,@function
 fedisableexcept:
-	sub $4, %esp
-	mov 4(%esp), %eax
+	sub $8, %esp
+	mov %ebx, 4(%esp)
+	mov 12(%esp), %eax
 	and $0x3f, %eax
 	mov %eax, %ecx
-	call 1f
-1:	mov $1, %eax
+	mov $1, %eax
 	cpuid
 	test $0x02000000, %edx
 	jz 1f
@@ -71,15 +72,16 @@ fedisableexcept:
 	orw %cx, %dx
 	movw %dx, 0(%esp)
 	fldcw 0(%esp)
-2:	add $4, %esp
+2:	mov 4(%esp), %ebx
+	add $8, %esp
 	ret
 
 .global fegetexcept
 .type fegetexcept,@function
 fegetexcept:
-	sub $4, %esp
-	call 1f
-1:	mov $1, %eax
+	sub $8, %esp
+	mov %ebx, 4(%esp)
+	mov $1, %eax
 	cpuid
 	test $0x02000000, %edx
 	jz 1f
@@ -95,5 +97,6 @@ fegetexcept:
 	movzwl %dx, %eax
 	not %eax
 	and $0x3f, %eax
-2:	add $4, %esp
+2:	mov 4(%esp), %ebx
+	add $8, %esp
 	ret

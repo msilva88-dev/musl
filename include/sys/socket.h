@@ -249,7 +249,7 @@ struct linger {
 #define SO_SPLICE       SO_BINDANY+SO_BROADCAST+3 // bsd-only
 #define SO_DOMAIN       SO_BINDANY+SO_BROADCAST+4
 #define SO_PROTOCOL     SO_BINDANY+SO_BROADCAST+5
-#if !defined(SO_DEBUG) && defined(__linux__)
+#elif !defined(SO_DEBUG) && defined(__linux__)
 #define SO_DEBUG        1
 #define SO_REUSEADDR    2
 #define SO_TYPE         3
@@ -280,7 +280,7 @@ struct linger {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define SO_RCVTIMEO     SO_BINDANY+6
 #define SO_SNDTIMEO     SO_BINDANY+5
-#if !defined(SO_RCVTIMEO) && defined(__linux__)
+#elif !defined(SO_RCVTIMEO) && defined(__linux__)
 #if __LONG_MAX == 0x7fffffff
 #define SO_RCVTIMEO     66
 #define SO_SNDTIMEO     67
@@ -292,7 +292,7 @@ struct linger {
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define SO_TIMESTAMP    1024
-#if !defined(SO_TIMESTAMP) && defined(__linux__)
+#elif !defined(SO_TIMESTAMP) && defined(__linux__)
 #if __LONG_MAX == 0x7fffffff
 #define SO_TIMESTAMP    63
 #define SO_TIMESTAMPNS  64 // linux-only
