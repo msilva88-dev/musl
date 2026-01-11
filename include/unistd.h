@@ -6,6 +6,11 @@ extern "C" {
 #endif
 
 #include <features.h>
+#include <stdint.h>
+
+#ifdef _BSD_SOURCE
+#define __NEED_mode_t
+#endif
 
 #ifdef __GNUC__
 #define DEPREC_A(msg) __attribute__((deprecated((msg))))
@@ -54,6 +59,7 @@ extern "C" {
 #include <hyperbk/nfs/nfs.h>
 #elif defined(__OpenBSD__)
 #include <nfs/nfs.h>
+#endif
 #endif
 #endif
 
@@ -263,9 +269,10 @@ pid_t getthrid(void);
 #if defined(__HyperbolaBSD__) || defined(__linux__)
 pid_t gettid(void);
 #endif
+#endif
 
 #ifdef _BSD_SOURCE
-char *fflagstostr(uint32_t);
+//char *fflagstostr(uint32_t);
 mode_t getmode(const void *, mode_t);
 char *getwd(char *) DEPREC_A("getwd is obsolete and unsafe, use getcwd instead");
 int rcmd(char **, int, const char *, const char *, const char *, int *);

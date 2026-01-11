@@ -393,14 +393,18 @@ typedef struct {
 #define SHT_REL		  9
 #define SHT_SHLIB	  10
 #define SHT_DYNSYM	  11
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define SHT_NUM		  12
+#endif
 #define SHT_INIT_ARRAY	  14
 #define SHT_FINI_ARRAY	  15
 #define SHT_PREINIT_ARRAY 16
 #define SHT_GROUP	  17
 #define SHT_SYMTAB_SHNDX  18
 #define SHT_RELR	  19
+#if defined(__linux__)
 #define	SHT_NUM		  20
+#endif
 #define SHT_LOOS	  0x60000000
 #define SHT_SUNW_dof	  0x6ffffff4
 #define SHT_GNU_ATTRIBUTES 0x6ffffff5

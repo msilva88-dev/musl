@@ -20,6 +20,7 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
+#include <stdint.h>
 
 #define	MD5_BLOCK_LENGTH 64
 #define	MD5_DIGEST_LENGTH 16

@@ -12,7 +12,7 @@
 
 #define FUTEX_REQUEUE		3
 
-#elif defined(__linux__)
+#if defined(__linux__)
 #define FUTEX_CMP_REQUEUE	4
 #define FUTEX_WAKE_OP		5
 #define FUTEX_LOCK_PI		6
@@ -23,7 +23,7 @@
 
 #define FUTEX_PRIVATE 128
 
-#elif defined(__linux__)
+#if defined(__linux__)
 #define FUTEX_CLOCK_REALTIME 256
 #endif
 

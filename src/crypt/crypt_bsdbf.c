@@ -137,7 +137,7 @@ static inline void blf_decrypt_block(bsdbf_ctx_t *c, uint32_t *L, uint32_t *R)
  *    then iteratively encrypts a zero block to fill P and S.
  *  - keylen is clamped to BSDBF_KEY_BYTES_MAX (56 bytes/448 bits).
  */
-void bsdbf_key(const uint8_t *key, uint16_t keylen, bsdbf_ctx_t *state)
+void bsdbf_key(bsdbf_ctx_t *state, const uint8_t *key, uint16_t keylen)
 {
 	/* Initialize with constant tables */
 	memcpy(state, &blf_init_state, sizeof(blf_init_state));

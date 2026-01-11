@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
+#include <stdint.h>
 
 #define	RMD160_BLOCK_LENGTH 64
 #define	RMD160_DIGEST_LENGTH 20
@@ -43,15 +44,15 @@ typedef struct RMD160Context {
 	uint8_t buffer[RMD160_BLOCK_LENGTH];
 } RMD160_CTX;
 
-char *RMD160Data(const uint8_t *, size_t, char *)
-char *RMD160End(RMD160_CTX *, char *)
-char *RMD160File(const char *, char *)
-char *RMD160FileChunk(const char *, char *, off_t, off_t)
-void RMD160Final(uint8_t [RMD160_DIGEST_LENGTH], RMD160_CTX *)
+char *RMD160Data(const uint8_t *, size_t, char *);
+char *RMD160End(RMD160_CTX *, char *);
+char *RMD160File(const char *, char *);
+char *RMD160FileChunk(const char *, char *, off_t, off_t);
+void RMD160Final(uint8_t [RMD160_DIGEST_LENGTH], RMD160_CTX *);
 void RMD160Init(RMD160_CTX *);
 void RMD160Pad(RMD160_CTX *);
-void RMD160Transform(uint32_t [5], const uint8_t [RMD160_BLOCK_LENGTH])
-void RMD160Update(RMD160_CTX *, const uint8_t *, size_t)
+void RMD160Transform(uint32_t [5], const uint8_t [RMD160_BLOCK_LENGTH]);
+void RMD160Update(RMD160_CTX *, const uint8_t *, size_t);
 
 #ifdef __cplusplus
 }

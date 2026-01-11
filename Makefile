@@ -17,16 +17,38 @@ includedir = $(prefix)/include
 libdir = $(prefix)/lib
 syslibdir = /lib
 
-UNAME_M := $(shell uname -m)
-UNAME_S := $(shell uname -s)
+UNAME != \
+if [ "$(CROSS_COMPILE)" ]; then \
+    case "$(CROSS_COMPILE)" in \
+        *-hyperbolabsd*) printf "%s\n" "HyperbolaBSD" ;; \
+        *-linux-musl*) printf "%s\n" "Linux" ;; \
+        *-openbsd*) printf "%s\n" "OpenBSD" ;; \
+    esac; \
+else \
+    printf "%s\n" "$$(uname -s)"; \
+fi
 
-BSDARCH := $(shell echo $(ARCH) | tr a-z A-Z)
-ifeq ($(ARCH_UPPER),X86_64)
-BSDARCH := AMD64
+BSDARCH = $(shell echo $(ARCH) | tr a-z A-Z)
+ifeq ($(ARCH),x86_64)
+BSDARCH = AMD64
 endif
 
-MALLOC_DIR = mallocng
-SRC_DIRS = $(addprefix $(srcdir)/,src/* src/malloc/$(MALLOC_DIR) crt ldso $(COMPAT_SRC_DIRS))
+MALLOC_DIR = malloc_mchunk
+COMMON_DIRS = src/aio src/complex src/conf src/crypt src/ctype src/dirent
+COMMON_DIRS += src/env src/errno src/exit src/fcntl src/fenv src/include
+COMMON_DIRS += src/internal src/ipc src/ldso src/legacy src/locale src/malloc
+COMMON_DIRS += src/math src/misc src/mman src/mq src/multibyte src/network
+COMMON_DIRS += src/passwd src/prng src/process src/regex src/sched src/search
+COMMON_DIRS += src/select src/setjmp src/signal src/stat src/stdio src/stdlib
+COMMON_DIRS += src/string src/temp src/termios src/thread src/time src/unistd
+
+ifeq ($(filter $(UNAME),HyperbolaBSD OpenBSD),$(UNAME))
+TARGET_DIR = src/bsd
+else ifeq ($(filter $(UNAME),Linux),$(UNAME))
+TARGET_DIR = src/linux
+endif
+
+SRC_DIRS = $(addprefix $(srcdir)/,$(COMMON_DIRS) $(TARGET_DIR) src/malloc/$(MALLOC_DIR) crt ldso $(COMPAT_SRC_DIRS))
 BASE_GLOBS = $(addsuffix /*.c,$(SRC_DIRS))
 ARCH_GLOBS = $(addsuffix /$(ARCH)/*.[csS],$(SRC_DIRS))
 BASE_SRCS = $(sort $(wildcard $(BASE_GLOBS)))
@@ -43,8 +65,8 @@ CRT_OBJS = $(filter obj/crt/%,$(ALL_OBJS))
 AOBJS = $(LIBC_OBJS)
 LOBJS = $(LIBC_OBJS:.o=.lo)
 GENH = obj/include/bits/alltypes.h obj/include/bits/syscall.h
-ifeq ($(filter $(UNAME_S),HyperbolaBSD OpenBSD),$(UNAME_S))
-ifeq ($(filter $(UNAME_M),i386 x32 x86_64),$(UNAME_M))
+ifeq ($(filter $(UNAME),HyperbolaBSD OpenBSD),$(UNAME))
+ifeq ($(filter $(ARCH),i386 x32 x86_64),$(ARCH))
 GENH += obj/include/bits/sysarch.h
 endif
 endif
@@ -81,20 +103,20 @@ BSD_HEADERS = sys/event.h sys/gmon.h sys/mount_info.h sys/sysarch.h
 HBBSD_HEADERS = $(BSD_HEADERS)
 LINUX_HEADERS = mqueue.h sys/epoll.h sys/eventfd.h sys/fanotify.h sys/inotify.h sys/io.h sys/klog.h sys/membarrier.h
 LINUX_HEADERS += sys/personality.h sys/prctl.h sys/random.h sys/signalfd.h sys/sysinfo.h sys/timerfd.h sys/timex.h sys/xattr.h
-OBSD_HEADERS := $(BSD_HEADERS)
+OBSD_HEADERS = $(BSD_HEADERS)
 ARCH_INCLUDES = $(wildcard $(srcdir)/arch/$(ARCH)/bits/*.h)
 GENERIC_INCLUDES = $(wildcard $(srcdir)/arch/generic/bits/*.h)
-ifeq ($(UNAME_S),HyperbolaBSD)
-INCLUDES := $(COMMON_HEADERS) $(HBBSD_HEADERS)
-ARCH_SYSCALL_HEADER := $(srcdir)/arch/generic/bits/syscall.h.in
-else ifeq ($(UNAME_S),Linux)
-INCLUDES := $(COMMON_HEADERS) $(LINUX_HEADERS)
-ARCH_SYSCALL_HEADER := $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
-else ifeq ($(UNAME_S),OpenBSD)
-INCLUDES := $(COMMON_HEADERS) $(OBSD_HEADERS)
-ARCH_SYSCALL_HEADER := $(srcdir)/arch/generic/bits/syscall.h.in
+ifeq ($(UNAME),HyperbolaBSD)
+INCLUDES = $(COMMON_HEADERS) $(HBBSD_HEADERS)
+ARCH_SYSCALL_HEADER = $(srcdir)/arch/generic/bits/syscall.h.in
+else ifeq ($(UNAME),Linux)
+INCLUDES = $(COMMON_HEADERS) $(LINUX_HEADERS)
+ARCH_SYSCALL_HEADER = $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
+else ifeq ($(UNAME),OpenBSD)
+INCLUDES = $(COMMON_HEADERS) $(OBSD_HEADERS)
+ARCH_SYSCALL_HEADER = $(srcdir)/arch/generic/bits/syscall.h.in
 endif
-ALL_INCLUDES = $(sort $(INCLUDES:$(srcdir)/%=%) $(GENH:obj/%=%)
+ALL_INCLUDES = $(sort $(INCLUDES:$(srcdir)/%=%) $(GENH:obj/%=%) \
  $(ARCH_INCLUDES:$(srcdir)/arch/$(ARCH)/%=include/%) $(GENERIC_INCLUDES:$(srcdir)/arch/generic/%=include/%))
 
 EMPTY_LIB_NAMES = m rt pthread crypt util xnet resolv dl

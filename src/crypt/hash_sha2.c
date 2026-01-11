@@ -32,6 +32,7 @@
 
 /* sha2 from OpenBSD 7.0 source code: lib/libc/hash/sha2.c */
 
+#define _BSD_SOURCE
 #include <string.h>
 #include <sha2.h>
 
@@ -306,8 +307,11 @@ void __SHA224Init(SHA2_CTX *context)
 }
 weak_alias(__SHA224Init, SHA224Init);
 
+void __SHA256Transform(uint32_t *, const uint8_t *);
+void __SHA256Update(SHA2_CTX *, const uint8_t *, size_t);
+void __SHA256Pad(SHA2_CTX *);
 weak_alias(__SHA256Transform, SHA224Transform);
-weak_alias(__SHA256Init, SHA224Update);
+weak_alias(__SHA256Update, SHA224Update);
 weak_alias(__SHA256Pad, SHA224Pad);
 
 void __SHA224Final(uint8_t digest[SHA224_DIGEST_LENGTH], SHA2_CTX *context)

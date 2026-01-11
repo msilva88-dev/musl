@@ -17,6 +17,7 @@
 
 /* md5 from OpenBSD 7.0 source code: lib/libc/hash/md5.c */
 
+#define _BSD_SOURCE
 #include <string.h>
 #include <md5.h>
 

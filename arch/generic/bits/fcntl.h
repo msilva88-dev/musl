@@ -11,7 +11,7 @@
 #define O_NOCTTY    0100000
 #define O_CLOEXEC   0200000
 #define O_DIRECTORY 0400000
-#if defined(__linux__)
+#elif defined(__linux__)
 #define O_CREAT        0100
 #define O_EXCL         0200
 #define O_NOCTTY       0400

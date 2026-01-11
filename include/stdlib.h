@@ -40,7 +40,7 @@ unsigned long long strtoull (const char *__restrict, char **__restrict, int);
 #ifdef _BSD_SOURCE
 quad_t strtoq (const char *__restrict, char **__restrict, int);
 u_quad_t strtouq (const char *__restrict, char **__restrict, int);
-long long strtonum(const char *, long long, long long, const char **)
+long long strtonum(const char *, long long, long long, const char **);
 #endif
 
 int rand (void);
@@ -73,6 +73,9 @@ long long llabs (long long);
 typedef struct { int quot, rem; } div_t;
 typedef struct { long quot, rem; } ldiv_t;
 typedef struct { long long quot, rem; } lldiv_t;
+#ifdef _BSD_SOURCE
+typedef struct { quad_t quot, rem; } qdiv_t;
+#endif
 
 div_t div (int, int);
 ldiv_t ldiv (long, long);
@@ -120,6 +123,8 @@ int mkostemp (char *, int);
 char *mkdtemp (char *);
 int getsubopt (char **, char *const *, char **);
 int rand_r (unsigned *);
+
+#endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE

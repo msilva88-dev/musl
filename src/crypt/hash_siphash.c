@@ -43,6 +43,7 @@
  * https://131002.net/siphash/
  */
 
+#define _BSD_SOURCE
 #include <endian.h>
 #include <stdint.h>
 #include <string.h>

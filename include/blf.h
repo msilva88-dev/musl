@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <bits/alltypes.h>
+#include <stdint.h>
 
 enum bsdbf_e {
 	BSDBF_ROUNDS = 16,

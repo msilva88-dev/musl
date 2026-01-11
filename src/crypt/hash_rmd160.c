@@ -29,6 +29,7 @@
  * RSA Laboratories, CryptoBytes, Volume 3, Number 2, Autumn 1997,
  * ftp://ftp.rsasecurity.com/pub/cryptobytes/crypto3n2.pdf
  */
+#define _BSD_SOURCE
 #include <endian.h>
 #include <string.h>
 #include <rmd160.h>

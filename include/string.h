@@ -7,6 +7,10 @@ extern "C" {
 
 #include <features.h>
 
+#ifdef _BSD_SOURCE
+#define __NEED_mode_t
+#endif
+
 #if __cplusplus >= 201103L
 #define NULL nullptr
 #elif defined(__cplusplus)

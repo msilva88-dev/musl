@@ -30,7 +30,9 @@
 
 #if __STDC_VERSION__ >= 201112L
 #elif defined(__GNUC__)
-#define _Noreturn __attribute__((__noreturn__))
+#define _Noreturn
+// It does not work as a prefix keyword for a function declaration
+//#define _Noreturn __attribute__((__noreturn__))
 #else
 #define _Noreturn
 #endif

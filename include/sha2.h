@@ -40,6 +40,7 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
+#include <stdint.h>
 
 #define SHA224_BLOCK_LENGTH 64
 #define SHA224_DIGEST_LENGTH 28
@@ -66,51 +67,51 @@ typedef struct _SHA2_CTX {
 	uint8_t	buffer[SHA512_BLOCK_LENGTH];
 } SHA2_CTX;
 
-char *SHA224Data(const uint8_t *, size_t, char *)
-char *SHA224End(SHA2_CTX *, char *)
-char *SHA224File(const char *, char *)
-char *SHA224FileChunk(const char *, char *, off_t, off_t)
-void SHA224Final(uint8_t [SHA224_DIGEST_LENGTH], SHA2_CTX *)
+char *SHA224Data(const uint8_t *, size_t, char *);
+char *SHA224End(SHA2_CTX *, char *);
+char *SHA224File(const char *, char *);
+char *SHA224FileChunk(const char *, char *, off_t, off_t);
+void SHA224Final(uint8_t [SHA224_DIGEST_LENGTH], SHA2_CTX *);
 void SHA224Init(SHA2_CTX *);
 void SHA224Pad(SHA2_CTX *);
 void SHA224Transform(uint32_t state[8], const uint8_t [SHA224_BLOCK_LENGTH]);
-void SHA224Update(SHA2_CTX *, const uint8_t *, size_t)
-char *SHA256Data(const uint8_t *, size_t, char *)
-char *SHA256End(SHA2_CTX *, char *)
-char *SHA256File(const char *, char *)
-char *SHA256FileChunk(const char *, char *, off_t, off_t)
-void SHA256Final(uint8_t [SHA256_DIGEST_LENGTH], SHA2_CTX *)
+void SHA224Update(SHA2_CTX *, const uint8_t *, size_t);
+char *SHA256Data(const uint8_t *, size_t, char *);
+char *SHA256End(SHA2_CTX *, char *);
+char *SHA256File(const char *, char *);
+char *SHA256FileChunk(const char *, char *, off_t, off_t);
+void SHA256Final(uint8_t [SHA256_DIGEST_LENGTH], SHA2_CTX *);
 void SHA256Init(SHA2_CTX *);
 void SHA256Pad(SHA2_CTX *);
 void SHA256Transform(uint32_t state[8], const uint8_t [SHA256_BLOCK_LENGTH]);
-void SHA256Update(SHA2_CTX *, const uint8_t *, size_t)
-char *SHA384Data(const uint8_t *, size_t, char *)
-char *SHA384End(SHA2_CTX *, char *)
-char *SHA384File(const char *, char *)
-char *SHA384FileChunk(const char *, char *, off_t, off_t)
-void SHA384Final(uint8_t [SHA384_DIGEST_LENGTH], SHA2_CTX *)
+void SHA256Update(SHA2_CTX *, const uint8_t *, size_t);
+char *SHA384Data(const uint8_t *, size_t, char *);
+char *SHA384End(SHA2_CTX *, char *);
+char *SHA384File(const char *, char *);
+char *SHA384FileChunk(const char *, char *, off_t, off_t);
+void SHA384Final(uint8_t [SHA384_DIGEST_LENGTH], SHA2_CTX *);
 void SHA384Init(SHA2_CTX *);
 void SHA384Pad(SHA2_CTX *);
 void SHA384Transform(uint64_t state[8], const uint8_t [SHA384_BLOCK_LENGTH]);
-void SHA384Update(SHA2_CTX *, const uint8_t *, size_t)
-char *SHA512Data(const uint8_t *, size_t, char *)
-char *SHA512End(SHA2_CTX *, char *)
-char *SHA512File(const char *, char *)
-char *SHA512FileChunk(const char *, char *, off_t, off_t)
-void SHA512Final(uint8_t [SHA512_DIGEST_LENGTH], SHA2_CTX *)
+void SHA384Update(SHA2_CTX *, const uint8_t *, size_t);
+char *SHA512Data(const uint8_t *, size_t, char *);
+char *SHA512End(SHA2_CTX *, char *);
+char *SHA512File(const char *, char *);
+char *SHA512FileChunk(const char *, char *, off_t, off_t);
+void SHA512Final(uint8_t [SHA512_DIGEST_LENGTH], SHA2_CTX *);
 void SHA512Init(SHA2_CTX *);
 void SHA512Pad(SHA2_CTX *);
 void SHA512Transform(uint64_t state[8], const uint8_t [SHA512_BLOCK_LENGTH]);
-void SHA512Update(SHA2_CTX *, const uint8_t *, size_t)
-char *SHA512_256Data(const uint8_t *, size_t, char *)
-char *SHA512_256End(SHA2_CTX *, char *)
-char *SHA512_256File(const char *, char *)
-char *SHA512_256FileChunk(const char *, char *, off_t, off_t)
-void SHA512_256Final(uint8_t [SHA512_256_DIGEST_LENGTH], SHA2_CTX *)
+void SHA512Update(SHA2_CTX *, const uint8_t *, size_t);
+char *SHA512_256Data(const uint8_t *, size_t, char *);
+char *SHA512_256End(SHA2_CTX *, char *);
+char *SHA512_256File(const char *, char *);
+char *SHA512_256FileChunk(const char *, char *, off_t, off_t);
+void SHA512_256Final(uint8_t [SHA512_256_DIGEST_LENGTH], SHA2_CTX *);
 void SHA512_256Init(SHA2_CTX *);
 void SHA512_256Pad(SHA2_CTX *);
 void SHA512_256Transform(uint64_t state[8], const uint8_t [SHA512_256_BLOCK_LENGTH]);
-void SHA512_256Update(SHA2_CTX *, const uint8_t *, size_t)
+void SHA512_256Update(SHA2_CTX *, const uint8_t *, size_t);
 
 #ifdef __cplusplus
 }

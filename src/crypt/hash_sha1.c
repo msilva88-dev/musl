@@ -14,6 +14,8 @@
 
 /* sha1 from OpenBSD 7.0 source code: lib/libc/hash/sha1.c */
 
+#define _BSD_SOURCE
+#include <stdint.h>
 #include <string.h>
 #include <sha1.h>
 
