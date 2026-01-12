@@ -177,6 +177,41 @@ uint16_t ntohs(uint16_t);
 #define IN_LOOPBACKNET 127
 
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define IP_OPTIONS         1
+#define IP_HDRINCL         2
+#define IP_TOS             3
+#define IP_TTL             4
+#define IP_RECVOPTS        5
+#define IP_RECVRETOPTS     6
+#define IP_RECVDSTADDR     7
+#define IP_RETOPTS         8
+#define IP_MULTICAST_IF    9
+#define IP_MULTICAST_TTL   10
+#define IP_MULTICAST_LOOP  11
+#define IP_ADD_MEMBERSHIP  12
+#define IP_DROP_MEMBERSHIP 13
+#define IP_PORTRANGE       19
+#define IP_AUTH_LEVEL      20
+#define IP_ESP_TRANS_LEVEL   21
+#define IP_ESP_NETWORK_LEVEL 22
+#define IP_IPSEC_LOCAL_ID    23
+#define IP_IPSEC_REMOTE_ID   24
+#define IP_IPSEC_LOCAL_CRED  25
+#define IP_IPSEC_REMOTE_CRED 26
+#define IP_IPSEC_LOCAL_AUTH  27
+#define IP_IPSEC_REMOTE_AUTH 28
+#define IP_IPCOMP_LEVEL    29
+#define IP_RECVIF          30
+#define IP_RECVTTL         31
+#define IP_MINTTL          32
+#define IP_RECVDSTPORT     33
+#define IP_PIPEX           34
+#define IP_RECVRTABLE      35
+#define IP_IPSECFLOWINFO   36
+#define IP_IPDEFTTL        37
+#define IP_SENDSRCADDR     IP_RECVDSTADDR
+#elif defined(__linux__)
 #define IP_TOS             1
 #define IP_TTL             2
 #define IP_HDRINCL         3
@@ -219,6 +254,7 @@ uint16_t ntohs(uint16_t);
 #define IP_UNICAST_IF      50
 
 #define IP_RECVRETOPTS IP_RETOPTS
+#endif
 
 #define IP_PMTUDISC_DONT   0
 #define IP_PMTUDISC_WANT   1
@@ -235,6 +271,17 @@ struct ip_opts {
 	struct in_addr ip_dst;
 	char ip_opts[40];
 };
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(_BSD_SOURCE)
+#define IP_PORTRANGE_DEFAULT	0
+#define IP_PORTRANGE_HIGH	1
+#define IP_PORTRANGE_LOW	2
+#define IPV6_PORTRANGE_DEFAULT  0
+#define IPV6_PORTRANGE_HIGH     1
+#define IPV6_PORTRANGE_LOW      2
+#endif
+#endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 
@@ -316,6 +363,49 @@ struct ip6_mtuinfo {
 };
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define IPV6_UNICAST_HOPS       4
+#define IPV6_MULTICAST_IF       9
+#define IPV6_MULTICAST_HOPS     10
+#define IPV6_MULTICAST_LOOP     11
+#define IPV6_JOIN_GROUP         12
+#define IPV6_LEAVE_GROUP        13
+#define IPV6_PORTRANGE          14
+#if _BSD_SOURCE
+#define ICMP6_FILTER            18
+#endif
+#define IPV6_CHECKSUM           26
+#define IPV6_V6ONLY             27
+#define IPV6_RTHDRDSTOPTS       35
+#define IPV6_RECVPKTINFO        36
+#define IPV6_RECVHOPLIMIT       37
+#define IPV6_RECVRTHDR          38
+#define IPV6_RECVHOPOPTS        39
+#define IPV6_RECVDSTOPTS        40
+#define IPV6_USE_MIN_MTU        42
+#define IPV6_RECVPATHMTU        43
+#define IPV6_PATHMTU            44
+#define IPV6_PKTINFO            46
+#define IPV6_HOPLIMIT           47
+#define IPV6_NEXTHOP            48
+#define IPV6_HOPOPTS            49
+#define IPV6_DSTOPTS            50
+#define IPV6_RTHDR              51
+#define IPV6_AUTH_LEVEL         53
+#define IPV6_ESP_TRANS_LEVEL    54
+#define IPV6_ESP_NETWORK_LEVEL  55
+#if _BSD_SOURCE
+#define IPSEC6_OUTSA            56
+#endif
+#define IPV6_RECVTCLASS         57
+#define IPV6_AUTOFLOWLABEL      59
+#define IPV6_IPCOMP_LEVEL       60
+#define IPV6_TCLASS             61
+#define IPV6_DONTFRAG           62
+#define IPV6_PIPEX              63
+#define IPV6_RECVDSTPORT        64
+#define IPV6_MINHOPCOUNT        65
+#elif defined(__linux__)
 #define IPV6_ADDRFORM           1
 #define IPV6_2292PKTINFO        2
 #define IPV6_2292HOPOPTS        3
@@ -375,6 +465,7 @@ struct ip6_mtuinfo {
 #define IPV6_DROP_MEMBERSHIP    IPV6_LEAVE_GROUP
 #define IPV6_RXHOPOPTS          IPV6_HOPOPTS
 #define IPV6_RXDSTOPTS          IPV6_DSTOPTS
+#endif
 
 #define IPV6_PMTUDISC_DONT      0
 #define IPV6_PMTUDISC_WANT      1

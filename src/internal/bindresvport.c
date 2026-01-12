@@ -40,11 +40,17 @@
  */
 int __bindresvport_sa(int sd, struct sockaddr *sa)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	int old, error, af;
+#elif defined(__linux__)
+	int error, af;
+#endif
 	struct sockaddr_storage myaddr;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	int proto, portrange, portlow;
+#endif
 	uint16_t port;
 	socklen_t salen;
 
@@ -61,16 +67,20 @@ int __bindresvport_sa(int sd, struct sockaddr *sa)
 		af = sa->sa_family;
 
 	if (af == AF_INET) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		proto = IPPROTO_IP;
 		portrange = IP_PORTRANGE;
 		portlow = IP_PORTRANGE_LOW;
+#endif
 		sin = (struct sockaddr_in *)sa;
 		salen = sizeof(struct sockaddr_in);
 		port = sin->sin_port;
 	} else if (af == AF_INET6) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		proto = IPPROTO_IPV6;
 		portrange = IPV6_PORTRANGE;
 		portlow = IPV6_PORTRANGE_LOW;
+#endif
 		sin6 = (struct sockaddr_in6 *)sa;
 		salen = sizeof(struct sockaddr_in6);
 		port = sin6->sin6_port;
@@ -79,6 +89,7 @@ int __bindresvport_sa(int sd, struct sockaddr *sa)
 		return -1;
 	}
 	sa->sa_family = af;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	sa->sa_len = salen;
 
 	if (port == 0) {
@@ -93,18 +104,21 @@ int __bindresvport_sa(int sd, struct sockaddr *sa)
 		if (error == -1)
 			return error;
 	}
+#endif
 
 	error = bind(sd, sa, salen);
 
 	if (port == 0) {
 		int saved_errno = errno;
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		if (error) {
 			if (setsockopt(sd, proto, portrange, &old,
 			    sizeof(old)) == -1)
 				errno = saved_errno;
 			return error;
 		}
+#endif
 
 		if (sa != (struct sockaddr *)&myaddr) {
 			/* Hmm, what did the kernel assign... */
