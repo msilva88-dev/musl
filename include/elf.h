@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <bits/elf.h>
 #include <stdint.h>
 
 typedef uint16_t Elf32_Half;
