@@ -10,11 +10,11 @@ extern "C" {
 #define N_STAB 0340
 
 enum __nlist_e {
-	N_UNDF = 00,
-	N_ABS = 02,
-	N_TEXT = 04,
-	N_DATA = 06,
-	N_BSS = 08,
+	N_UNDF = 0,
+	N_ABS = 2,
+	N_TEXT = 4,
+	N_DATA = 6,
+	N_BSS = 8,
 	N_INDR = 10,
 	N_SIZE = 12,
 	N_COMM = 18,

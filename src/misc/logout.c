@@ -30,8 +30,8 @@
 /* logout from OpenBSD 7.0 source code: lib/libutil/logout.c */
 
 #define _BSD_SOURCE
-#include <sys/time.h>
 #include <fcntl.h>
+#include <time.h>
 #include <utmp.h>
 #include <unistd.h>
 #include <stdlib.h>

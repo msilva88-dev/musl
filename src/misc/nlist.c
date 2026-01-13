@@ -32,17 +32,38 @@
 #define _BSD_SOURCE
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <nlist.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <elf.h>
+
+#if ULONG_MAX == 0xffffffff
+#define Elf_Ehdr Elf64_Ehdr
+#define Elf_Off Elf64_Off
+#define Elf_Shdr Elf64_Shdr
+#define ELF_ST_BIND ELF64_ST_BIND
+#define ELF_ST_TYPE ELF64_ST_TYPE
+#define Elf_Sword Elf64_Sword
+#define Elf_Sym Elf64_Sym
+#define Elf_Word Elf64_Word
+#else
+#define Elf_Ehdr Elf32_Ehdr
+#define Elf_Off Elf32_Off
+#define Elf_Shdr Elf32_Shdr
+#define ELF_ST_BIND ELF32_ST_BIND
+#define ELF_ST_TYPE ELF32_ST_TYPE
+#define Elf_Sword Elf32_Sword
+#define Elf_Sym Elf32_Sym
+#define Elf_Word Elf32_Word
+#endif
 
 #define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
-#define	ISLAST(p) (p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
+#define ISLAST(p) (p->n_name == 0 || p->n_name[0] == 0)
 
 /*
  * __elf_is_okay__ - Determine if ehdr really
@@ -60,7 +81,10 @@ static int __elf_is_okay__(Elf_Ehdr *ehdr)
 	 * Elf_Ehdr structure.  These few elements are
 	 * represented in a machine independent fashion.
 	 */
-	if (IS_ELF(*ehdr) &&
+	if (ehdr->e_ident[EI_MAG0] == ELFMAG0 &&
+	    ehdr->e_ident[EI_MAG1] == ELFMAG1 &&
+	    ehdr->e_ident[EI_MAG2] == ELFMAG2 &&
+	    ehdr->e_ident[EI_MAG3] == ELFMAG3 &&
 	    ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&
 	    ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
 	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
@@ -223,7 +247,7 @@ static int __fdnlist(int fd, struct nlist *list)
 				 *       for both 'foo' and '_foo' in the
 				 *	 table and 'foo' is first?
 				 */
-				sym = p->n_un.n_name;
+				sym = p->n_name;
 				len = strlen(sym);
 
 				if ((len >= left ||
