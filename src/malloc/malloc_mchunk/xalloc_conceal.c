@@ -1,7 +1,9 @@
 #define _BSD_SOURCE
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include "mallocopts.h"
+#include "mchunk.h"
 
 void *malloc_conceal(size_t n)
 {

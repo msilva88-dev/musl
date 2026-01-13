@@ -18,9 +18,8 @@ extern "C" {
 #define __NEED_size_t
 #define __NEED_wchar_t
 
-#ifndef _BSD_SOURCE
 #include <bits/alltypes.h>
-#else
+#ifdef _BSD_SOURCE
 #include <sys/types.h>
 #endif
 

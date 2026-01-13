@@ -18,7 +18,7 @@ typedef unsigned int tcflag_t;
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define NCCS 20
-#if defined(__linux__)
+#elif defined(__linux__)
 #define NCCS 32
 #endif
 

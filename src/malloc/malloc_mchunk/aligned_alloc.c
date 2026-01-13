@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "mallocopts.h"
+#include "mchunk.h"
 
 void *aligned_alloc(size_t align, size_t len)
 {

@@ -2,6 +2,8 @@
 #define _INTERNAL_CRYPT_CHACHA_H
 
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "syscall.h"
 
@@ -34,7 +36,7 @@ hidden inline void __dso_arc4rb(struct __buffer *buf)
 	const uint8_t KS = __KIV - __IV;
 
 	if (__ccb.bytes) {
-		chacha_encrypt_bytes(&__ccb.ctx, buf->data, buf->data, buf->bytes);
+		__chacha_encrypt_bytes(&__ccb.ctx, buf->data, buf->data, buf->bytes);
 
 		if (__ccb.bytes > RK || __ccb.bytes + buf->bytes > RK) {
 			__ccb.bytes = 0;
@@ -48,19 +50,25 @@ hidden inline void __dso_arc4rb(struct __buffer *buf)
 	char bytes[__KIV];
 
 	if (getentropy(bytes, __KIV) == 0) {
-		chacha_keysetup(&__ccb.ctx, (uint8_t *)bytes, 256);
-		chacha_ivsetup(&__ccb.ctx, (uint8_t *)(KS + bytes));
+		__chacha_keysetup(&__ccb.ctx, (uint8_t *)bytes, 256);
+		__chacha_ivsetup(&__ccb.ctx, (uint8_t *)(KS + bytes));
 
 		if (getentropy(bytes, __KIV) == 0) {
 			return;
 		}
 
-		error("Cannot overwrite RNG key");
+		fprintf(stderr, "Cannot overwrite RNG key\n");
+		abort();
 	} else {
-		error("Lack of entropy");
+		fprintf(stderr, "Lack of entropy\n");
+		abort();
 	}
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	syscall(SYS_thrkill, 0, 9, NULL);
+#elif defined(__linux__)
+	syscall(SYS_tkill, 0, 9);
+#endif
 }
 
 #endif

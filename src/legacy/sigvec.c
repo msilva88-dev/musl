@@ -1,5 +1,6 @@
 #define _BSD_SOURCE
 #include <signal.h>
+#include <stddef.h>
 
 int sigvec(int sig, struct sigvec *newvec, struct sigvec *oldvec)
 {
@@ -21,7 +22,12 @@ int sigvec(int sig, struct sigvec *newvec, struct sigvec *oldvec)
 		if (oldaction.sa_flags & SA_ONSTACK) oldvec->sv_flags |= SV_ONSTACK;
 		if (!(oldaction.sa_flags & SA_RESTART)) oldvec->sv_flags |= SV_INTERRUPT;
 		oldvec->sv_handler = oldaction.sa_handler;
-		oldvec->sv_mask = oldaction.sa_mask;
+		int mask = 0;
+		for (int sigbit = 1; sigbit < NSIG; sigbit++) {
+			if (sigismember(&oldaction.sa_mask, sigbit))
+				mask |= 1 << (sigbit - 1);
+			}
+		oldvec->sv_mask = mask;
 	};
 	return ret;
 }

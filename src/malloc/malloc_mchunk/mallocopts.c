@@ -1,3 +1,7 @@
+#define _BSD_SOURCE
+#if defined(__linux__)
+#define _GNU_SOURCE
+#endif
 #include <sys/mman.h>
 #include <errno.h>
 #ifdef MALLOC_STATS
@@ -14,6 +18,7 @@
 #include "libc.h"
 #include "mchunk.h"
 #include "mallocopts.h"
+#include "pthread_impl.h"
 
 /*
 ===============================================================================
@@ -255,6 +260,21 @@ static struct __malloc_stats {
 
 static volatile int mallocopts_initialized = 0;
 
+/* lock/unlock helpers — accept pointer to two-int array (element 0 = lock, element 1 = waiter counter) */
+
+static inline void lock(volatile int (*arr)[2])
+{
+	/* wait: CAS on element 0, and wait on (addr0, addr1) as original futex helpers expect */
+	while (a_cas(&(*arr)[0], 0, 1)) __wait(&(*arr)[0], &(*arr)[1], 1, 1);
+}
+
+static inline void unlock(volatile int (*arr)[2])
+{
+	/* swap element0 back to 0; if previous value was 1 wake sleepers.
+	 * a_swap returns the *previous* value. wake only if previous == 1. */
+	if (a_swap(&(*arr)[0], 0) == 1) __wake(&(*arr)[0], 1, 1);
+}
+
 static inline size_t page_cache_capacity(void)
 {
 	return ((size_t)1 << __mallocopts.mo_cachesize) * 1024;
@@ -456,21 +476,6 @@ static void m_warn(const char *const msg)
 	write(2, msg, n);
 }
 
-/* lock/unlock helpers — accept pointer to two-int array (element 0 = lock, element 1 = waiter counter) */
-
-static inline void lock(int (*arr)[2])
-{
-	/* wait: CAS on element 0, and wait on (addr0, addr1) as original futex helpers expect */
-	while (a_cas(&(*arr)[0], 0, 1)) __wait(&(*arr)[0], &(*arr)[1], 1, 1);
-}
-
-static inline void unlock(int (*arr)[2])
-{
-	/* swap element0 back to 0; if previous value was 1 wake sleepers.
-	 * a_swap returns the *previous* value. wake only if previous == 1. */
-	if (a_swap(&(*arr)[0], 0) == 1) __wake(&(*arr)[0], 1, 1);
-}
-
 static int add_guard_entry(void *base, size_t total)
 {
 	struct __guard_entry *g = mmap(NULL, sizeof(*g), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -587,6 +592,47 @@ static void guard_quarantine_add(void *base, size_t total)
 	unlock(&__guard_q_lock);
 }
 
+static void guard_release(struct __guard_entry *g)
+{
+	/* Drop guard metadata refcount and unmap node if removed and last ref. */
+
+	/* Atomically decrement the refcount and free the list node only
+	 * when the previous value was 1 *and* it has been marked removed.
+	 * Using a_fetch_add keeps the behaviour consistent with the rest
+	 * of the atomic helpers. */
+	int prev = a_fetch_add(&g->ref, -1);
+	if (prev <= 0) m_crash("malloc [guard_release]: the reference of guard is zero or negative\n");
+	/* Decrement and free only if previous value was 1 (so new becomes 0) */
+	if (prev == 1 && g->removed) munmap(g, sizeof(*g));
+}
+
+static int remove_guard_entry(void *base)
+{
+	/* Remove guard metadata list node by base pointer.
+	 * Mark as removed while holding list lock. Then drop the list’s reference;
+	 * the node will be unmapped when the last ref is released. */
+	if (!base) return -1;
+	lock(&__guard_list_lock);
+	struct __guard_entry **pp = &__guard_list;
+	while (*pp) {
+		if ((*pp)->base == base) {
+			struct __guard_entry *old = *pp;
+			*pp = old->next;
+			/* Mark removed while still holding lock to prevent races */
+			old->removed = 1;
+			unlock(&__guard_list_lock);
+
+			/* Drop the list's reference */
+			//if (a_fetch_add(&old->ref, -1) == 1) munmap(old, sizeof(*old));
+			guard_release(old);
+			return 0;
+		}
+		pp = &(*pp)->next;
+	}
+	unlock(&__guard_list_lock);
+	return -1;
+}
+
 static void guard_quarantine_sweep(uint64_t now)
 {
 	/* Sweep quarantine: unlink, drop metadata, sanity-check size, unmap.
@@ -623,6 +669,17 @@ static void guard_quarantine_sweep(uint64_t now)
 	unlock(&__guard_q_lock);
 }
 
+/* Helper for overflow: check (base + add) ((PAGE_SIZE - 1) included) */
+static inline int plus_overflows_with_rounding(uintptr_t base, size_t add)
+{
+	/* Computes if base + add (+ rounding) overflows uintptr_t */
+	if (
+		(add > (UINTPTR_MAX - base))
+		|| ((PAGE_SIZE - 1) && add + (PAGE_SIZE - 1) > (UINTPTR_MAX - base))
+	) return 1;
+	return 0;
+}
+
 static void protect_chunk(void *p, size_t size)
 {
 	/* For larger chunks and U enabled, protect region with PROT_NONE.
@@ -630,7 +687,7 @@ static void protect_chunk(void *p, size_t size)
 	if (!p || size == 0) return;
 	check_malloc_options_once();
 	if (!__mallocopts.mo_freeunmap) return;
-	if (size >= FREEUNMAP_THRESHOLD) {
+	if (size >= PAGE_SIZE) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
 		/* Overflow check for end computation */
 		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("malloc [protect_chunk]: overflow\n");
@@ -647,7 +704,7 @@ static void unprotect_chunk(void *p, size_t size)
 	if (!p || size == 0) return;
 	check_malloc_options_once();
 	if (!__mallocopts.mo_freeunmap) return;
-	if (size >= FREEUNMAP_THRESHOLD) {
+	if (size >= PAGE_SIZE) {
 		uintptr_t base = (uintptr_t)p & ~(PAGE_SIZE - 1);
 		if (plus_overflows_with_rounding((uintptr_t)p, size)) m_crash("malloc [unprotect_chunk]: overflow\n");
 		uintptr_t end = ((uintptr_t)p + size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
@@ -769,20 +826,6 @@ static inline void guard_hold(struct __guard_entry *g)
 {
 	/* Increment guard metadata refcount (caller holds a stable reference) */
 	a_inc(&g->ref);
-}
-
-static void guard_release(struct __guard_entry *g)
-{
-	/* Drop guard metadata refcount and unmap node if removed and last ref. */
-
-	/* Atomically decrement the refcount and free the list node only
-	 * when the previous value was 1 *and* it has been marked removed.
-	 * Using a_fetch_add keeps the behaviour consistent with the rest
-	 * of the atomic helpers. */
-	int prev = a_fetch_add(&g->ref, -1);
-	if (prev <= 0) m_crash("malloc [guard_release]: the reference of guard is zero or negative\n");
-	/* Decrement and free only if previous value was 1 (so new becomes 0) */
-	if (prev == 1 && g->removed) munmap(g, sizeof(*g));
 }
 
 static struct __guard_entry *find_guard_by_ptr(void *ptr)
@@ -960,44 +1003,6 @@ static void *page_cache_try_get(size_t len)
 		unlock(&__page_cache_bucket_lock[b]);
 	}
 	return NULL;
-}
-
-static int remove_guard_entry(void *base)
-{
-	/* Remove guard metadata list node by base pointer.
-	 * Mark as removed while holding list lock. Then drop the list’s reference;
-	 * the node will be unmapped when the last ref is released. */
-	if (!base) return -1;
-	lock(&__guard_list_lock);
-	struct __guard_entry **pp = &__guard_list;
-	while (*pp) {
-		if ((*pp)->base == base) {
-			struct __guard_entry *old = *pp;
-			*pp = old->next;
-			/* Mark removed while still holding lock to prevent races */
-			old->removed = 1;
-			unlock(&__guard_list_lock);
-
-			/* Drop the list's reference */
-			//if (a_fetch_add(&old->ref, -1) == 1) munmap(old, sizeof(*old));
-			guard_release(old);
-			return 0;
-		}
-		pp = &(*pp)->next;
-	}
-	unlock(&__guard_list_lock);
-	return -1;
-}
-
-/* Helper for overflow: check (base + add) ((PAGE_SIZE - 1) included) */
-static inline int plus_overflows_with_rounding(uintptr_t base, size_t add)
-{
-	/* Computes if base + add (+ rounding) overflows uintptr_t */
-	if (
-		(add > (UINTPTR_MAX - base))
-		|| ((PAGE_SIZE - 1) && add + (PAGE_SIZE - 1) > (UINTPTR_MAX - base))
-	) return 1;
-	return 0;
 }
 
 static void fill_junk(void *p, size_t len, int on_alloc)

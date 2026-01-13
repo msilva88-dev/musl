@@ -6,6 +6,7 @@ Public domain.
 
 /* ChaCha cipher from OpenBSD 7.0 source code: lib/libc/crypt/chacha_private.h */
 
+#define _BSD_SOURCE
 #include "crypt_chacha.h"
 
 static const char SIGMA[16] = "expand 32-byte k", TAU[16] = "expand 16-byte k";
@@ -125,14 +126,14 @@ void __chacha_encrypt_bytes(struct __chacha_ctx *x, const uint8_t *m, uint8_t *c
 		x15 = j15;
 
 		for (i = 20; i > 0; i -= 2) {
-			quarterround32(x0, x4, x8, x12);
-			quarterround32(x1, x5, x9, x13);
-			quarterround32(x2, x6, x10, x14);
-			quarterround32(x3, x7, x11, x15);
-			quarterround32(x0, x5, x10, x15);
-			quarterround32(x1, x6, x11, x12);
-			quarterround32(x2, x7, x8, x13);
-			quarterround32(x3, x4, x9, x14);
+			quarterround32(&x0, &x4, &x8, &x12);
+			quarterround32(&x1, &x5, &x9, &x13);
+			quarterround32(&x2, &x6, &x10, &x14);
+			quarterround32(&x3, &x7, &x11, &x15);
+			quarterround32(&x0, &x5, &x10, &x15);
+			quarterround32(&x1, &x6, &x11, &x12);
+			quarterround32(&x2, &x7, &x8, &x13);
+			quarterround32(&x3, &x4, &x9, &x14);
 		}
 
 		x0 = plus32(x0, j0);
@@ -203,7 +204,7 @@ void __chacha_keysetup(struct __chacha_ctx *x, const uint8_t *k, uint32_t kbits)
 {
 	if (kbits != 128 && kbits != 256) return;
 
-	const char *constants;
+	const uint8_t *constants;
 
 	x->input[4] = u8to32_little(k + 0);
 	x->input[5] = u8to32_little(k + 4);
@@ -212,9 +213,9 @@ void __chacha_keysetup(struct __chacha_ctx *x, const uint8_t *k, uint32_t kbits)
 
 	if (kbits == 256) { /* recommended */
 		k += 16;
-		constants = SIGMA;
+		constants = (const uint8_t *)SIGMA;
 	} else { /* kbits == 128 */
-		constants = TAU;
+		constants = (const uint8_t *)TAU;
 	}
 
 	x->input[8] = u8to32_little(k + 0);

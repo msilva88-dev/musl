@@ -1,6 +1,8 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include "mallocopts.h"
+#include "mchunk.h"
 
 void *malloc(size_t n)
 {
