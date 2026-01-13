@@ -29,8 +29,8 @@
 
 /* fts from OpenBSD 7.0 source code: lib/libc/gen/fts.c */
 
+#define _BSD_SOURCE
 #include <sys/param.h>	/* ALIGN */
-
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -645,11 +645,11 @@ static FTSENT *fts_build(FTS *sp, int type)
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
-		if (!(p = fts_alloc(sp, dp->d_name, dp->d_namlen)))
+		if (!(p = fts_alloc(sp, dp->d_name, strlen(dp->d_name))))
 			goto mem1;
-		if (dp->d_namlen >= maxlen) {	/* include space for NUL */
+		if (strlen(dp->d_name) >= maxlen) {	/* include space for NUL */
 			oldaddr = sp->fts_path;
-			if (fts_palloc(sp, dp->d_namlen +len + 1)) {
+			if (fts_palloc(sp, strlen(dp->d_name) + len + 1)) {
 				/*
 				 * No more memory for path or structures.  Save
 				 * errno, free up the current structure and the
@@ -675,7 +675,7 @@ mem1:				saved_errno = errno;
 
 		p->fts_level = level;
 		p->fts_parent = sp->fts_cur;
-		p->fts_pathlen = len + dp->d_namlen;
+		p->fts_pathlen = len + strlen(dp->d_name);
 		if (p->fts_pathlen < len) {
 			/*
 			 * If we wrap, free up the current structure and
@@ -869,7 +869,7 @@ static FTSENT *fts_sort(FTS *sp, FTSENT *head, int nitems)
 	 * 40 so don't realloc one entry at a time.
 	 */
 	if (nitems > sp->fts_nitems) {
-		struct _ftsent **a;
+		struct __ftsent **a;
 
 		if ((a = reallocarray(sp->fts_array,
 		    nitems + 40, sizeof(FTSENT *))) == NULL) {

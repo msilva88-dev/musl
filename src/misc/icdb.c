@@ -16,6 +16,7 @@
 
 /* icdb from OpenBSD 7.0 source code: lib/libc/stdlib/icdb.c */
 
+#define _BSD_SOURCE
 #include <errno.h>
 #include <fcntl.h>
 #include <icdb.h>

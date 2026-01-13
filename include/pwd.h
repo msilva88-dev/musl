@@ -16,6 +16,7 @@ extern "C" {
 #endif
 
 #include <bits/alltypes.h>
+#include <stdint.h>
 
 struct passwd {
 	char *pw_name;

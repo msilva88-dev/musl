@@ -25,7 +25,7 @@ extern "C" {
 #define FSTAB_XX __FSTABSPEC(-1)
 
 struct fstab {
-	char *fs_spec, *fs_file, *fs_vfstype, *fs_mntops, *fs_type;
+	const char *fs_spec, *fs_file, *fs_vfstype, *fs_mntops, *fs_type;
 	int fs_freq, fs_passno;
 };
 

@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 struct icdb;
 int icdb_add(struct icdb *, const void *);
 int icdb_close(struct icdb *);

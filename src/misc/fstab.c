@@ -184,7 +184,11 @@ hidden int __setfsent(void)
 	if (stat(_PATH_FSTAB, &sbuf) != 0)
 		goto fail;
 	if ((sbuf.st_size == 0) || ((sbuf.st_mode & S_IFMT) != S_IFREG)) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		errno = EFTYPE;
+#elif defined(__linux__)
+		errno = EINVAL;
+#endif
 		goto fail;
 	}
 

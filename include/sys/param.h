@@ -28,6 +28,7 @@
 #define roundup(n,d) (howmany(n,d)*(d))
 #define powerof2(n) !(((n)-1) & (n))
 
+#include <bits/param.h>
 #include <sys/resource.h>
 #include <endian.h>
 #include <limits.h>

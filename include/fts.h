@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-#include <stat.h>
+#include <sys/stat.h>
 
 enum __fts_options {
 	FTS_COMFOLLOW = 000001,
@@ -115,8 +115,8 @@ struct __fts {
 typedef struct __ftsent ftsent_t;
 typedef struct __fts fts_t;
 
-#define FTS fts_t;
-#define FTSENT ftsent_t;
+#define FTS fts_t
+#define FTSENT ftsent_t
 
 FTSENT *fts_children(FTS *, int);
 int fts_close(FTS *);

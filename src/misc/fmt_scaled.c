@@ -36,7 +36,7 @@
  * Scanning code written for OpenBSD libutil.
  */
 
-#include _BSD_SOURCE
+#define _BSD_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

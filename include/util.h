@@ -7,16 +7,24 @@ extern "C" {
 
 #include <pty.h>
 #include <pwd.h>
+#include <stdint.h>
 #include <utmp.h>
+
+#define FMT_SCALED_STRSIZE 7
+#define OPENDEV_PART 1
 
 #ifdef _BSD_SOURCE
 int bcrypt_pbkdf(const char *, size_t, const uint8_t *, size_t, uint8_t *, size_t, unsigned int);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 pid_t fdforkpty(int, int *, char *, struct termios *, struct winsize *);
 int fdopenpty(int, int *, int *, char *, struct termios *, struct winsize *);
+#endif
 int fmt_scaled(long long, char *);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 int getmaxpartitions(void);
 int getptmfd(void);
 int getrawpartition(void);
+#endif
 int isduid(const char *, int);
 void login(struct utmp *);
 void login_fbtab(const char *, uid_t, gid_t);
