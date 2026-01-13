@@ -29,7 +29,7 @@
 
 /* bsdpty from OpenBSD 7.0 source code: lib/libutil/pty.c */
 
-#include _BSD_SOURCE
+#define _BSD_SOURCE
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>

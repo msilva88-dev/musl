@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <pty.h>
+#include <pwd.h>
 #include <utmp.h>
 
 #ifdef _BSD_SOURCE

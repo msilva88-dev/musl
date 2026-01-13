@@ -18,12 +18,13 @@
 
 /* ber from OpenBSD 7.0 source code: lib/libutil/ber.c */
 
+#define _BSD_SOURCE
 #include <errno.h>
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #ifdef DEBUG
 #include <err.h> /* XXX for debug output */
-#include <stdio.h> /* XXX for debug output */
 #endif
 #include <string.h>
 #include <unistd.h>

@@ -3,6 +3,10 @@
 #include <float.h>
 #include <limits.h>
 
+#ifndef M_LN2L
+#define M_LN2L 0.693147180559945309417232121458176568L
+#endif
+
 static const long double pow2_table[16] = {
 	1.0L,
 	1.0442737824274138L, // 2^(1/16)
@@ -31,7 +35,7 @@ long double scalbl(long double x, long double n)
 	}
 	if (x == 0.0L) return x;
 
-	long int int_part;
+	long double int_part;
 	long double frac_part = modfl(n, &int_part);
 
 	if (int_part > 65000) int_part = 65000;

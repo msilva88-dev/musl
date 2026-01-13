@@ -64,11 +64,11 @@ static void bcrypt_hash(uint8_t *sha2pass, uint8_t *sha2salt, uint8_t *out)
 	size_t shalen = SHA512_DIGEST_LENGTH;
 
 	/* key expansion */
-	Blowfish_initstate(&state);
-	Blowfish_expandstate(&state, sha2salt, shalen, sha2pass, shalen);
+	bsdbf_init(&state);
+	bsdbf_expst(&state, sha2salt, shalen, sha2pass, shalen);
 	for (i = 0; i < 64; i++) {
-		Blowfish_expand0state(&state, sha2salt, shalen);
-		Blowfish_expand0state(&state, sha2pass, shalen);
+		bsdbf_expst3(&state, sha2salt, shalen);
+		bsdbf_expst3(&state, sha2pass, shalen);
 	}
 
 	/* encryption */
@@ -77,7 +77,7 @@ static void bcrypt_hash(uint8_t *sha2pass, uint8_t *sha2salt, uint8_t *out)
 		cdata[i] = Blowfish_stream2word(ciphertext, sizeof(ciphertext),
 		    &j);
 	for (i = 0; i < 64; i++)
-		blf_enc(&state, cdata, BCRYPT_WORDS / 2);
+		bsdbf_enc(&state, cdata, BCRYPT_WORDS / 2);
 
 	/* copy out */
 	for (i = 0; i < BCRYPT_WORDS; i++) {
@@ -117,7 +117,7 @@ int bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t s
 
 	/* collapse password */
 	SHA512Init(&ctx);
-	SHA512Update(&ctx, pass, passlen);
+	SHA512Update(&ctx, (const uint8_t *)pass, passlen);
 	SHA512Final(sha2pass, &ctx);
 
 
