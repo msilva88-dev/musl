@@ -99,10 +99,19 @@ struct res_sym {
 #define	RES_BLAST	0x00020000
 #define RES_USEBSTRING	0x00040000
 #define RES_NOIP6DOTINT	0x00080000
+#if defined(__linux__)
 #define RES_USE_EDNS0	0x00100000
+#endif
 #define RES_SNGLKUP	0x00200000
 #define RES_SNGLKUPREOP	0x00400000
+#if defined(__linux__)
 #define RES_USE_DNSSEC	0x00800000
+#endif
+#define	RES_USE_CD	0x10000000
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define RES_USE_DNSSEC  0x20000000
+#define RES_USE_EDNS0   0x40000000
+#endif
 
 #define RES_DEFAULT	(RES_RECURSE|RES_DEFNAMES|RES_DNSRCH|RES_NOIP6DOTINT)
 
