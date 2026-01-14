@@ -7,25 +7,38 @@ extern "C" {
 
 #include <features.h>
 
-#define __NEED_size_t
-#define __NEED_uid_t
 #define __NEED_gid_t
+#define __NEED_uid_t
+#define __NEED_size_t
+#define __NEED_time_t
+#define __NEED_uint8_t
 
 #ifdef _GNU_SOURCE
 #define __NEED_FILE
 #endif
 
 #include <bits/alltypes.h>
-#include <stdint.h>
+#include <paths.h>
+
+#define _PASSWORD_NOUID 1
+#define _PASSWORD_NOGID 2
+#define _PASSWORD_NOCHG 4
+#define _PASSWORD_NOEXP 8
+
+#define _PASSWORD_SECUREONLY 1
+#define _PASSWORD_OMITV7 2
 
 struct passwd {
 	char *pw_name;
 	char *pw_passwd;
 	uid_t pw_uid;
 	gid_t pw_gid;
+	time_t pw_change;
+	char *pw_class;
 	char *pw_gecos;
 	char *pw_dir;
 	char *pw_shell;
+	time_t pw_expire;
 };
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)

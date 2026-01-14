@@ -5,6 +5,11 @@
 extern "C" {
 #endif
 
+#define __NEED_int32_t
+#define __NEED_uint8_t
+#define __NEED_uint16_t
+#define __NEED_uint32_t
+
 #include <bits/alltypes.h>
 
 enum __uuid_len { UUID_STR_LEN = 36, UUID_BUF_LEN = 38 };

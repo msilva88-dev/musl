@@ -47,7 +47,11 @@ int __openblkdev(const char *path, int flags, char *buf, size_t buflen, int isco
 		return -1;
 	}
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	rawpart = getrawpartition();
+#elif defined(__linux__)
+	rawpart = 0;
+#endif
 	if (rawpart < 0)
 		return -1; /* sysctl(3) in getrawpartition sets errno */
 

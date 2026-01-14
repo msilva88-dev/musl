@@ -34,6 +34,11 @@
 
 #define MB_LEN_MAX 4
 
+#ifdef _BSD_SOURCE
+#define GID_MAX UINT_MAX
+#define UID_MAX UINT_MAX
+#endif
+
 #if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) \
  || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 

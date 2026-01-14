@@ -13,6 +13,18 @@ extern "C" {
 #define FMT_SCALED_STRSIZE 7
 #define OPENDEV_PART 1
 
+enum {
+	UU_LOCK_OWNER_ERR = -7,
+	UU_LOCK_TRY_ERR,
+	UU_LOCK_LINK_ERR,
+	UU_LOCK_WRITE_ERR,
+	UU_LOCK_CREAT_ERR,
+	UU_LOCK_READ_ERR,
+	UU_LOCK_OPEN_ERR,
+	UU_LOCK_OK,
+	UU_LOCK_INUSE,
+};
+
 #ifdef _BSD_SOURCE
 int bcrypt_pbkdf(const char *, size_t, const uint8_t *, size_t, uint8_t *, size_t, unsigned int);
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)

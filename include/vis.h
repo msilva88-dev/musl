@@ -5,6 +5,11 @@
 extern "C" {
 #endif
 
+#define __NEED_size_t
+#define __NEED_ssize_t
+
+#include <bits/alltypes.h>
+
 enum __vis_e {
 	VIS_OCTAL = 00001,
 	VIS_CSTYLE = 00002,

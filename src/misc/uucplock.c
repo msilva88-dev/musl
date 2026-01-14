@@ -30,6 +30,7 @@
 /* uucplock from OpenBSD 7.0 source code: lib/libutil/uucplock.c */
 
 #define _BSD_SOURCE
+#include <sys/param.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -45,6 +46,10 @@
 
 #define LOCKTMP "LCKTMP..%ld"
 #define LOCKFMT "LCK..%s"
+
+#ifndef __CONCAT
+#define __CONCAT(p,x) p##x
+#endif
 
 #define GORET(level, val) { err = errno; uuerr = (val); \
 			    goto __CONCAT(ret, level); }
