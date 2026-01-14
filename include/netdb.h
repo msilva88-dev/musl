@@ -180,10 +180,8 @@ __attribute__((const))
 #endif
 int *__h_errno_location(void);
 #define h_errno (*__h_errno_location())
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define NETDB_INTERNAL -1
 #define NETDB_SUCCESS  0
-#endif
 #define HOST_NOT_FOUND 1
 #define TRY_AGAIN      2
 #define NO_RECOVERY    3

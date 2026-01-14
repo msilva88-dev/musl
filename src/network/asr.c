@@ -16,8 +16,10 @@
 
 /* asr from OpenBSD 7.0 source code: lib/libc/asr/asr.c */
 
+#define _BSD_SOURCE
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -26,8 +28,8 @@
 #include <asr.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <resolv.h>
 #include <poll.h>
+#include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +57,6 @@ static int asr_ndots(const char *);
 static void pass0(char **, int, struct asr_ctx *);
 static int strsplit(char *, char **, int);
 static void asr_ctx_envopts(struct asr_ctx *);
-static _Thread_local struct asr *_asr = NULL;
 static pthread_key_t asr_key;
 static pthread_once_t asr_once = PTHREAD_ONCE_INIT;
 
@@ -98,6 +99,50 @@ static void *_asr_resolver(void)
 	}
 
 	return NULL;
+}
+
+static void _asr_resolver_done_tp(void *arg);
+
+static void asr_make_key(void)
+{
+	pthread_key_create(&asr_key, _asr_resolver_done_tp);
+}
+
+static struct asr *asr_private_get(void)
+{
+	pthread_once(&asr_once, asr_make_key);
+	return pthread_getspecific(asr_key);
+}
+
+static void asr_private_set(struct asr *val)
+{
+	pthread_once(&asr_once, asr_make_key);
+	pthread_setspecific(asr_key, val);
+}
+
+/*
+ * Free the "asr" async resolver (or the thread-local resolver if NULL).
+ * Drop the reference to the current context.
+ */
+void _asr_resolver_done(void *arg)
+{
+	struct asr_ctx *ac = arg;
+	struct asr *asr;
+	struct asr *priv;
+
+	if (ac) {
+		_asr_ctx_unref(ac);
+		return;
+	} else {
+		priv = asr_private_get();
+		if (priv == NULL)
+			return;
+		asr = priv;
+		asr_private_set(NULL);
+	}
+
+	_asr_ctx_unref(asr->a_ctx);
+	free(asr);
 }
 
 static void _asr_resolver_done_tp(void *arg)
@@ -181,11 +226,11 @@ static int poll_intrsafe(struct pollfd *fds, nfds_t nfds, int timeout)
 	struct timespec pollstart, pollend, elapsed;
 	int r;
 
-	if (WRAP(clock_gettime)(CLOCK_MONOTONIC, &pollstart))
+	if (__clock_gettime(CLOCK_MONOTONIC, &pollstart))
 		return -1;
 
 	while ((r = poll(fds, 1, timeout)) == -1 && errno == EINTR) {
-		if (WRAP(clock_gettime)(CLOCK_MONOTONIC, &pollend))
+		if (__clock_gettime(CLOCK_MONOTONIC, &pollend))
 			return -1;
 		timespecsub(&pollend, &pollstart, &elapsed);
 		timeout -= elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
@@ -311,26 +356,6 @@ void _asr_async_free(struct asr_query *as)
 	free(as);
 }
 
-static void asr_make_key(void)
-{
-	pthread_key_create(&asr_key, _asr_resolver_done_tp);
-}
-
-static struct asr *asr_private_get(void)
-{
-	pthread_once(&asr_once, asr_make_key);
-
-	struct asr **priv = pthread_getspecific(asr_key);
-	if (!priv) {
-		priv = calloc(1, sizeof(*priv));
-		*priv = calloc(1, sizeof(struct asr));
-
-		pthread_setspecific(asr_key, priv);
-	}
-
-	return *priv;
-}
-
 /*
  * Get a context from the given resolver. This takes a new reference to
  * the returned context, which *must* be explicitly dropped when done
@@ -340,7 +365,7 @@ struct asr_ctx *_asr_use_resolver(void *arg)
 {
 	struct asr_ctx *ac = arg;
 	struct asr *asr;
-	struct asr **priv;
+	struct asr *priv;
 
 	if (ac) {
 		asr_ctx_ref(ac);
@@ -349,11 +374,12 @@ struct asr_ctx *_asr_use_resolver(void *arg)
 	else {
 		DPRINT("using thread-local resolver\n");
 		priv = asr_private_get();
-		if (*priv == NULL) {
+		if (priv == NULL) {
 			DPRINT("setting up thread-local resolver\n");
-			*priv = _asr_resolver();
+			priv = _asr_resolver();
+			asr_private_set(priv);
 		}
-		asr = *priv;
+		asr = priv;
 	}
 	if (asr != NULL) {
 		asr_check_reload(asr);
@@ -415,7 +441,7 @@ static void asr_check_reload(struct asr *asr)
 		asr->a_rtime = 0;
 	}
 
-	if (WRAP(clock_gettime)(CLOCK_MONOTONIC, &ts) == -1)
+	if (__clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		return;
 
 	if ((ts.tv_sec - asr->a_rtime) < RELOAD_DELAY && asr->a_rtime != 0)
@@ -574,9 +600,9 @@ static void pass0(char **tok, int n, struct asr_ctx *ac)
 			return;
 		if (asr_parse_nameserver((struct sockaddr *)&ss, tok[1]))
 			return;
-		if ((ac->ac_ns[ac->ac_nscount] = calloc(1, ss.ss_len)) == NULL)
+		if ((ac->ac_ns[ac->ac_nscount] = calloc(1, sizeof ss)) == NULL)
 			return;
-		memmove(ac->ac_ns[ac->ac_nscount], &ss, ss.ss_len);
+		memmove(ac->ac_ns[ac->ac_nscount], &ss, sizeof ss);
 		ac->ac_nscount += 1;
 
 	} else if (!strcmp(tok[0], "domain")) {
@@ -792,7 +818,7 @@ static int asr_parse_nameserver(struct sockaddr *sa, const char *s)
  */
 char *_asr_strdname(const char *_dname, char *buf, size_t max)
 {
-	const unsigned char *dname = _dname;
+	const unsigned char *dname = (const unsigned char *)_dname;
 	char *res;
 	size_t left, n, count;
 

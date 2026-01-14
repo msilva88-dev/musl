@@ -53,6 +53,16 @@ int adjfreq (const int64_t *, int64_t *);
 	((a)->tv_usec += 1000000, (a)->tv_sec--) )
 #endif
 
+#if defined(_BSD_SOURCE)
+#define timespecsub(t, u, v) (void) ( \
+	(v)->tv_sec = (t)->tv_sec - (u)->tv_sec, \
+	(v)->tv_nsec = (t)->tv_nsec - (u)->tv_nsec, \
+	(v)->tv_sec = ((v)->tv_nsec < 0) ? (v)->tv_sec - 1 : (v)->tv_sec, \
+	(v)->tv_nsec = \
+	    ((v)->tv_nsec < 0) ? (v)->tv_nsec + 1000000000L : (v)->tv_nsec \
+)
+#endif
+
 #if defined(_GNU_SOURCE)
 #define TIMEVAL_TO_TIMESPEC(tv, ts) ( \
 	(ts)->tv_sec = (tv)->tv_sec, \
