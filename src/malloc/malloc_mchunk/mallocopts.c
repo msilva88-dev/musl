@@ -1139,7 +1139,7 @@ static void *mguard(size_t size, int flags)
 /* munguard: given a guarded user pointer and size (user length), undo the
  * guard mapping and unmap. For non-guarded allocations, the caller uses
  * plain munmap instead and this function is bypassed. */
-static int munguard(void *ptr, size_t size)
+__attribute__((__unused__)) static int munguard(void *ptr, size_t size)
 {
 	/* Undo guarded mapping for a user pointer and size (user length):
 	 * - Find and validate guard metadata

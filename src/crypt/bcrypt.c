@@ -185,7 +185,7 @@ char *bcrypt(const char *key, const char *salt)
  *  - bcrypt_checkpass(pass, hash): constant-time verification */
 
 /* Extract two-digit cost from a bcrypt hash: returns -1 on error */
-static int bcrypt_extract_cost(const char *hash)
+__attribute__((__unused__)) static int bcrypt_extract_cost(const char *hash)
 {
 	if (!bcrypt_valid_version_prefix(hash)) return -1;
 	const char *p = hash + 4; /* after "$2x$" or "$2b$" */
