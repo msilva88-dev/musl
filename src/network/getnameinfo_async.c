@@ -53,7 +53,9 @@ struct asr_query *__getnameinfo_async(const struct sockaddr *sa, socklen_t slen,
 	else if (sa->sa_family == AF_INET6)
 		memmove(&as->as.ni.sa.sa, sa, sizeof (as->as.ni.sa.sain6));
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	as->as.ni.sa.sa.sa_len = slen;
+#endif
 	as->as.ni.hostname = host;
 	as->as.ni.hostnamelen = hostlen;
 	as->as.ni.servname = serv;
@@ -92,9 +94,9 @@ static int getnameinfo_async_run(struct asr_query *as, struct asr_result *ar)
 		}
 
 		if ((as->as.ni.sa.sa.sa_family == AF_INET &&
-		    (as->as.ni.sa.sa.sa_len != sizeof (as->as.ni.sa.sain))) ||
+		    (sizeof as->as.ni.sa.sa != sizeof (as->as.ni.sa.sain))) ||
 		    (as->as.ni.sa.sa.sa_family == AF_INET6 &&
-		    (as->as.ni.sa.sa.sa_len != sizeof (as->as.ni.sa.sain6)))) {
+		    (sizeof as->as.ni.sa.sa != sizeof (as->as.ni.sa.sain6)))) {
 			ar->ar_gai_errno = EAI_FAIL;
 			async_set_state(as, ASR_STATE_HALT);
 			break;

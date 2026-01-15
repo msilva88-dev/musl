@@ -713,13 +713,13 @@ static int addrconfig_setup(struct asr_query *as)
 			continue;
 
 		switch (ifa->ifa_addr->sa_family) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		case PF_LINK:
 			/* AF_LINK comes before inet / inet6 on an interface */
 			ifa_data = (struct if_data *)ifa->ifa_data;
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			ifa_rtable = ifa_data->ifi_rdomain;
-#endif
 			break;
+#endif
 		case PF_INET:
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			if (ifa_rtable != rtable)

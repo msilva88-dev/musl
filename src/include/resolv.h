@@ -17,11 +17,11 @@ hidden int res_ownok(const char *);
 hidden int res_mailok(const char *);
 */
 
-hidden u_int16_t _getshort(const unsigned char *);
-hidden u_int32_t _getlong(const unsigned char *);
+hidden uint16_t _getshort(const unsigned char *);
+hidden uint32_t _getlong(const unsigned char *);
 /*
-hidden void __putlong(u_int32_t, unsigned char *);
-hidden void __putshort(u_int16_t, unsigned char *);
+hidden void __putlong(uint32_t, unsigned char *);
+hidden void __putshort(uint16_t, unsigned char *);
 */
 
 #endif

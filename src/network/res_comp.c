@@ -178,18 +178,18 @@ int res_dnok(const char *dn)
  * Routines to insert/extract short/long's.
  */
 
-u_int16_t ___getshort(const u_char *msgp)
+uint16_t ___getshort(const unsigned char *msgp)
 {
-	u_int16_t u;
+	uint16_t u;
 
 	GETSHORT(u, msgp);
 	return u;
 }
 strong_alias(___getshort, _getshort);
 
-u_int32_t ___getlong(const u_char *msgp)
+uint32_t ___getlong(const unsigned char *msgp)
 {
-	u_int32_t u;
+	uint32_t u;
 
 	GETLONG(u, msgp);
 	return u;
@@ -197,12 +197,12 @@ u_int32_t ___getlong(const u_char *msgp)
 strong_alias(___getlong, _getlong);
 
 /*
-void __putshort(u_int16_t s, u_char *msgp)
+void __putshort(uint16_t s, unsigned char *msgp)
 {
 	PUTSHORT(s, msgp);
 }
 
-void __putlong(u_int32_t l, u_char *msgp)
+void __putlong(uint32_t l, unsigned char *msgp)
 {
 	PUTLONG(l, msgp);
 }
