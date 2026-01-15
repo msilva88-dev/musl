@@ -757,7 +757,6 @@ static void check_delayed_chunks()
 
 		if (__mallocopts.mo_freecheck && __mallocopts.mo_freeunmap && snap[s].len >= DELAYED_PROTECT_THRESHOLD) {
 			/* Divergence: require F+U for page protection on delayed chunks */
-			uintptr_t page_base = (uintptr_t)ptr & ~(PAGE_SIZE - 1);
 			if (snap[s].len > SIZE_MAX - (uintptr_t)ptr - (PAGE_SIZE - 1)) {
 				/* Overflow scenario: treat as suspicious */
 				m_crash("free() [check_delayed_chunks]: delayed chunk length overflow\n");
@@ -803,7 +802,6 @@ static void check_delayed_chunks()
 		}
 
 		if (need_reprotect) {
-			uintptr_t page_base = (uintptr_t)ptr & ~(PAGE_SIZE - 1);
 			if (snap[s].len > SIZE_MAX - (uintptr_t)ptr - (PAGE_SIZE - 1)) {
 				/* Overflow scenario: treat as suspicious */
 				m_crash("free() [check_delayed_chunks]: delayed chunk length overflow\n");
@@ -1223,7 +1221,6 @@ static void *mreguard(void *ptr, size_t old_size, size_t new_size)
 		return MAP_FAILED;
 	}
 
-	size_t old_aligned = g->total - 2*PAGE_SIZE;
 	size_t old_total = g->total;
 	char *old_base = g->base;
 	/* Keep caller ref 'g' while we update the guard list/entries */
@@ -1565,7 +1562,6 @@ void *realloc_chunk(void *old, size_t newlen, int flags)
 	if (m->magic != MCHUNK_MAGIC) m_crash("realloc(): invalid or corrupted pointer\n");
 
 	size_t oldlen = m->user_len;
-	size_t old_total = m->total_len;
 	int old_flags = m->flags;
 
 	if (newlen == oldlen) {

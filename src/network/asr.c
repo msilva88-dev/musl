@@ -147,8 +147,6 @@ void _asr_resolver_done(void *arg)
 
 static void _asr_resolver_done_tp(void *arg)
 {
-	char buf[100];
-	int len;
 	struct asr **priv = arg;
 	struct asr *asr;
 

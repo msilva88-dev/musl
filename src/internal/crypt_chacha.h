@@ -30,7 +30,7 @@ hidden void __chacha_encrypt_bytes(struct __chacha_ctx *, const uint8_t *, uint8
 hidden void __chacha_ivsetup(struct __chacha_ctx *, const uint8_t *);
 hidden void __chacha_keysetup(struct __chacha_ctx *, const uint8_t *, uint32_t);
 
-hidden inline void __dso_arc4rb(struct __buffer *buf)
+static inline void __dso_arc4rb(struct __buffer *buf)
 {
 	const uint32_t RK = 0x80000000U;
 	const uint8_t KS = __KIV - __IV;

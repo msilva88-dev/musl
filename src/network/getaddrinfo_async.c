@@ -692,7 +692,9 @@ static int addrinfo_from_pkt(struct asr_query *as, char *pkt, size_t pktlen)
 static int addrconfig_setup(struct asr_query *as)
 {
 	struct ifaddrs *ifa, *ifa0;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	struct if_data *ifa_data;
+#endif
 	struct sockaddr_in *sinp;
 	struct sockaddr_in6 *sin6p;
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
