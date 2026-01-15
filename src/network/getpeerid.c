@@ -1,4 +1,7 @@
 #define _BSD_SOURCE
+#if defined(__linux__)
+#define _GNU_SOURCE
+#endif
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
@@ -11,7 +14,7 @@ int getpeereid(int s, uid_t *euid, gid_t *egid)
 #elif defined(__linux__)
 	struct ucred cred;
 #endif
-	socklen_t len = sizeof(cred);
+	socklen_t len = sizeof cred;
 
 	if (getsockopt(s, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) return -1;
 	if (euid) *euid = cred.uid;

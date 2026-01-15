@@ -33,7 +33,10 @@ static void apply_mask(void *addr, int af, int bits)
  */
 int inet_net_pton(int af, const char *src, void *dst, size_t size)
 {
-	if (!src || !dst) errno = EINVAL, return -1;
+	if (!src || !dst) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	char buf[128];
 	strncpy(buf, src, sizeof(buf));
@@ -42,7 +45,10 @@ int inet_net_pton(int af, const char *src, void *dst, size_t size)
 	char *slash = strchr(buf, '/');
 	int bits = (af == AF_INET) ? 32 : (af == AF_INET6) ? 128 : -1;
 
-	if (bits == -1) errno = EAFNOSUPPORT, return -1;
+	if (bits == -1) {
+		errno = EAFNOSUPPORT;
+		return -1;
+	}
 
 	if (slash) {
 		*slash = '\0';
@@ -55,10 +61,16 @@ int inet_net_pton(int af, const char *src, void *dst, size_t size)
 		bits = (int)val;
 	}
 
-	if (inet_pton(af, buf, dst) != 1) errno = EINVAL, return -1;
+	if (inet_pton(af, buf, dst) != 1) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	size_t need = (af == AF_INET) ? sizeof(struct in_addr) : sizeof(struct in6_addr);
-	if (size < need) errno = ENOSPC, return -1;
+	if (size < need) {
+		errno = ENOSPC;
+		return -1;
+	}
 
 	/* Apply network mask (like BSD does) */
 	apply_mask(dst, af, bits);
@@ -72,18 +84,30 @@ int inet_net_pton(int af, const char *src, void *dst, size_t size)
  */
 char *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
-	if (!src || !dst) errno = EINVAL, return NULL;
+	if (!src || !dst) {
+		errno = EINVAL;
+		return NULL;
+	}
 
 	char addrbuf[INET6_ADDRSTRLEN];
 
-	if (af != AF_INET && af != AF_INET6) errno = EAFNOSUPPORT, return NULL;
+	if (af != AF_INET && af != AF_INET6) {
+		errno = EAFNOSUPPORT;
+		return NULL;
+	}
 	if (!inet_ntop(af, src, addrbuf, sizeof(addrbuf))) return NULL;
 
 	int maxbits = (af == AF_INET) ? 32 : 128;
-	if (bits < 0 || bits > maxbits) errno = EINVAL, return NULL;
+	if (bits < 0 || bits > maxbits) {
+		errno = EINVAL;
+		return NULL;
+	}
 
 	int n = snprintf(dst, size, "%s/%d", addrbuf, bits);
-	if (n < 0 || (size_t)n >= size) errno = ENOSPC, return NULL;
+	if (n < 0 || (size_t)n >= size) {
+		errno = ENOSPC;
+		return NULL;
+	}
 
 	return dst;
 }

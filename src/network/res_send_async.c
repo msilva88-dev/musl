@@ -249,7 +249,7 @@ static int res_send_async_run(struct asr_query *as, struct asr_result *ar)
 
 	case ASR_STATE_PACKET:
 
-		memmove(&ar->ar_ns, AS_NS_SA(as), AS_NS_SA(as)->sa_len);
+		memmove(&ar->ar_ns, AS_NS_SA(as), sizeof AS_NS_SA(as));
 		ar->ar_datalen = as->as.dns.ibuflen;
 		ar->ar_data = as->as.dns.ibuf;
 		as->as.dns.ibuf = NULL;
@@ -304,7 +304,7 @@ static int sockaddr_connect(const struct sockaddr *sa, int socktype)
 	    socktype | SOCK_NONBLOCK | SOCK_DNS, 0)) == -1)
 		goto fail;
 
-	if (connect(sock, sa, sa->sa_len) == -1) {
+	if (connect(sock, sa, sizeof sa) == -1) {
 		/*
 		 * In the TCP case, the caller will be asked to poll for
 		 * POLLOUT so that we start writing the packet in tcp_write()

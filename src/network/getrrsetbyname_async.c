@@ -261,7 +261,7 @@ static void get_response(struct asr_result *ar, const char *pkt, int pktlen)
 	unsigned int index_ans, index_sig;
 
 	/* parse result */
-	response = parse_dns_response(pkt, pktlen);
+	response = parse_dns_response((const unsigned char *)pkt, pktlen);
 	if (response == NULL) {
 		ar->ar_rrset_errno = ERRSET_FAIL;
 		goto fail;

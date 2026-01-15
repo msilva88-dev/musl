@@ -5,7 +5,11 @@
 extern "C" {
 #endif
 
+#define __NEED_uint16_t
+
+#include <bits/alltypes.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #define _SDL_DATA_LEN 24
 struct sockaddr_dl {
@@ -17,7 +21,7 @@ struct sockaddr_dl {
 
 #define LLADDR(sdl) (caddr_t)((sdl)->sdl_nlen + (sdl)->sdl_data)
 
-#define _BSD_SOURCE
+#ifdef _BSD_SOURCE
 char *link_ntoa_r(const struct sockaddr_dl *, char *, size_t);
 char *link_ntoa(const struct sockaddr_dl *);
 #endif

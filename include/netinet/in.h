@@ -515,7 +515,7 @@ struct ip6_mtuinfo {
 int inet6_opt_append(void *extbuf, socklen_t extlen, int offset, uint8_t type, socklen_t len, uint8_t align, void **databufp);
 int inet6_opt_find(void *extbuf, socklen_t extlen, int offset, uint8_t type, socklen_t *lenp, void **databufp);
 int inet6_opt_finish(void *extbuf, socklen_t extlen, int offset);
-int inet6_opt_get_val(void *databuf, socklen_t offset, void *val, socklen_t vallen);
+int inet6_opt_get_val(void *databuf, int offset, void *val, socklen_t vallen);
 int inet6_opt_init(void *extbuf, socklen_t extlen);
 int inet6_opt_next(void *extbuf, socklen_t extlen, int offset, uint8_t *typep, socklen_t *lenp, void **databufp);
 socklen_t inet6_rth_space(int, int);

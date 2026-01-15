@@ -27,6 +27,7 @@
 
 #include <asr.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -211,10 +212,11 @@ static int getnameinfo_async_run(struct asr_query *as, struct asr_result *ar)
 static int _servname(struct asr_query *as)
 {
 	struct servent s;
-	struct servent_data sd;
+	struct servent *sp = NULL;
 	int port, r;
 	char *buf = as->as.ni.servname;
 	size_t n, buflen = as->as.ni.servnamelen;
+	char buf2[PAGE_SIZE];
 
 	if (as->as.ni.servname == NULL || as->as.ni.servnamelen == 0)
 		return 0;
@@ -225,13 +227,11 @@ static int _servname(struct asr_query *as)
 		port = as->as.ni.sa.sain6.sin6_port;
 
 	if (!(as->as.ni.flags & NI_NUMERICSERV)) {
-		memset(&sd, 0, sizeof (sd));
 		r = getservbyport_r(port, (as->as.ni.flags & NI_DGRAM) ?
-		    "udp" : "tcp", &s, &sd);
-		if (r == 0)
+		    "udp" : "tcp", &s, buf2, sizeof buf2, &sp);
+		if (r == 0 && sp)
 			n = strlcpy(buf, s.s_name, buflen);
-		endservent_r(&sd);
-		if (r == 0) {
+		if (r == 0 && sp) {
 			if (n >= buflen)
 				return -1;
 			return 0;

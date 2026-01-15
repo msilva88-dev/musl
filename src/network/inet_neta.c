@@ -6,7 +6,10 @@
 
 char *inet_neta(in_addr_t src, char *dst, size_t size)
 {
-	if (!dst || size == 0) errno = EINVAL, return NULL;
+	if (!dst || size == 0) {
+		errno = EINVAL;
+		return NULL;
+	}
 
 	unsigned char a[4];
 	int len = 0;
@@ -23,7 +26,10 @@ char *inet_neta(in_addr_t src, char *dst, size_t size)
 	else if (a[1] != 0) len = snprintf(dst, size, "%u.%u", a[0], a[1]);
 	else len = snprintf(dst, size, "%u", a[0]);
 
-	if (len < 0 || (size_t)len >= size) errno = ENOSPC, return NULL;
+	if (len < 0 || (size_t)len >= size) {
+		errno = ENOSPC;
+		return NULL;
+	}
 
 	return dst;
 }

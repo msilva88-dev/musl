@@ -73,7 +73,17 @@ struct addrinfo {
 #endif
 
 #ifdef _BSD_SOURCE
+enum {
+	ERRSET_SUCCESS,
+	ERRSET_NOMEMORY,
+	ERRSET_FAIL,
+	ERRSET_INVAL,
+	ERRSET_NONAME,
+	ERRSET_NODATA,
+};
+
 #define SCOPE_DELIMITER '%'
+#define RRSET_VALIDATED 1
 #endif
 
 int getaddrinfo (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict, struct addrinfo **__restrict);
@@ -132,6 +142,16 @@ struct protoent_data {
 	char *line;
 	/* hardcoded; index of hardcoded protocols */
 	size_t idx;
+};
+
+struct rrsetinfo {
+	unsigned int rri_flags, rri_rdclass, rri_rdtype;
+	unsigned int rri_ttl, rri_nrdatas, rri_nsigs;
+	char *rri_name;
+	struct rdatainfo {
+		unsigned int rdi_length;
+		unsigned char *rdi_data;
+	} *rri_rdatas, *rri_sigs;
 };
 #endif
 

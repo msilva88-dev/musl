@@ -16,7 +16,10 @@
  */
 char *link_ntoa_r(const struct sockaddr_dl *sdl, char *dst, size_t size)
 {
-	if (!sdl || !dst || size == 0) errno = EINVAL, return NULL;
+	if (!sdl || !dst || size == 0) {
+		errno = EINVAL;
+		return NULL;
+	}
 
 	char tmp[64], *p = tmp;
 	unsigned char *addr;
@@ -33,16 +36,22 @@ char *link_ntoa_r(const struct sockaddr_dl *sdl, char *dst, size_t size)
 	}
 
 	/* Hardware address */
-	addr = LLADDR(sdl);
+	addr = (unsigned char *)LLADDR(sdl);
 	for (int i = 0; i < sdl->sdl_alen; i++) {
 		n = snprintf(p, sizeof(tmp) - (p - tmp), "%s%02x", i ? ":" : "", addr[i]);
-		if (n < 0 || (size_t)n >= sizeof(tmp) - (p - tmp)) errno = ENOSPC, return NULL;
+		if (n < 0 || (size_t)n >= sizeof(tmp) - (p - tmp)) {
+			errno = ENOSPC;
+			return NULL;
+		}
 		p += n;
 	}
 
 	/* Copy to destination buffer */
 	size_t len = p - tmp;
-	if ((size_t)len >= size) errno = ENOSPC, return NULL;
+	if ((size_t)len >= size) {
+		errno = ENOSPC;
+		return NULL;
+	}
 
 	memcpy(dst, tmp, len + 1);
 	return dst;
