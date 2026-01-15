@@ -116,6 +116,7 @@ struct linger {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define SOCK_CLOEXEC   0100000
 #define SOCK_NONBLOCK  040000
+#define SOCK_DNS       010000
 #elif !defined(SOCK_CLOEXEC) && defined(__linux__)
 #define SOCK_CLOEXEC   02000000
 #define SOCK_NONBLOCK  04000

@@ -72,7 +72,7 @@ struct asr_query *__res_send_async(const unsigned char *buf, int buflen, void *a
 	as->as.dns.obuflen = buflen;
 	as->as.dns.obufsize = buflen;
 
-	_asr_unpack_init(&p, buf, buflen);
+	_asr_unpack_init(&p, (const char *)buf, buflen);
 	_asr_unpack_header(&p, &h);
 	_asr_unpack_query(&p, &q);
 	if (p.err) {
@@ -301,7 +301,11 @@ static int sockaddr_connect(const struct sockaddr *sa, int socktype)
 	int errno_save, sock;
 
 	if ((sock = socket(sa->sa_family,
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	    socktype | SOCK_NONBLOCK | SOCK_DNS, 0)) == -1)
+#elif defined(__linux__)
+	    socktype | SOCK_NONBLOCK, 0)) == -1)
+#endif
 		goto fail;
 
 	if (connect(sock, sa, sizeof sa) == -1) {
@@ -377,7 +381,7 @@ static int setup_query(struct asr_query *as, const char *name, const char *dom,
 	if (as->as_ctx->ac_options & (RES_USE_EDNS0 | RES_USE_DNSSEC))
 		h.arcount = 1;
 
-	_asr_pack_init(&p, as->as.dns.obuf, as->as.dns.obufsize);
+	_asr_pack_init(&p, (char *)as->as.dns.obuf, as->as.dns.obufsize);
 	_asr_pack_header(&p, &h);
 	_asr_pack_query(&p, type, class, dname);
 	if (as->as_ctx->ac_options & (RES_USE_EDNS0 | RES_USE_DNSSEC))
@@ -601,9 +605,9 @@ static int tcp_read(struct asr_query *as)
 			return 1; /* no more data available */
 	}
 
-	offset = as->as.dns.datalen - sizeof(as->as.dns.pktlen);
-	pos = as->as.dns.ibuf + offset;
-	len =  as->as.dns.ibuflen - offset;
+	offset = as->as.dns.datalen - sizeof as->as.dns.pktlen;
+	pos = (char *)(as->as.dns.ibuf + offset);
+	len = as->as.dns.ibuflen - offset;
 
     read_again:
 	n = read(as->as_fd, pos, len);
@@ -650,7 +654,7 @@ static int ensure_ibuf(struct asr_query *as, size_t n)
 	t = recallocarray(as->as.dns.ibuf, as->as.dns.ibufsize, n, 1);
 	if (t == NULL)
 		return -1; /* errno set */
-	as->as.dns.ibuf = t;
+	as->as.dns.ibuf = (unsigned char *)t;
 	as->as.dns.ibufsize = n;
 
 	return 0;
@@ -668,7 +672,8 @@ static int validate_packet(struct asr_query *as)
 	struct asr_dns_rr rr;
 	int r;
 
-	_asr_unpack_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
+	_asr_unpack_init(&p, (const char *)as->as.dns.ibuf,
+	    as->as.dns.ibuflen);
 
 	_asr_unpack_header(&p, &h);
 	if (p.err)
