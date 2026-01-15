@@ -14,6 +14,9 @@ typedef uint32_t in_addr_t;
 struct in_addr { in_addr_t s_addr; };
 
 struct sockaddr_in {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	uint8_t sin_len;
+#endif
 	sa_family_t sin_family;
 	in_port_t sin_port;
 	struct in_addr sin_addr;
@@ -32,11 +35,14 @@ struct in6_addr {
 #define s6_addr32 __in6_union.__s6_addr32
 
 struct sockaddr_in6 {
-	sa_family_t     sin6_family;
-	in_port_t       sin6_port;
-	uint32_t        sin6_flowinfo;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	uint8_t sin6_len;
+#endif
+	sa_family_t sin6_family;
+	in_port_t sin6_port;
+	uint32_t sin6_flowinfo;
 	struct in6_addr sin6_addr;
-	uint32_t        sin6_scope_id;
+	uint32_t sin6_scope_id;
 };
 
 struct ipv6_mreq {
@@ -136,6 +142,9 @@ uint16_t ntohs(uint16_t);
          !IN6_IS_ADDR_UNSPECIFIED(a) && !IN6_IS_ADDR_LOOPBACK(a))
 
 #define IN6_IS_ADDR_MC_NODELOCAL(a) \
+        (IN6_IS_ADDR_MULTICAST(a) && ((((uint8_t *) (a))[1] & 0xf) == 0x1))
+
+#define IN6_IS_ADDR_MC_INTFACELOCAL(a) \
         (IN6_IS_ADDR_MULTICAST(a) && ((((uint8_t *) (a))[1] & 0xf) == 0x1))
 
 #define IN6_IS_ADDR_MC_LINKLOCAL(a) \

@@ -34,16 +34,17 @@ struct addrinfo {
 #define AI_CANONNAME    0x02
 #define AI_NUMERICHOST  0x04
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#define AI_EXT		0x08
-#define AI_NUMERICSERV	0x10
-#define AI_FQDN		0x20
-#define AI_ADDRCONFIG	0x40
-#define AI_MASK		0x7f
+#define AI_EXT          0x08
+#define AI_NUMERICSERV  0x10
+#define AI_FQDN         0x20
+#define AI_ADDRCONFIG   0x40
+#define AI_MASK         0x7f
 #elif defined(__linux__)
 #define AI_V4MAPPED     0x08
 #define AI_ALL          0x10
 #define AI_ADDRCONFIG   0x20
 #define AI_NUMERICSERV  0x400
+#define AI_MASK         0x43F
 #endif
 
 #define NI_NUMERICHOST  0x01
@@ -71,10 +72,8 @@ struct addrinfo {
 #define EAI_OVERFLOW   -12
 #endif
 
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
 #define SCOPE_DELIMITER '%'
-#endif
 #endif
 
 int getaddrinfo (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict, struct addrinfo **__restrict);

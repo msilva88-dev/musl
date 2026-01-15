@@ -142,6 +142,17 @@ by Wietse Venema, licensed under permissive terms allowing redistribution
 and modification with preservation of copyright notice.
 See the file itself for details.
 
+The implementation of res_comp (src/network/res_comp.c) includes
+code originally developed by the University of California (BSD 3-clause license),
+and Digital Equipment Corporation (permissive MIT-like license),
+See the file header for full license texts.
+
+The implementation of res_debug_syms (src/network/res_debug_syms.c) includes
+code originally developed by the University of California (BSD 3-clause license),
+Digital Equipment Corporation (permissive MIT-like license),
+and IBM (permissive license with a patent grant for DNS dynamic updates).
+See the file header for full license texts.
+
 The implementation of bsdlabel [disklabel] (src/bsd/bsdlabel.c) is
 Copyright © 1983, 1987, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
@@ -302,13 +313,13 @@ The implementation of vis (src/misc/vis.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
-The implementation of getmaxpartitions (src/misc/getmaxpartitions.c) is
+The implementation of getmaxpartitions (src/bsd/getmaxpartitions.c) is
 Copyright © 1996 The NetBSD Foundation, Inc.
 It is derived from software contributed to The NetBSD Foundation
 by Jason R. Thorpe.
 It is licensed under a two-clause BSD license.
 
-The implementation of getrawpartition (src/misc/getrawpartition.c) is
+The implementation of getrawpartition (src/bsd/getrawpartition.c) is
 Copyright © 1996 The NetBSD Foundation, Inc.
 It is derived from software contributed to The NetBSD Foundation
 by Jason R. Thorpe.
@@ -471,11 +482,11 @@ The implementation of icdb (src/misc/icdb.c) is
 Copyright © 2015 Ted Unangst <tedu@openbsd.org>.
 It is licensed under a ISC license.
 
-The implementation of imsg (src/misc/imsg.c) is
+The implementation of imsg (src/bsd/imsg.c) is
 Copyright © 2003, 2004 Henning Brauer <henning@openbsd.org>.
 It is licensed under a ISC license.
 
-The implementation of imsg-buffer (src/misc/imsg-buffer.c) is
+The implementation of imsg-buffer (src/bsd/imsg-buffer.c) is
 Copyright © 2003, 2004 Henning Brauer <henning@openbsd.org>.
 It is licensed under a ISC license.
 

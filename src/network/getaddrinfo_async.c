@@ -36,6 +36,16 @@
 
 #include "asr_private.h"
 
+/*
+ * AI_FQDN is a BSD-specific flag for getaddrinfo().
+ * It is not defined or supported on Linux or POSIX systems.
+ * Define it as 0 on non-BSD systems
+ * so code remains portable and harmless.
+ */
+#ifndef AI_FQDN
+#define AI_FQDN 0
+#endif
+
 struct match {
 	int family;
 	int socktype;
@@ -153,7 +163,11 @@ static int getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 		    ai->ai_canonname ||
 		    ai->ai_addr ||
 		    ai->ai_next) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			ar->ar_gai_errno = EAI_BADHINTS;
+#elif defined(__linux__)
+			ar->ar_gai_errno = EAI_BADFLAGS;
+#endif
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
@@ -206,7 +220,11 @@ static int getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 			    MATCH_PROTO(ai->ai_protocol, i))
 				break;
 		if (matches[i].family == -1) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			ar->ar_gai_errno = EAI_BADHINTS;
+#elif defined(__linux__)
+			ar->ar_gai_errno = EAI_BADFLAGS;
+#endif
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
@@ -465,9 +483,10 @@ static int getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 static int get_port(const char *servname, const char *proto, int numonly)
 {
 	struct servent se;
-	struct servent_data sed;
+	struct servent *sep = NULL;
 	int port;
 	const char *e;
+	char buf[PAGE_SIZE];
 
 	if (servname == NULL)
 		return 0;
@@ -482,10 +501,9 @@ static int get_port(const char *servname, const char *proto, int numonly)
 		return -2;
 
 	port = -1;
-	memset(&sed, 0, sizeof(sed));
-	if (getservbyname_r(servname, proto, &se, &sed) != -1)
+	int res = getservbyname_r(servname, proto, &se, buf, sizeof buf, &sep);
+	if (res == 0 && sep)
 		port = ntohs(se.s_port);
-	endservent_r(&sed);
 
 	return port;
 }
@@ -542,14 +560,14 @@ static int addrinfo_add(struct asr_query *as, const struct sockaddr *sa, const c
 		if (port == -1)
 			continue;
 
-		ai = calloc(1, sizeof(*ai) + sa->sa_len);
+		ai = calloc(1, sizeof(*ai) + sizeof sa);
 		if (ai == NULL)
 			return EAI_MEMORY;
 		ai->ai_family = sa->sa_family;
 		ai->ai_socktype = matches[i].socktype;
 		ai->ai_protocol = proto;
 		ai->ai_flags = as->as.ai.hints.ai_flags;
-		ai->ai_addrlen = sa->sa_len;
+		ai->ai_addrlen = sizeof sa;
 		ai->ai_addr = (void *)(ai + 1);
 		if (cname &&
 		    as->as.ai.hints.ai_flags & (AI_CANONNAME | AI_FQDN)) {
@@ -558,7 +576,7 @@ static int addrinfo_add(struct asr_query *as, const struct sockaddr *sa, const c
 				return EAI_MEMORY;
 			}
 		}
-		memmove(ai->ai_addr, sa, sa->sa_len);
+		memmove(ai->ai_addr, sa, sizeof sa);
 		if (sa->sa_family == PF_INET)
 			((struct sockaddr_in *)ai->ai_addr)->sin_port =
 			    htons(port);
@@ -640,12 +658,16 @@ static int addrinfo_from_pkt(struct asr_query *as, char *pkt, size_t pktlen)
 
 		memset(&u, 0, sizeof u);
 		if (rr.rr_type == T_A) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			u.sain.sin_len = sizeof u.sain;
+#endif
 			u.sain.sin_family = AF_INET;
 			u.sain.sin_addr = rr.rr.in_a.addr;
 			u.sain.sin_port = 0;
 		} else if (rr.rr_type == T_AAAA) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			u.sain6.sin6_len = sizeof u.sain6;
+#endif
 			u.sain6.sin6_family = AF_INET6;
 			u.sain6.sin6_addr = rr.rr.in_aaaa.addr6;
 			u.sain6.sin6_port = 0;
@@ -673,12 +695,16 @@ static int addrconfig_setup(struct asr_query *as)
 	struct if_data *ifa_data;
 	struct sockaddr_in *sinp;
 	struct sockaddr_in6 *sin6p;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	int rtable, ifa_rtable = -1;
+#endif
 
 	if (getifaddrs(&ifa0) == -1)
 		return -1;
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	rtable = getrtable();
+#endif
 
 	as->as_flags |= ASYNC_NO_INET | ASYNC_NO_INET6;
 
@@ -690,11 +716,15 @@ static int addrconfig_setup(struct asr_query *as)
 		case PF_LINK:
 			/* AF_LINK comes before inet / inet6 on an interface */
 			ifa_data = (struct if_data *)ifa->ifa_data;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			ifa_rtable = ifa_data->ifi_rdomain;
+#endif
 			break;
 		case PF_INET:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			if (ifa_rtable != rtable)
 				continue;
+#endif
 
 			sinp = (struct sockaddr_in *)ifa->ifa_addr;
 
@@ -704,8 +734,10 @@ static int addrconfig_setup(struct asr_query *as)
 			as->as_flags &= ~ASYNC_NO_INET;
 			break;
 		case PF_INET6:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 			if (ifa_rtable != rtable)
 				continue;
+#endif
 
 			sin6p = (struct sockaddr_in6 *)ifa->ifa_addr;
 

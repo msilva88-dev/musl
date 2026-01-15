@@ -353,6 +353,7 @@ int ns_parserr(ns_msg *, ns_sect, int, ns_rr *);
 int ns_skiprr(const unsigned char *, const unsigned char *, ns_sect, int);
 int ns_name_uncompress(const unsigned char *, const unsigned char *, const unsigned char *, char *, size_t);
 
+#define DNS_MESSAGEEXTFLAG_DO 32768U
 
 #define	__BIND		19950621
 
@@ -465,6 +466,7 @@ typedef struct {
 #define T_NAPTR		ns_t_naptr
 #define T_A6		ns_t_a6
 #define T_DNAME		ns_t_dname
+#define T_OPT		ns_t_opt
 #define T_DS		ns_t_ds
 #define T_SSHFP		ns_t_sshfp
 #define T_IPSECKEY	ns_t_ipseckey

@@ -16,6 +16,7 @@
 
 /* asr_utils from OpenBSD 7.0 source code: lib/libc/asr/asr_utils.c */
 
+#define _BSD_SOURCE
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -132,7 +133,8 @@ static ssize_t dname_expand(const unsigned char *data, size_t len, size_t offset
 		if (offset + n + 1 > len)
 			return -1;
 
-		if (dname_check_label(data + offset + 1, n) == -1)
+		if (dname_check_label(
+		    (const char *)(data + offset + 1), n) == -1)
 			return -1;
 
 		/* copy n + at offset+1 */
@@ -226,7 +228,8 @@ static int unpack_dname(struct asr_unpack *p, char *dst, size_t max)
 	if (p->err)
 		return -1;
 
-	e = dname_expand(p->buf, p->len, p->offset, &p->offset, dst, max);
+	e = dname_expand((const unsigned char *)p->buf, p->len,
+	    p->offset, &p->offset, dst, max);
 	if (e == -1) {
 		p->err = EINVAL;
 		return -1;
@@ -433,7 +436,9 @@ int _asr_sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 
 		sin = (struct sockaddr_in *)sa;
 		memset(sin, 0, sizeof *sin);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		sin->sin_len = sizeof(struct sockaddr_in);
+#endif
 		sin->sin_family = PF_INET;
 		sin->sin_addr.s_addr = ina.s_addr;
 		return 0;
@@ -456,7 +461,9 @@ int _asr_sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 
 		sin6 = (struct sockaddr_in6 *)sa;
 		memset(sin6, 0, sizeof *sin6);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
+#endif
 		sin6->sin6_family = PF_INET6;
 		sin6->sin6_addr = in6a;
 
