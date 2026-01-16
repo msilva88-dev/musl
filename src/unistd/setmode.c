@@ -32,8 +32,8 @@
 
 /* setmode from OpenBSD 7.0 source code: lib/libc/gen/setmode.c */
 
+#define _BSD_SOURCE
 #include <sys/stat.h>
-
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>

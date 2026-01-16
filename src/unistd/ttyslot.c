@@ -29,6 +29,7 @@
 
 /* ttyslot from OpenBSD 7.0 source code: lib/libc/gen/ttyslot.c */
 
+#define _BSD_SOURCE
 #include <ttyent.h>
 #include <stdio.h>
 #include <string.h>

@@ -213,6 +213,7 @@ int __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 			case '\0':
 				hostok = 1;
 				break;
+#if 0
 			case '@':
 				if (rhost == (char *)-1)
 					rhost = __gethostloop(raddr, salen);
@@ -221,6 +222,7 @@ int __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 					hostok = innetgr(&ahost[2], rhost,
 					    NULL, domain);
 				break;
+#endif
 			default:
 				hostok = __icheckhost(raddr, salen, &ahost[1]);
 				break;
@@ -230,6 +232,7 @@ int __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 			case '\0':
 				hostok = -1;
 				break;
+#if 0
 			case '@':
 				if (rhost == (char *)-1)
 					rhost = __gethostloop(raddr, salen);
@@ -238,6 +241,7 @@ int __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 					hostok = -innetgr(&ahost[2], rhost,
 					    NULL, domain);
 				break;
+#endif
 			default:
 				hostok = -__icheckhost(raddr, salen, &ahost[1]);
 				break;
@@ -251,10 +255,12 @@ int __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 			case '\0':
 				userok = 1;
 				break;
+#if 0
 			case '@':
 				userok = innetgr(&auser[2], NULL, ruser,
 				    domain);
 				break;
+#endif
 			default:
 				userok = strcmp(ruser, &auser[1]) ? 0 : 1;
 				break;
@@ -264,10 +270,12 @@ int __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 			case '\0':
 				userok = -1;
 				break;
+#if 0
 			case '@':
 				userok = -innetgr(&auser[2], NULL, ruser,
 				    domain);
 				break;
+#endif
 			default:
 				userok = strcmp(ruser, &auser[1]) ? 0 : -1;
 				break;

@@ -29,8 +29,11 @@
 
 /* strtofflags from OpenBSD 7.0 source code: lib/libc/gen/strtofflags.c */
 
+#define _BSD_SOURCE
+#if defined(__linux__)
+#define _GNU_SOURCE
+#endif
 #include <sys/stat.h>
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -42,6 +45,7 @@ static const struct {
 	int invert;
 } mapping[] = {
 	/* shorter names per flag first, all prefixed by "no" */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	{ "nosappnd",		SF_APPEND,	0 },
 	{ "nosappend",		SF_APPEND,	0 },
 	{ "noarch",		SF_ARCHIVED,	0 },
@@ -56,6 +60,19 @@ static const struct {
 	{ "nouimmutable",	UF_IMMUTABLE,	0 },
 	{ "nodump",		UF_NODUMP,	1 },
 	{ "noopaque",		UF_OPAQUE,	0 },
+#elif defined(__linux__)
+	{ "nosappnd",		STATX_ATTR_APPEND,	0 },
+	{ "nosappend",		STATX_ATTR_APPEND,	0 },
+	{ "noschg",		STATX_ATTR_IMMUTABLE,	0 },
+	{ "noschange",		STATX_ATTR_IMMUTABLE,	0 },
+	{ "nosimmutable",	STATX_ATTR_IMMUTABLE,	0 },
+	{ "nouappnd",		STATX_ATTR_APPEND,	0 },
+	{ "nouappend",		STATX_ATTR_APPEND,	0 },
+	{ "nouchg",		STATX_ATTR_IMMUTABLE,	0 },
+	{ "nouchange",		STATX_ATTR_IMMUTABLE,	0 },
+	{ "nouimmutable",	STATX_ATTR_IMMUTABLE,	0 },
+	{ "nodump",		STATX_ATTR_NODUMP,	1 },
+#endif
 };
 #define longestflaglen	12
 #define nmappings	(sizeof(mapping) / sizeof(mapping[0]))

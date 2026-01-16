@@ -299,7 +299,7 @@ void bsdbf_cbc_dec(bsdbf_ctx_t *state, uint8_t *iv, uint8_t *data, uint32_t data
  *
  * Calling sequence for bcrypt/Eksblowfish:
  *     bsdbf_init(ctx);
- *     bsdbf_expst5(key, keylen, salt, saltlen, ctx);
+ *     bsdbf_expst(key, keylen, salt, saltlen, ctx);
  *     repeat cost times:
  *         bsdbf_expst3(key, keylen, ctx);
  *         bsdbf_expst3(salt, saltlen, ctx);
@@ -370,7 +370,7 @@ void bsdbf_expst3(bsdbf_ctx_t *c, const uint8_t *data, uint16_t len)
  * Alternately XOR salt and key words into L and R, encipher, overwrite
  * P-array and S-box entries.
  */
-void bsdbf_expst5(bsdbf_ctx_t *c,
+void bsdbf_expst(bsdbf_ctx_t *c,
 	const uint8_t *salt, uint16_t saltlen,
 	const uint8_t *key,  uint16_t keylen)
 {
