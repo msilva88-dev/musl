@@ -33,38 +33,104 @@
 #include <signal.h>
 
 const char *const __sys_signame[NSIG] = {
-	"Signal 0",
+	"0",
 	"HUP",		/* SIGHUP */
 	"INT",		/* SIGINT */
 	"QUIT",		/* SIGQUIT */
 	"ILL",		/* SIGILL */
 	"TRAP",		/* SIGTRAP */
 	"ABRT",		/* SIGABRT */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(SIGEMT)
 	"EMT",		/* SIGEMT */
+#else
+	"7",
+#endif
+#elif defined(__linux__)
+	"BUS",		/* SIGBUS */
+#endif
 	"FPE",		/* SIGFPE */
 	"KILL",		/* SIGKILL */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	"BUS",		/* SIGBUS */
+#elif defined(__linux__)
+	"USR1",		/* SIGUSR1 */
+#endif
 	"SEGV",		/* SIGSEGV */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	"SYS",		/* SIGSYS */
+#elif defined(__linux__)
+	"USR2",		/* SIGUSR2 */
+#endif
 	"PIPE",		/* SIGPIPE */
 	"ALRM",		/* SIGALRM */
 	"TERM",		/* SIGTERM */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	"URG",		/* SIGURG */
 	"STOP",		/* SIGSTOP */
 	"TSTP",		/* SIGTSTP */
 	"CONT",		/* SIGCONT */
 	"CHLD",		/* SIGCHLD */
+#elif defined(__linux__)
+#if defined(SIGSTKFLT)
+	"STKFLT",	/* SIGSTKFLT */
+#elif defined(SIGEMT)
+	"EMT",		/* SIGEMT */
+#else
+	"16",
+#endif
+	"CHLD",		/* SIGCHLD */
+	"CONT",		/* SIGCONT */
+	"STOP",		/* SIGSTOP */
+	"TSTP",		/* SIGTSTP */
+#endif
 	"TTIN",		/* SIGTTIN */
 	"TTOU",		/* SIGTTOU */
-	"IO",		/* SIGIO */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	"POLL",		/* SIGIO/SIGPOLL */
+#elif defined(__linux__)
+	"URG",		/* SIGURG */
+#endif
 	"XCPU",		/* SIGXCPU */
 	"XFSZ",		/* SIGXFSZ */
 	"VTALRM",	/* SIGVTALRM */
 	"PROF",		/* SIGPROF */
+#if defined(SIGWINCH) || defined(__linux__)
 	"WINCH",	/* SIGWINCH */
+#else
+	"28",
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(SIGINFO)
 	"INFO",		/* SIGINFO */
+#else
+	"29",
+#endif
 	"USR1",		/* SIGUSR1 */
 	"USR2",		/* SIGUSR2 */
-	"THR",		/* SIGTHR */
+#if defined(SIGTHR)
+	"THR"		/* SIGTHR */
+#else
+	"32"
+#endif
+#elif defined(__linux__)
+	"POLL",		/* SIGIO/SIGPOLL */
+	"PWD",		/* SIGPWD */
+	"SYS",		/* SIGSYS */
+	"32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42",
+	"43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53",
+	"54", "55", "56", "57", "58", "59", "60", "61", "62", "63",
+#if _NSIG > 65
+	"64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74",
+	"75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85",
+	"86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96",
+	"97", "98", "99", "100", "101", "102", "103", "104", "105", "106",
+	"107", "108", "109", "110", "111", "112", "113", "114", "115", "116",
+	"117", "118", "119", "120", "121", "122", "123", "124", "125", "126",
+	"127", "128"
+#else
+	"64"
+#endif
+#endif
 };
 strong_alias(__sys_signame, sys_signame);

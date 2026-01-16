@@ -201,9 +201,9 @@ static const char strings[] =
 	"User defined signal 1\0"
 	"User defined signal 2\0"
 #if defined(SIGTHR)
-	"Thread AST\0"
+	"Thread AST"
 #else
-	"Unknown signal\0"
+	"Unknown signal"
 #endif
 #elif defined(__linux__)
 	"I/O possible\0"

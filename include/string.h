@@ -84,6 +84,14 @@ size_t strxfrm_l (char *__restrict, const char *__restrict, size_t, locale_t);
 void *memmem(const void *, size_t, const void *, size_t);
 #endif
 
+#ifdef _BSD_SOURCE
+char *strsignal_name(int);
+const char * const *sys_signamef(void);
+void sys_signamef_r(const char **);
+const char * const *sys_siginfof(void);
+void sys_siginfof_r(const char **);
+#endif
+
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
  || defined(_BSD_SOURCE)
 void *memccpy (void *__restrict, const void *__restrict, int, size_t);

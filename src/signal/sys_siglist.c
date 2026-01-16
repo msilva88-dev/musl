@@ -33,38 +33,105 @@
 #include <signal.h>
 
 const char *const __sys_siglist[NSIG] = {
-	"Signal 0",
+	"Unknown signal",
 	"Hangup",			/* SIGHUP */
 	"Interrupt",			/* SIGINT */
 	"Quit",				/* SIGQUIT */
 	"Illegal instruction",		/* SIGILL */
-	"Trace/BPT trap",		/* SIGTRAP */
-	"Abort trap",			/* SIGABRT */
-	"EMT trap",			/* SIGEMT */
-	"Floating point exception",	/* SIGFPE */
-	"Killed",			/* SIGKILL */
+	"Trace/breakpoint trap",	/* SIGTRAP */
+	"Aborted",			/* SIGABRT */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(SIGEMT)
+	"Emulator trap",		/* SIGEMT */
+#else
+	"Unknown signal",
+#endif
+#elif defined(__linux__)
 	"Bus error",			/* SIGBUS */
+#endif
+	"Arithmetic exception",		/* SIGFPE */
+	"Killed",			/* SIGKILL */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	"Bus error",			/* SIGBUS */
+#elif defined(__linux__)
+	"User defined signal 1",	/* SIGUSR1 */
+#endif
 	"Segmentation fault",		/* SIGSEGV */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	"Bad system call",		/* SIGSYS */
+#elif defined(__linux__)
+	"User defined signal 2",	/* SIGUSR2 */
+#endif
 	"Broken pipe",			/* SIGPIPE */
 	"Alarm clock",			/* SIGALRM */
 	"Terminated",			/* SIGTERM */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	"Urgent I/O condition",		/* SIGURG */
-	"Suspended (signal)",		/* SIGSTOP */
-	"Suspended",			/* SIGTSTP */
+	"Stopped (signal)",		/* SIGSTOP */
+	"Stopped",			/* SIGTSTP */
 	"Continued",			/* SIGCONT */
-	"Child exited",			/* SIGCHLD */
+	"Child process status",		/* SIGCHLD */
+#elif defined(__linux__)
+#if defined(SIGSTKFLT)
+	"Stack fault",			/* SIGSTKFLT */
+#elif defined(SIGEMT)
+	"Emulator trap",		/* SIGEMT */
+#endif
+	"Child process status",		/* SIGCHLD */
+	"Continued",			/* SIGCONT */
+	"Stopped (signal)",		/* SIGSTOP */
+	"Stopped",			/* SIGTSTP */
+#endif
 	"Stopped (tty input)",		/* SIGTTIN */
 	"Stopped (tty output)",		/* SIGTTOU */
-	"I/O possible",			/* SIGIO */
-	"Cputime limit exceeded",	/* SIGXCPU */
-	"Filesize limit exceeded",	/* SIGXFSZ */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	"I/O possible",			/* SIGIO/SIGPOLL */
+#elif defined(__linux__)
+	"Urgent I/O condition",		/* SIGURG */
+#endif
+	"CPU time limit exceeded",	/* SIGXCPU */
+	"File size limit exceeded",	/* SIGXFSZ */
 	"Virtual timer expired",	/* SIGVTALRM */
 	"Profiling timer expired",	/* SIGPROF */
+#if defined(SIGWINCH) || defined(__linux__)
 	"Window size changes",		/* SIGWINCH */
+#else
+	"Unknown signal",
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(SIGINFO)
 	"Information request",		/* SIGINFO */
+#else
+	"Unknown signal",
+#endif
 	"User defined signal 1",	/* SIGUSR1 */
 	"User defined signal 2",	/* SIGUSR2 */
-	"Thread AST",			/* SIGTHR */
+#if defined(SIGTHR)
+	"Thread AST"			/* SIGTHR */
+#else
+	"Unknown signal"
+#endif
+#elif defined(__linux__)
+	"I/O possible",			/* SIGIO/SIGPOLL */
+	"Power failure",		/* SIGPWR */
+	"Bad system call",		/* SIGSYS */
+	"RT32", "RT33", "RT34", "RT35", "RT36", "RT37", "RT38", "RT39",
+	"RT40", "RT41", "RT42", "RT43", "RT44", "RT45", "RT46", "RT47",
+	"RT48", "RT49", "RT50", "RT51", "RT52", "RT53", "RT54", "RT55",
+	"RT56", "RT57", "RT58", "RT59", "RT60", "RT61", "RT62", "RT63",
+#if _NSIG > 65
+	"RT64", "RT65", "RT66", "RT67", "RT68", "RT69", "RT70", "RT71",
+	"RT72", "RT73", "RT74", "RT75", "RT76", "RT77", "RT78", "RT79",
+	"RT80", "RT81", "RT82", "RT83", "RT84", "RT85", "RT86", "RT87",
+	"RT88", "RT89", "RT90", "RT91", "RT92", "RT93", "RT94", "RT95",
+	"RT96", "RT97", "RT98", "RT99", "RT100", "RT101", "RT102", "RT103",
+	"RT104", "RT105", "RT106", "RT107", "RT108", "RT109", "RT110",
+	"RT111", "RT112", "RT113", "RT114", "RT115", "RT116", "RT117",
+	"RT118", "RT119", "RT120", "RT121", "RT122", "RT123", "RT124",
+	"RT125", "RT126", "RT127", "RT128"
+#else
+	"RT64"
+#endif
+#endif
 };
 strong_alias(__sys_siglist, sys_siglist);
