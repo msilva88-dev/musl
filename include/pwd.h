@@ -28,6 +28,10 @@ extern "C" {
 #define _PASSWORD_SECUREONLY 1
 #define _PASSWORD_OMITV7 2
 
+#ifdef _BSD_SOURCE
+#define _PW_BUF_LEN 1024
+#endif
+
 struct passwd {
 	char *pw_name;
 	char *pw_passwd;

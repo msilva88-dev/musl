@@ -14,6 +14,10 @@ extern "C" {
 #define __NEED_FILE
 #endif
 
+#ifdef _BSD_SOURCE
+#define _GR_BUF_LEN (1024+200*sizeof(char*))
+#endif
+
 #include <bits/alltypes.h>
 
 struct group {

@@ -32,6 +32,7 @@
 
 /* getcap (cget) without BSD db from OpenBSD 7.0 source code: lib/libc/gen/getcap.c */
 
+#define _BSD_SOURCE
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -185,12 +186,9 @@ weak_alias(__cgetent, cgetent);
 static int getent(char **cap, unsigned int *len, char **db_array, FILE *fp,
 	const char *name, int depth, char *nfield)
 {
-#if 0 /* The BSD db is not implemented yet */
-	DB *capdbp;
-#endif
 	char *r_end, *rp, **db_p;
-	int myfd, eof, foundit, opened, retval, clen;
-	char *record, *cbuf;
+	int myfd, eof, foundit, opened, clen;
+	char *record;
 	int tc_not_resolved;
 	char pbuf[PATH_MAX];
 
@@ -239,8 +237,6 @@ static int getent(char **cap, unsigned int *len, char **db_array, FILE *fp,
 			myfd = 0;
 			opened++;
 		} else {
-			char *dbrecord;
-
 			clen = snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
 			{
 				fp = fopen(*db_p, "re");

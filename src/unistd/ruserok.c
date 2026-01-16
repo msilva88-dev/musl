@@ -30,6 +30,7 @@
 
 /* ruserok from OpenBSD 7.0 source code: lib/libc/net/ruserok.c */
 
+#define _BSD_SOURCE
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -41,7 +42,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
-#include <netgroup.h>
+#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>

@@ -16,6 +16,8 @@
 #define UNUSED_A
 #endif
 
+struct servent_data;
+
 UNUSED_A void endservent_r(struct servent_data *data)
 {
 	if (!data) return;

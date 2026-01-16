@@ -297,7 +297,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		__syscall(SYS_rt_sigprocmask, SIG_UNBLOCK, SIGPT_SET, 0, _NSIG/8);
 #endif
 		self->tsd = (void **)__pthread_tsd_main;
-#elif defined(__linux__)
+#if defined(__linux__)
 		__membarrier_init();
 #endif
 		libc.threaded = 1;

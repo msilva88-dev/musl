@@ -274,7 +274,7 @@ int fmt_scaled(long long number, char *result)
 	return 0;
 }
 
-#ifdef	MAIN
+#ifdef MAIN
 /*
  * This is the original version of the program in the man page.
  * Copy-and-paste whatever you need from it.

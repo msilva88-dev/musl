@@ -238,8 +238,8 @@ void psignal(int, const char *);
 #endif
 
 #ifdef _BSD_SOURCE
-extern char *const sys_siglist[_NSIG];
-extern char *const sys_signame[_NSIG];
+extern const char *const sys_siglist[_NSIG];
+extern const char *const sys_signame[_NSIG];
 #endif
 
 #if defined(_XOPEN_SOURCE) || defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
@@ -301,7 +301,7 @@ int sigandset(sigset_t *, const sigset_t *, const sigset_t *);
  * Legacy BSD compat.
  */
 #ifdef _BSD_SOURCE
-struct  sigvec {
+struct sigvec {
 	void (*sv_handler)(int);
 	int sv_mask;
 	int sv_flags;

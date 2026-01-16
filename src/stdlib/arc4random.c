@@ -134,14 +134,14 @@ static inline void _rs_init(unsigned char *buf, size_t n)
 			_exit(1);
 	}
 
-	chacha_keysetup(&rsx->rs_chacha, buf, KEYSZ * 8, 0);
-	chacha_ivsetup(&rsx->rs_chacha, buf + KEYSZ);
+	__chacha_keysetup(&rsx->rs_chacha, buf, KEYSZ * 8);
+	__chacha_ivsetup(&rsx->rs_chacha, buf + KEYSZ);
 }
 
 static inline void _rs_rekey(unsigned char *dat, size_t datlen)
 {
 	/* fill rs_buf with the keystream */
-	chacha_encrypt_bytes(&rsx->rs_chacha, rsx->rs_buf,
+	__chacha_encrypt_bytes(&rsx->rs_chacha, rsx->rs_buf,
 	    rsx->rs_buf, sizeof(rsx->rs_buf));
 	/* mix in optional user provided data */
 	if (dat) {

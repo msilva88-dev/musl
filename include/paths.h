@@ -7,9 +7,7 @@
 #define _PATH_BSHELL	"/bin/sh"
 #define _PATH_CONSOLE	"/dev/console"
 #define _PATH_DEVNULL	"/dev/null"
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define _PATH_HEQUIV	"/etc/hosts.equiv"
-#endif
 #define _PATH_HOSTS	"/etc/hosts"
 #define _PATH_LOG	"/dev/log"
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
@@ -51,5 +49,6 @@
 #define _PATH_MASTERPASSWD "/etc/master.passwd"
 #define _PATH_MASTERPASSWD_LOCK "/etc/ptmp"
 #define _PATH_PWD_MKDB "/usr/sbin/pwd_mkdb"
+#define _PATH_RSH "/usr/bin/ssh"
 
 #endif

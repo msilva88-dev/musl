@@ -1,4 +1,9 @@
 #define _BSD_SOURCE
+
+#define __NEED_uintptr_t
+
+#include <bits/alltypes.h>
+
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +29,6 @@ void setprogname(const char *name)
 		__progname_safe[len] = '\0';
 		__progname = __progname_safe;
 	} else {
-		__progname = base;
+		__progname = strdup(base);
 	}
 }

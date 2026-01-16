@@ -30,7 +30,9 @@
 
 /* rcmd from OpenBSD 7.0 source code: lib/libc/net/rcmd.c */
 
+#define _BSD_SOURCE
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 
 #include <netinet/in.h>
@@ -208,7 +210,11 @@ again:
 		pfd[1].events = POLLIN;
 
 		errno = 0;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		if (poll(pfd, 2, INFTIM) < 1 ||
+#elif defined(__linux__)
+		if (poll(pfd, 2, -1) < 1 ||
+#endif
 		    (pfd[1].revents & (POLLIN|POLLHUP)) == 0) {
 			if (errno != 0)
 				(void)fprintf(stderr,

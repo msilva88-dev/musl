@@ -33,6 +33,7 @@
  * Chris Siebenmann <cks@utcc.utoronto.ca>.
  */
 
+#define _BSD_SOURCE
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <signal.h>
@@ -188,5 +189,6 @@ int __rcmdsh(char **ahost, int rport, const char *locuser, const char *remuser,
 		return sp[0];
 	}
 	/* NOTREACHED */
+	return 0; // Unreachable, placates -Wreturn-type
 }
 weak_alias(__rcmdsh, rcmdsh);

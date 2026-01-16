@@ -1,17 +1,21 @@
 #define _BSD_SOURCE
+#include <sys/mman.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
 #include <time.h>
+#include "lock.h"
 #include "time_impl.h"
+
+extern char *__tzname[2];
 
 static char std_name[TZNAME_MAX+1];
 static char dst_name[TZNAME_MAX+1];
 
 static int dst_off;
 
-static const unsigned char *zi, *trans, *index, *types, *abbrevs, *abbrevs_end;
+static const unsigned char *zi, *trans, *idx, *types, *abbrevs, *abbrevs_end;
 static size_t map_size;
 
 static char old_tz_buf[32];
@@ -73,8 +77,8 @@ static void do_tzsetwall(void)
 		} else {
 			trans = zi+44;
 		}
-		index = trans + (zi_read32(trans-12) << scale);
-		types = index + zi_read32(trans-12);
+		idx = trans + (zi_read32(trans-12) << scale);
+		types = idx + zi_read32(trans-12);
 		abbrevs = types + 6*zi_read32(trans-8);
 		abbrevs_end = abbrevs + zi_read32(trans-4);
 		if (zi[map_size-1] == '\n') {

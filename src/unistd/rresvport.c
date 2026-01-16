@@ -30,6 +30,7 @@
 
 /* rresvport from OpenBSD 7.0 source code: lib/libc/net/rresvport.c */
 
+#define _BSD_SOURCE
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -47,7 +48,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <stdlib.h>
-#include <netgroup.h>
 
 #include "bindresvport.h"
 
@@ -68,11 +68,15 @@ int __rresvport_af(int *alport, int af)
 
 	switch (af) {
 	case AF_INET:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		sa->sa_len = sizeof(struct sockaddr_in);
+#endif
 		portp = &((struct sockaddr_in *)sa)->sin_port;
 		break;
 	case AF_INET6:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		sa->sa_len = sizeof(struct sockaddr_in6);
+#endif
 		portp = &((struct sockaddr_in6 *)sa)->sin6_port;
 		break;
 	default:
@@ -87,7 +91,7 @@ int __rresvport_af(int *alport, int af)
 
 	*portp = htons(*alport);
 	if (*alport < IPPORT_RESERVED - 1) {
-		if (bind(s, sa, sa->sa_len) != -1)
+		if (bind(s, sa, sizeof sa) != -1)
 			return s;
 		if (errno != EADDRINUSE) {
 			(void)close(s);

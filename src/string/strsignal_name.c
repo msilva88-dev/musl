@@ -228,7 +228,7 @@ static const char strings[] =
 #endif
 	"";
 
-static char *__strsignal_name(int signum)
+char *__strsignal_name(int signum)
 {
 	const char *s = strings;
 
@@ -240,6 +240,7 @@ static char *__strsignal_name(int signum)
 	return (char *)LCTRANS_CUR(s);
 }
 
+/*
 const char *const sys_signame[] = {
 	__strsignal_name(0), __strsignal_name(1), __strsignal_name(2), __strsignal_name(3),
 	__strsignal_name(4), __strsignal_name(5), __strsignal_name(6), __strsignal_name(7),
@@ -283,8 +284,10 @@ const char *const sys_signame[] = {
 #endif
 #endif
 };
+*/
 
-const char *const sys_signame[] = {
+/*
+const char *const sys_siglist[] = {
 	strsignal(0), strsignal(1), strsignal(2), strsignal(3), strsignal(4), strsignal(5),
 	strsignal(6), strsignal(7), strsignal(8), strsignal(9), strsignal(10), strsignal(11),
 	strsignal(12), strsignal(13), strsignal(14), strsignal(15), strsignal(16), strsignal(17),
@@ -317,3 +320,4 @@ const char *const sys_signame[] = {
 #endif
 #endif
 };
+*/

@@ -8,6 +8,8 @@
 #define strong_alias(old, new) \
 	extern __typeof(old) new __attribute__((__alias__(#old)))
 #define weak_alias(old, new) \
-	extern __typeof(old) new __attribute__((__weak__, __alias__(#old)))
+	extern __typeof(old) new weak; \
+	extern __typeof(old) new __attribute__((__alias__(#old)))
 
 #endif
+

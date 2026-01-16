@@ -84,9 +84,13 @@ restart:
 		memcpy(&term, &oterm, sizeof(term));
 		if (!(flags & RPP_ECHO_ON))
 			term.c_lflag &= ~(ECHO | ECHONL);
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		if (term.c_cc[VSTATUS] != _POSIX_VDISABLE)
 			term.c_cc[VSTATUS] = _POSIX_VDISABLE;
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
+#elif defined(__linux__)
+		(void)tcsetattr(input, TCSAFLUSH, &term);
+#endif
 	} else {
 		memset(&term, 0, sizeof(term));
 		term.c_lflag |= ECHO;
@@ -139,7 +143,11 @@ restart:
 		const int sigttou = signo[SIGTTOU];
 
 		/* Ignore SIGTTOU generated when we are not the fg pgrp. */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		while (tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm) == -1 &&
+#elif defined(__linux__)
+		while (tcsetattr(input, TCSAFLUSH, &oterm) == -1 &&
+#endif
 		    errno == EINTR && !signo[SIGTTOU])
 			continue;
 		signo[SIGTTOU] = sigttou;

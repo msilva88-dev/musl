@@ -55,20 +55,20 @@ static size_t fun_write(FILE *f, const unsigned char *buf, size_t len)
 	return (size_t)ret;
 }
 
-static off_t fun_seek(FILE *f, off_t off, int whence)
+static off_t fun_seek(FILE *restrict f, off_t off, int whence)
 {
 	struct fun_cookie *fc = f->cookie;
 	fpos_t pos;
 
 	if (!fc->seekfn) {
 		errno = ENOTSUP;
-		return -1;
+		return -1LL;
 	}
 
-	pos = fc->seekfn(fc->cookie, (fpos_t)off, whence);
-	if (pos == -1) return -1;
+	pos = fc->seekfn(fc->cookie, *(fpos_t *)&off, whence);
+	if (*(off_t *)&pos == -1LL) return -1LL;
 
-	return (off_t)pos;
+	return *(off_t *)&pos;
 }
 
 static int fun_close(FILE *f)

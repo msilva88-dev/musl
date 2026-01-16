@@ -293,6 +293,14 @@ The implementation of strtofflags/fflagstostr (src/unistd/strtofflags.c) is
 Copyright © 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of sys_siglist (src/string/sys_siglist.c) is
+Copyright © 1983, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
+The implementation of sys_signame (src/string/sys_signame.c) is
+Copyright © 1983 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of ttyname (src/misc/ttyname.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
@@ -344,6 +352,11 @@ It is licensed under a two-clause BSD license.
 
 The implementation of readlabels (src/bsd/readlabels.c) is
 Copyright © 1996 Jason Downs.
+It is licensed under a two-clause BSD license.
+
+The implementation of res_random (src/network/res_random.c) is
+Copyright © 1997 Niels Provos, and
+Copyright © 2008 Damien Miller.
 It is licensed under a two-clause BSD license.
 
 The implementation of rmd160 (src/crypt/hash_rmd160.c) is

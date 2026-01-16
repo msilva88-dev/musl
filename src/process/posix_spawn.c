@@ -163,6 +163,8 @@ fail:
 		while (r<0 && r!=-EPIPE);
 	}
 	_exit(127);
+	/* NOTREACHED */
+	return 0; // Unreachable, placates -Wreturn-type
 }
 
 

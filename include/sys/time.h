@@ -54,6 +54,7 @@ int adjfreq (const int64_t *, int64_t *);
 #endif
 
 #if defined(_BSD_SOURCE)
+#define timespecclear(t) (t)->tv_sec = (t)->tv_nsec = 0
 #define timespecsub(t, u, v) (void) ( \
 	(v)->tv_sec = (t)->tv_sec - (u)->tv_sec, \
 	(v)->tv_nsec = (t)->tv_nsec - (u)->tv_nsec, \
