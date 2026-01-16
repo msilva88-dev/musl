@@ -115,7 +115,6 @@ strong_alias(__res_hnok, res_hnok);
  * hostname-like (A, MX, WKS) owners can have "*" as their first label
  * but must otherwise be as a host name.
  */
-/*
 int res_ownok(const char *dn)
 {
 	if (asterchar(dn[0])) {
@@ -126,23 +125,21 @@ int res_ownok(const char *dn)
 	}
 	return res_hnok(dn);
 }
-*/
 
 /*
  * SOA RNAMEs and RP RNAMEs can have any printable character in their first
  * label, but the rest of the name has to look like a host name.
  */
-/*
 int res_mailok(const char *dn)
 {
 	int ch, escaped = 0;
-*/
+
 	/* "." is a valid missing representation */
-/*	if (*dn == '\0')
+	if (*dn == '\0')
 		return 1;
-*/
+
 	/* otherwise <label>.<hostname> */
-/*	while ((ch = *dn++) != '\0') {
+	while ((ch = *dn++) != '\0') {
 		if (!domainchar(ch))
 			return 0;
 		if (!escaped && periodchar(ch))
@@ -156,13 +153,11 @@ int res_mailok(const char *dn)
 		return res_hnok(dn);
 	return 0;
 }
-*/
 
 /*
  * This function is quite liberal, since RFC 1034's character sets are only
  * recommendations.
  */
-/*
 int res_dnok(const char *dn)
 {
 	int ch;
@@ -172,7 +167,6 @@ int res_dnok(const char *dn)
 			return 0;
 	return 1;
 }
-*/
 
 /*
  * Routines to insert/extract short/long's.
@@ -196,7 +190,6 @@ uint32_t ___getlong(const unsigned char *msgp)
 }
 strong_alias(___getlong, _getlong);
 
-/*
 void __putshort(uint16_t s, unsigned char *msgp)
 {
 	PUTSHORT(s, msgp);
@@ -206,4 +199,3 @@ void __putlong(uint32_t l, unsigned char *msgp)
 {
 	PUTLONG(l, msgp);
 }
-*/

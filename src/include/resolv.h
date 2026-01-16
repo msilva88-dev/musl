@@ -9,19 +9,7 @@ hidden int __res_mkquery(int, const char *, int, int, const unsigned char *, int
 hidden int __res_send(const unsigned char *, int, unsigned char *, int);
 hidden int __res_msend(int, const unsigned char *const *, const int *, unsigned char *const *, int *, int);
 
-hidden int __res_hnok(const char *);
-hidden int res_hnok(const char *);
-/*
-hidden int res_dnok(const char *);
-hidden int res_ownok(const char *);
-hidden int res_mailok(const char *);
-*/
-
 hidden uint16_t _getshort(const unsigned char *);
 hidden uint32_t _getlong(const unsigned char *);
-/*
-hidden void __putlong(uint32_t, unsigned char *);
-hidden void __putshort(uint16_t, unsigned char *);
-*/
 
 #endif

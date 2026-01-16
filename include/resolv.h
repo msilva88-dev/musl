@@ -29,7 +29,7 @@ typedef struct __res_state {
 	unsigned long options;
 	int nscount;
 	struct sockaddr_in nsaddr_list[MAXNS];
-# define nsaddr	nsaddr_list[0]
+#define nsaddr nsaddr_list[0]
 	unsigned short id;
 	char *dnsrch[MAXDNSRCH+1];
 	char defdname[256];
@@ -145,7 +145,16 @@ int dn_expand(const unsigned char *, const unsigned char *, const unsigned char 
 int dn_skipname(const unsigned char *, const unsigned char *);
 
 #ifdef _BSD_SOURCE
+const char *p_class(int);
+const char *p_type(int);
+void putlong(uint32_t, unsigned char *);
+void putshort(uint16_t, unsigned char *);
+int res_dnok(const char *);
+int res_hnok(const char *);
+int res_mailok(const char *);
+int res_ownok(const char *);
 unsigned int res_randomid(void);
+const char *sym_ntos(const struct res_sym *, int, int *);
 #endif
 
 #ifdef __cplusplus

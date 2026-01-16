@@ -60,7 +60,7 @@ float expf(float x)
 	kd = roundtoint(z);
 	ki = converttoint(z);
 #else
-# define SHIFT __exp2f_data.shift
+#define SHIFT __exp2f_data.shift
 	kd = eval_as_double(z + SHIFT);
 	ki = asuint64(kd);
 	kd -= SHIFT;

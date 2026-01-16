@@ -16,6 +16,7 @@
 
 /* asr_debug from OpenBSD 7.0 source code: lib/libc/asr/asr_debug.c */
 
+#define _BSD_SOURCE
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -68,8 +69,8 @@ static const char *print_rr(const struct asr_dns_rr *rr, char *buf, size_t max)
 	r = snprintf(buf, max, "%s %u %s %s ",
 	    print_dname(rr->rr_dname, tmp, sizeof tmp),
 	    rr->rr_ttl,
-	    __p_class(rr->rr_class),
-	    __p_type(rr->rr_type));
+	    p_class(rr->rr_class),
+	    p_type(rr->rr_type));
 	if (r < 0 || r >= max) {
 		buf[0] = '\0';
 		return buf;
@@ -133,7 +134,7 @@ static const char *print_query(const struct asr_dns_query *q, char *buf, size_t 
 
 	snprintf(buf, max, "%s	%s %s",
 	    print_dname(q->q_dname, b, sizeof b),
-	    __p_class(q->q_class), __p_type(q->q_type));
+	    p_class(q->q_class), p_type(q->q_type));
 
 	return buf;
 }

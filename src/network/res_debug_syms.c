@@ -148,7 +148,7 @@ const struct res_sym __p_type_syms[] = {
 	{0, 		NULL,		NULL}
 };
 
-const char *____sym_ntos(const struct res_sym *syms, int number, int *success)
+const char *__sym_ntos(const struct res_sym *syms, int number, int *success)
 {
 	static char unname[20];
 
@@ -165,23 +165,23 @@ const char *____sym_ntos(const struct res_sym *syms, int number, int *success)
 		*success = 0;
 	return unname;
 }
-strong_alias(____sym_ntos, __sym_ntos);
+strong_alias(__sym_ntos, sym_ntos);
 
 /*
  * Return a string for the type
  */
-const char *____p_type(int type)
+const char *__p_type(int type)
 {
 	return __sym_ntos(__p_type_syms, type, NULL);
 }
-strong_alias(____p_type, __p_type);
+strong_alias(__p_type, p_type);
 
 /*
  * Return a mnemonic for class
  */
-const char *____p_class(int class)
+const char *__p_class(int class)
 {
 	return __sym_ntos(__p_class_syms, class, NULL);
 }
-strong_alias(____p_class, __p_class);
+strong_alias(__p_class, p_class);
 

@@ -346,11 +346,6 @@ hidden void _asr_dump_packet(FILE *, const void *, size_t);
 
 hidden extern FILE *_asr_debug;
 
-struct res_sym;
-hidden const char *__sym_ntos(const struct res_sym *, int, int *);
-hidden const char *__p_type(int);
-hidden const char *__p_class(int);
-
 #define async_set_state(a, s) do {		\
 	DPRINT("asr: [%s@%p] %s -> %s\n",	\
 		_asr_querystr((a)->as_type),	\

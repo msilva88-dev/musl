@@ -1,9 +1,9 @@
 #if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) \
- || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+  || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
-# define MINSIGSTKSZ 2048
-# define SIGSTKSZ 8192
+#define MINSIGSTKSZ 2048
+#define SIGSTKSZ 8192
 #endif
 
 typedef unsigned long __riscv_mc_gp_state[32];
