@@ -9,6 +9,7 @@ void *malloc(size_t n)
 	return malloc_chunk(n, MCHUNK_FLAG_NONE);
 }
 
+/*
 void *calloc(size_t m, size_t n)
 {
 	if (m && n > SIZE_MAX / m) {
@@ -21,3 +22,4 @@ void *calloc(size_t m, size_t n)
 	memset(p, 0, t);
 	return p;
 }
+*/
