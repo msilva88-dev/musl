@@ -17,6 +17,35 @@ includedir = $(prefix)/include
 libdir = $(prefix)/lib
 syslibdir = /lib
 
+LDFLAGS =
+LDFLAGS_AUTO =
+LIBCC = -lgcc
+CPPFLAGS =
+CFLAGS =
+CFLAGS_AUTO = -Os -pipe
+CFLAGS_C99FSE = -std=c99 -ffreestanding -nostdinc
+
+AR      = $(CROSS_COMPILE)ar
+RANLIB  = $(CROSS_COMPILE)ranlib
+
+TOOL_LIBS = lib/musl-gcc.specs
+ALL_TOOLS = obj/musl-gcc
+
+WRAPCC_GCC = gcc
+WRAPCC_CLANG = clang
+
+-include config.mak
+-include $(srcdir)/arch/$(ARCH)/arch.mak
+
+CFLAGS_ALL = $(CFLAGS_C99FSE)
+CFLAGS_ALL += -D_XOPEN_SOURCE=700 -I$(srcdir)/arch/$(ARCH) -I$(srcdir)/arch/generic
+CFLAGS_ALL += -Iobj/src/internal -I$(srcdir)/src/include -I$(srcdir)/src/internal -Iobj/include -I$(srcdir)/include
+CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS_AUTO) $(CFLAGS)
+
+LDFLAGS_ALL = $(LDFLAGS_AUTO) $(LDFLAGS)
+
+INSTALL = $(srcdir)/tools/install.sh
+
 UNAME != \
 if [ "$(CROSS_COMPILE)" ]; then \
     case "$(CROSS_COMPILE)" in \
@@ -73,25 +102,6 @@ endif
 GENH_INT = obj/src/internal/version.h
 IMPH = $(addprefix $(srcdir)/, src/internal/stdio_impl.h src/internal/pthread_impl.h src/internal/locale_impl.h src/internal/libc.h)
 
-LDFLAGS =
-LDFLAGS_AUTO =
-LIBCC = -lgcc
-CPPFLAGS =
-CFLAGS =
-CFLAGS_AUTO = -Os -pipe
-CFLAGS_C99FSE = -std=c99 -ffreestanding -nostdinc
-
-CFLAGS_ALL = $(CFLAGS_C99FSE)
-CFLAGS_ALL += -D_XOPEN_SOURCE=700 -I$(srcdir)/arch/$(ARCH) -I$(srcdir)/arch/generic
-CFLAGS_ALL += -Iobj/src/internal -I$(srcdir)/src/include -I$(srcdir)/src/internal -Iobj/include -I$(srcdir)/include
-CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS_AUTO) $(CFLAGS)
-
-LDFLAGS_ALL = $(LDFLAGS_AUTO) $(LDFLAGS)
-
-AR      = $(CROSS_COMPILE)ar
-RANLIB  = $(CROSS_COMPILE)ranlib
-INSTALL = $(srcdir)/tools/install.sh
-
 COMMON_HEADERS = $(wildcard include/*.h)
 COMMON_HEADERS += $(wildcard include/arpa/*.h)
 COMMON_HEADERS += $(wildcard include/net/*.h)
@@ -124,17 +134,9 @@ EMPTY_LIBS = $(EMPTY_LIB_NAMES:%=lib/lib%.a)
 CRT_LIBS = $(addprefix lib/,$(notdir $(CRT_OBJS)))
 STATIC_LIBS = lib/libc.a
 SHARED_LIBS = lib/libc.so
-TOOL_LIBS = lib/musl-gcc.specs
 ALL_LIBS = $(CRT_LIBS) $(STATIC_LIBS) $(SHARED_LIBS) $(EMPTY_LIBS) $(TOOL_LIBS)
-ALL_TOOLS = obj/musl-gcc
-
-WRAPCC_GCC = gcc
-WRAPCC_CLANG = clang
 
 LDSO_PATHNAME = $(syslibdir)/ld-musl-$(ARCH)$(SUBARCH).so.1
-
--include config.mak
--include $(srcdir)/arch/$(ARCH)/arch.mak
 
 ifeq ($(ARCH),)
 
