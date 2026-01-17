@@ -12,4 +12,3 @@
 	extern __typeof(old) new __attribute__((__alias__(#old)))
 
 #endif
-

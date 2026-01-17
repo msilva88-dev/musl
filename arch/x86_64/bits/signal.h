@@ -11,6 +11,15 @@
 #endif
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint8_t
+#define __NEED_uint16_t
+#define __NEED_uint32_t
+#define __NEED_uint64_t
+
+#include <bits/alltypes.h>
+#endif
+
 #ifdef _GNU_SOURCE
 enum { REG_R8 = 0 };
 #define REG_R8 REG_R8
@@ -76,7 +85,7 @@ typedef struct _fpstate {
 } *fpregset_t;
 struct sigcontext {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	long sc_rdi, sc_rsi, sc_rdx, sc_rcx,
+	long sc_rdi, sc_rsi, sc_rdx, sc_rcx;
 	long sc_r8, sc_r9, sc_r10, sc_r11, sc_r12, sc_r13, sc_r14, sc_r15;
         long sc_rbp, sc_rbx, sc_rax, sc_gs, sc_fs, sc_es, sc_ds, sc_trapno;
         long sc_err, sc_rip, sc_cs, sc_rflags, sc_rsp, sc_ss;

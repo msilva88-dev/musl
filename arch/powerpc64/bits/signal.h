@@ -11,6 +11,12 @@
 #endif
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint64_t
+
+#include <bits/alltypes.h>
+#endif
+
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 typedef long breg_t;

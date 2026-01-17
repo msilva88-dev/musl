@@ -273,13 +273,15 @@ static void *io_thread_func(void *ctx)
 	case O_SYNC:
 		ret = fsync(fd);
 		break;
+#if defined(__linux__)
 	case O_DSYNC:
 		ret = fdatasync(fd);
 		break;
+#endif
 	}
 	at.ret = ret;
 	at.err = ret<0 ? errno : 0;
-	
+
 	pthread_cleanup_pop(1);
 
 	return 0;

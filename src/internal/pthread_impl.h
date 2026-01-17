@@ -36,7 +36,7 @@ struct pthread {
 	/* Part 2 -- implementation details, non-ABI. */
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	char name[32];
-	struct pthread_attr attr;
+	pthread_attr_t attr;
 	pid_t *ctid;
 	char clear_ctid;
 #endif

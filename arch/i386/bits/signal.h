@@ -11,6 +11,14 @@
 #endif
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint8_t
+#define __NEED_uint16_t
+#define __NEED_uint32_t
+
+#include <bits/alltypes.h>
+#endif
+
 #ifdef _GNU_SOURCE
 enum { REG_GS = 0 };
 #define REG_GS REG_GS
