@@ -28,7 +28,7 @@
 #include "libc.h"
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-static inline rlimit_t __getrlimit_sysconf(int val, char shrt)
+static inline rlim_t __getrlimit_sysconf(int val, char shrt)
 {
 	struct rlimit rl;
 	if (getrlimit(val, &rl)) return -1;
@@ -41,7 +41,7 @@ static inline rlimit_t __getrlimit_sysconf(int val, char shrt)
 	return rl.rlim_cur;
 }
 
-static inline int __sysctl_sysconf(int tlmane, int slname, char zerocond)
+static inline int __sysctl_sysconf(int tlname, int slname, char zerocond)
 {
 	int mib[] = {tlname, slname}, r = 0, value = 0;
 	size_t len = sizeof(value);
@@ -58,12 +58,12 @@ static inline int64_t __sysctl_physpages(int slname)
 		(slname == HW_PHYSMEM64) ? HW_PHYSMEM64 : VM_UVMEXP
 	};
 	long r = 0;
+	int64_t physmem = 0;
+	struct uvmexp uvmexp;
 	if (slname == HW_PHYSMEM64) {
-		int64_t physmem = 0;
 		size_t len = sizeof(physmem);
 		r = __syscall(SYS_sysctl, mib, 2, &physmem, &len, NULL, 0);
 	} else {
-		struct uvmexp uvmexp;
 		size_t len = sizeof(uvmexp);
 		r = __syscall(SYS_sysctl, mib, 2, &uvmexp, &len, NULL, 0);
 	}
@@ -88,7 +88,7 @@ static inline long __ipv6_sysconf(void)
 	return _POSIX_IPV6;
 }
 
-#define _CHAR_SIZE(type) (sizeof((type)) * CHAR_BIT)
+#define _CHAR_SIZE(type) (sizeof(type) * CHAR_BIT)
 #if !_POSIX_V6_ILP32_OFFBIG || !_POSIX_V7_ILP32_OFFBIG
 #define _VAL_ILP32 (( \
 	_CHAR_SIZE(int) == 32 && _CHAR_SIZE(long) == 32 \
@@ -113,17 +113,29 @@ static inline long __ipv6_sysconf(void)
 #else
 #define _VAL_LPBIG
 #endif
-#elif defined(__linux__)
+#endif
+
 #define JT(x) (-256|(x))
 #define VER JT(1)
 #define JT_ARG_MAX JT(2)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define JT_XOPEN_SHM JT(3)
+#elif defined(__linux__)
 #define JT_MQ_PRIO_MAX JT(3)
+#endif
 #define JT_PAGE_SIZE JT(4)
 #define JT_SEM_VALUE_MAX JT(5)
 #define JT_NPROCESSORS_CONF JT(6)
 #define JT_NPROCESSORS_ONLN JT(7)
 #define JT_PHYS_PAGES JT(8)
 #define JT_AVPHYS_PAGES JT(9)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define JT_CHILD_MAX JT(10)
+#define JT_NGRPS_MAX JT(11)
+#define JT_OPEN_MAX JT(12)
+#define JT_STREAM_MAX JT(13)
+#define JT_IPV6 JT(14)
+#elif defined(__linux__)
 #define JT_ZERO JT(10)
 #define JT_DELAYTIMER_MAX JT(11)
 #define JT_MINSIGSTKSZ JT(12)
@@ -136,13 +148,27 @@ long sysconf(int name)
 {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	static const long values[] = {
-		[_SC_ARG_MAX] = __sysctl_sysconf(CTL_KERN, KERN_ARGMAX, 0),
-		[_SC_CHILD_MAX] = __getrlimit_sysconf(RLIMIT_NPROC, 0),
-		[_SC_CLK_TCK] = CLK_TCK,
-		[_SC_NGROUPS_MAX] = __sysctl_sysconf(CTL_KERN, KERN_NGROUPS, 0),
-		[_SC_OPEN_MAX] = __getrlimit_sysconf(RLIMIT_NOFILE, 0),
-		[_SC_STREAM_MAX] = __getrlimit_sysconf(RLIMIT_NOFILE, 1),
+#elif defined(__linux__)
+	static const short values[] = {
+#endif
+		[_SC_ARG_MAX] = JT_ARG_MAX,
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		[_SC_CHILD_MAX] = JT_CHILD_MAX,
+#elif defined(__linux__)
+		[_SC_CHILD_MAX] = RLIM(NPROC),
+#endif
+		[_SC_CLK_TCK] = 100,
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		[_SC_NGROUPS_MAX] = JT_NGRPS_MAX,
+		[_SC_OPEN_MAX] = JT_OPEN_MAX,
+		[_SC_STREAM_MAX] = JT_STREAM_MAX,
 		[_SC_TZNAME_MAX] = NAME_MAX,
+#elif defined(__linux__)
+		[_SC_NGROUPS_MAX] = 32,
+		[_SC_OPEN_MAX] = RLIM(NOFILE),
+		[_SC_STREAM_MAX] = -1,
+		[_SC_TZNAME_MAX] = TZNAME_MAX,
+#endif
 		[_SC_JOB_CONTROL] = _POSIX_JOB_CONTROL,
 		[_SC_SAVED_IDS] = _POSIX_SAVED_IDS,
 		[_SC_REALTIME_SIGNALS] = _POSIX_REALTIME_SIGNALS,
@@ -159,32 +185,6 @@ long sysconf(int name)
 		[_SC_MESSAGE_PASSING] = _POSIX_MESSAGE_PASSING,
 		[_SC_SEMAPHORES] = _POSIX_SEMAPHORES,
 		[_SC_SHARED_MEMORY_OBJECTS] = _POSIX_SHARED_MEMORY_OBJECTS,
-#elif defined(__linux__)
-	static const short values[] = {
-		[_SC_ARG_MAX] = JT_ARG_MAX,
-		[_SC_CHILD_MAX] = RLIM(NPROC),
-		[_SC_CLK_TCK] = 100,
-		[_SC_NGROUPS_MAX] = 32,
-		[_SC_OPEN_MAX] = RLIM(NOFILE),
-		[_SC_STREAM_MAX] = -1,
-		[_SC_TZNAME_MAX] = TZNAME_MAX,
-		[_SC_JOB_CONTROL] = 1,
-		[_SC_SAVED_IDS] = 1,
-		[_SC_REALTIME_SIGNALS] = VER,
-		[_SC_PRIORITY_SCHEDULING] = -1,
-		[_SC_TIMERS] = VER,
-		[_SC_ASYNCHRONOUS_IO] = VER,
-		[_SC_PRIORITIZED_IO] = -1,
-		[_SC_SYNCHRONIZED_IO] = -1,
-		[_SC_FSYNC] = VER,
-		[_SC_MAPPED_FILES] = VER,
-		[_SC_MEMLOCK] = VER,
-		[_SC_MEMLOCK_RANGE] = VER,
-		[_SC_MEMORY_PROTECTION] = VER,
-		[_SC_MESSAGE_PASSING] = VER,
-		[_SC_SEMAPHORES] = VER,
-		[_SC_SHARED_MEMORY_OBJECTS] = VER,
-#endif
 		[_SC_AIO_LISTIO_MAX] = -1,
 		[_SC_AIO_MAX] = -1,
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
@@ -194,27 +194,22 @@ long sysconf(int name)
 		[_SC_AIO_PRIO_DELTA_MAX] = JT_ZERO, /* ?? */
 		[_SC_DELAYTIMER_MAX] = JT_DELAYTIMER_MAX,
 #endif
-#if defined(__linux__)
 		[_SC_MQ_OPEN_MAX] = -1,
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		[_SC_MQ_PRIO_MAX] = -1,
+#elif defined(__linux__)
 		[_SC_MQ_PRIO_MAX] = JT_MQ_PRIO_MAX,
 #endif
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-		[_SC_VERSION] = __sysctl_sysconf(CTL_KERN, KERN_POSIX1, 0),
-		[_SC_PAGE_SIZE] = PAGE_SIZE ? PAGE_SIZE : __sysctl_sysconf(CTL_HW, HW_PAGESIZE, 0),
-#elif defined(__linux__)
 		[_SC_VERSION] = VER,
 		[_SC_PAGE_SIZE] = JT_PAGE_SIZE,
-#endif
-#if defined(__linux__)
-		[_SC_RTSIG_MAX] = _NSIG - 1 - 31 - 3,
-#endif
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		[_SC_RTSIG_MAX] = -1,
 		[_SC_SEM_NSEMS_MAX] = -1,
-		[_SC_SEM_VALUE_MAX] = SEM_VALUE_MAX,
 #elif defined(__linux__)
+		[_SC_RTSIG_MAX] = _NSIG - 1 - 31 - 3,
 		[_SC_SEM_NSEMS_MAX] = SEM_NSEMS_MAX,
-		[_SC_SEM_VALUE_MAX] = JT_SEM_VALUE_MAX,
 #endif
+		[_SC_SEM_VALUE_MAX] = JT_SEM_VALUE_MAX,
 		[_SC_SIGQUEUE_MAX] = -1,
 		[_SC_TIMER_MAX] = -1,
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
@@ -237,7 +232,6 @@ long sysconf(int name)
 		[_SC_LINE_MAX] = -1,
 #endif
 		[_SC_RE_DUP_MAX] = RE_DUP_MAX,
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_2_VERSION] = _POSIX2_VERSION,
 		[_SC_2_C_BIND] = _POSIX2_C_BIND,
 		[_SC_2_C_DEV] = _POSIX2_C_DEV,
@@ -245,25 +239,14 @@ long sysconf(int name)
 		[_SC_2_FORT_RUN] = _POSIX2_FORT_RUN,
 		[_SC_2_SW_DEV] = _POSIX2_SW_DEV,
 		[_SC_2_LOCALEDEF] = _POSIX2_LOCALEDEF,
-#elif defined(__linux__)
-		[_SC_2_VERSION] = VER,
-		[_SC_2_C_BIND] = VER,
-		[_SC_2_C_DEV] = -1,
-		[_SC_2_FORT_DEV] = -1,
-		[_SC_2_FORT_RUN] = -1,
-		[_SC_2_SW_DEV] = -1,
-		[_SC_2_LOCALEDEF] = -1,
-#endif
 		[_SC_IOV_MAX] = IOV_MAX,
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_THREADS] = _POSIX_THREADS,
 		[_SC_THREAD_SAFE_FUNCTIONS] = _POSIX_THREAD_SAFE_FUNCTIONS,
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_GETGR_R_SIZE_MAX] = _GR_BUF_LEN,
 		[_SC_GETPW_R_SIZE_MAX] = _PW_BUF_LEN,
 		[_SC_LOGIN_NAME_MAX] = LOGIN_NAME_MAX,
 #elif defined(__linux__)
-		[_SC_THREADS] = VER,
-		[_SC_THREAD_SAFE_FUNCTIONS] = VER,
 		[_SC_GETGR_R_SIZE_MAX] = -1,
 		[_SC_GETPW_R_SIZE_MAX] = -1,
 		[_SC_LOGIN_NAME_MAX] = 256,
@@ -274,29 +257,19 @@ long sysconf(int name)
 		[_SC_THREAD_STACK_MIN] = PTHREAD_STACK_MIN,
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_THREAD_THREADS_MAX] = PTHREAD_THREADS_MAX,
+#elif defined(__linux__)
+		[_SC_THREAD_THREADS_MAX] = -1,
+#endif
 		[_SC_THREAD_ATTR_STACKADDR] = _POSIX_THREAD_ATTR_STACKADDR,
 		[_SC_THREAD_ATTR_STACKSIZE] = _POSIX_THREAD_ATTR_STACKSIZE,
 		[_SC_THREAD_PRIORITY_SCHEDULING] = _POSIX_THREAD_PRIORITY_SCHEDULING,
 		[_SC_THREAD_PRIO_INHERIT] = _POSIX_THREAD_PRIO_INHERIT,
 		[_SC_THREAD_PRIO_PROTECT] = _POSIX_THREAD_PRIO_PROTECT,
 		[_SC_THREAD_PROCESS_SHARED] = _POSIX_THREAD_PROCESS_SHARED,
-		[_SC_NPROCESSORS_CONF] = __sysctl_sysconf(CTL_HW, HW_NCPU, 0),
-		[_SC_NPROCESSORS_ONLN] = __sysctl_sysconf(CTL_HW, HW_NCPUONLINE, 0),
-		[_SC_PHYS_PAGES] = __sysctl_physpages(HW_PHYSMEM64),
-		[_SC_AVPHYS_PAGES] = __sysctl_physpages(VM_UVMEXP),
-#elif defined(__linux__)
-		[_SC_THREAD_THREADS_MAX] = -1,
-		[_SC_THREAD_ATTR_STACKADDR] = VER,
-		[_SC_THREAD_ATTR_STACKSIZE] = VER,
-		[_SC_THREAD_PRIORITY_SCHEDULING] = VER,
-		[_SC_THREAD_PRIO_INHERIT] = -1,
-		[_SC_THREAD_PRIO_PROTECT] = -1,
-		[_SC_THREAD_PROCESS_SHARED] = VER,
 		[_SC_NPROCESSORS_CONF] = JT_NPROCESSORS_CONF,
 		[_SC_NPROCESSORS_ONLN] = JT_NPROCESSORS_ONLN,
 		[_SC_PHYS_PAGES] = JT_PHYS_PAGES,
 		[_SC_AVPHYS_PAGES] = JT_AVPHYS_PAGES,
-#endif
 		[_SC_ATEXIT_MAX] = -1,
 #if defined(__linux__)
 		[_SC_PASS_MAX] = -1,
@@ -305,21 +278,16 @@ long sysconf(int name)
 #if defined(__linux__)
 		[_SC_XOPEN_XCU_VERSION] = _XOPEN_VERSION,
 #endif
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_XOPEN_UNIX] = _XOPEN_UNIX,
 		[_SC_XOPEN_CRYPT] = _XOPEN_CRYPT,
 		[_SC_XOPEN_ENH_I18N] = _XOPEN_ENH_I18N,
-		[_SC_XOPEN_SHM] = __sysctl_sysconf(CTL_KERN, KERN_SYSVSHM, 1),
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		[_SC_XOPEN_SHM] = JT_XOPEN_SHM,
+#elif defined(__linux__)
+		[_SC_XOPEN_SHM] = _XOPEN_SHM,
+#endif
 		[_SC_2_CHAR_TERM] = _POSIX2_CHAR_TERM,
 		[_SC_2_UPE] = _POSIX2_UPE,
-#elif defined(__linux__)
-		[_SC_XOPEN_UNIX] = 1,
-		[_SC_XOPEN_CRYPT] = -1,
-		[_SC_XOPEN_ENH_I18N] = 1,
-		[_SC_XOPEN_SHM] = 1,
-		[_SC_2_CHAR_TERM] = -1,
-		[_SC_2_UPE] = -1,
-#endif
 #if defined(__linux__)
 		[_SC_XOPEN_XPG2] = -1,
 		[_SC_XOPEN_XPG3] = -1,
@@ -330,7 +298,6 @@ long sysconf(int name)
 		[_SC_XBS5_LP64_OFF64] = sizeof(long)==8 ? 1 : -1,
 		[_SC_XBS5_LPBIG_OFFBIG] = -1,
 #endif
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_XOPEN_LEGACY] = _XOPEN_LEGACY,
 		[_SC_XOPEN_REALTIME] = _XOPEN_REALTIME,
 		[_SC_XOPEN_REALTIME_THREADS] = _XOPEN_REALTIME_THREADS,
@@ -350,102 +317,59 @@ long sysconf(int name)
 		[_SC_TIMEOUTS] = _POSIX_TIMEOUTS,
 		[_SC_TYPED_MEMORY_OBJECTS] = _POSIX_TYPED_MEMORY_OBJECTS,
 		[_SC_2_PBS] = _POSIX2_PBS,
-		[_SC_2_PBS_ACCOUNTING] = _POSIX2_PBS,
-		[_SC_2_PBS_LOCATE] = _POSIX2_PBS,
-		[_SC_2_PBS_MESSAGE] = _POSIX2_PBS,
-		[_SC_2_PBS_TRACK] = _POSIX2_PBS,
-#elif defined(__linux__)
-		[_SC_XOPEN_LEGACY] = -1,
-		[_SC_XOPEN_REALTIME] = -1,
-		[_SC_XOPEN_REALTIME_THREADS] = -1,
-		[_SC_ADVISORY_INFO] = VER,
-		[_SC_BARRIERS] = VER,
-		[_SC_CLOCK_SELECTION] = VER,
-		[_SC_CPUTIME] = VER,
-		[_SC_THREAD_CPUTIME] = VER,
-		[_SC_MONOTONIC_CLOCK] = VER,
-		[_SC_READER_WRITER_LOCKS] = VER,
-		[_SC_SPIN_LOCKS] = VER,
-		[_SC_REGEXP] = 1,
-		[_SC_SHELL] = 1,
-		[_SC_SPAWN] = VER,
-		[_SC_SPORADIC_SERVER] = -1,
-		[_SC_THREAD_SPORADIC_SERVER] = -1,
-		[_SC_TIMEOUTS] = VER,
-		[_SC_TYPED_MEMORY_OBJECTS] = -1,
-		[_SC_2_PBS] = -1,
-		[_SC_2_PBS_ACCOUNTING] = -1,
-		[_SC_2_PBS_LOCATE] = -1,
-		[_SC_2_PBS_MESSAGE] = -1,
-		[_SC_2_PBS_TRACK] = -1,
-#endif
+		[_SC_2_PBS_ACCOUNTING] = _POSIX2_PBS_ACCOUNTING,
+		[_SC_2_PBS_LOCATE] = _POSIX2_PBS_LOCATE,
+		[_SC_2_PBS_MESSAGE] = _POSIX2_PBS_MESSAGE,
+		[_SC_2_PBS_TRACK] = _POSIX2_PBS_TRACK,
 		[_SC_SYMLOOP_MAX] = SYMLOOP_MAX,
 #if defined(__linux__)
 		[_SC_STREAMS] = JT_ZERO,
 #endif
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-		[_SC_2_PBS_CHECKPOINT] = _POSIX2_PBS,
+		[_SC_2_PBS_CHECKPOINT] = _POSIX2_PBS_CHECKPOINT,
 		[_SC_V6_ILP32_OFF32] = _POSIX_V6_ILP32_OFF32,
-		[_SC_V6_ILP32_OFFBIG] = (_POSIX_V6_ILP32_OFFBIG == 0) ? _VAL_V6_ILP32 : _POSIX_V6_ILP32_OFFBIG,
-		[_SC_V6_LP64_OFF64] = (_POSIX_V6_LP64_OFF64 == 0) ? _VAL_V6_LP64 : _POSIX_V6_LP64_OFF64,
-		[_SC_V6_LPBIG_OFFBIG] = (_POSIX_V6_LPBIG_OFFBIG == 0) ? _VAL_V6_LPBIG : _POSIX_V6_LPBIG_OFFBIG,
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		[_SC_V6_ILP32_OFFBIG] = (_POSIX_V6_ILP32_OFFBIG == 0) ? _VAL_ILP32 : _POSIX_V6_ILP32_OFFBIG,
+		[_SC_V6_LP64_OFF64] = (_POSIX_V6_LP64_OFF64 == 0) ? _VAL_LP64 : _POSIX_V6_LP64_OFF64,
+		[_SC_V6_LPBIG_OFFBIG] = (_POSIX_V6_LPBIG_OFFBIG == 0) ? _VAL_LPBIG : _POSIX_V6_LPBIG_OFFBIG,
 #elif defined(__linux__)
-		[_SC_2_PBS_CHECKPOINT] = -1,
-		[_SC_V6_ILP32_OFF32] = -1,
 		[_SC_V6_ILP32_OFFBIG] = sizeof(long)==4 ? 1 : -1,
 		[_SC_V6_LP64_OFF64] = sizeof(long)==8 ? 1 : -1,
-		[_SC_V6_LPBIG_OFFBIG] = -1,
+		[_SC_V6_LPBIG_OFFBIG] = _POSIX_V6_LPBIG_OFFBIG,
 #endif
 		[_SC_HOST_NAME_MAX] = HOST_NAME_MAX,
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_TRACE] = _POSIX_TRACE,
-		[_SC_TRACE_EVENT_FILTER] = _POSIX_TRACE,
-		[_SC_TRACE_INHERIT] = _POSIX_TRACE,
-		[_SC_TRACE_LOG] = _POSIX_TRACE,
-#elif defined(__linux__)
-		[_SC_TRACE] = -1,
-		[_SC_TRACE_EVENT_FILTER] = -1,
-		[_SC_TRACE_INHERIT] = -1,
-		[_SC_TRACE_LOG] = -1,
-#endif
+		[_SC_TRACE_EVENT_FILTER] = _POSIX_TRACE_EVENT_FILTER,
+		[_SC_TRACE_INHERIT] = _POSIX_TRACE_INHERIT,
+		[_SC_TRACE_LOG] = _POSIX_TRACE_LOG,
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-		[_SC_IPV6] = __ipv6_sysconf(),
-		[_SC_RAW_SOCKETS] = _POSIX_RAW_SOCKETS,
-		[_SC_V7_ILP32_OFF32] = _POSIX_V7_ILP32_OFF32,
-		[_SC_V7_ILP32_OFFBIG] = (_POSIX_V7_ILP32_OFFBIG == 0) ? _VAL_V7_ILP32 : _POSIX_V7_ILP32_OFFBIG,
-		[_SC_V7_LP64_OFF64] = (_POSIX_V7_LP64_OFF64 == 0) ? _VAL_V7_LP64 : _POSIX_V7_LP64_OFF64,
-		[_SC_V7_LPBIG_OFFBIG] = (_POSIX_V7_LPBIG_OFFBIG == 0) ? _VAL_V7_LPBIG : _POSIX_V7_LPBIG_OFFBIG,
+		[_SC_IPV6] = JT_IPV6,
 #elif defined(__linux__)
 		[_SC_IPV6] = VER,
-		[_SC_RAW_SOCKETS] = VER,
-		[_SC_V7_ILP32_OFF32] = -1,
+#endif
+		[_SC_RAW_SOCKETS] = _POSIX_RAW_SOCKETS,
+		[_SC_V7_ILP32_OFF32] = _POSIX_V7_ILP32_OFF32,
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		[_SC_V7_ILP32_OFFBIG] = (_POSIX_V7_ILP32_OFFBIG == 0) ? _VAL_ILP32 : _POSIX_V7_ILP32_OFFBIG,
+		[_SC_V7_LP64_OFF64] = (_POSIX_V7_LP64_OFF64 == 0) ? _VAL_LP64 : _POSIX_V7_LP64_OFF64,
+		[_SC_V7_LPBIG_OFFBIG] = (_POSIX_V7_LPBIG_OFFBIG == 0) ? _VAL_LPBIG : _POSIX_V7_LPBIG_OFFBIG,
+#elif defined(__linux__)
 		[_SC_V7_ILP32_OFFBIG] = sizeof(long)==4 ? 1 : -1,
 		[_SC_V7_LP64_OFF64] = sizeof(long)==8 ? 1 : -1,
-		[_SC_V7_LPBIG_OFFBIG] = -1,
+		[_SC_V7_LPBIG_OFFBIG] = _POSIX_V7_LPBIG_OFFBIG,
 #endif
-#if defined(__linux__)
 		[_SC_SS_REPL_MAX] = -1,
-#endif
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_TRACE_EVENT_NAME_MAX] = _POSIX_TRACE,
-#elif defined(__linux__)
-		[_SC_TRACE_EVENT_NAME_MAX] = -1,
-#endif
-#if defined(__linux__)
-		[_SC_TRACE_NAME_MAX] = -1,
-		[_SC_TRACE_SYS_MAX] = -1,
-		[_SC_TRACE_USER_EVENT_MAX] = -1,
-#endif
+		[_SC_TRACE_NAME_MAX] = _POSIX_TRACE,
+		[_SC_TRACE_SYS_MAX] = _POSIX_TRACE,
+		[_SC_TRACE_USER_EVENT_MAX] = _POSIX_TRACE,
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_XOPEN_STREAMS] = _XOPEN_STREAMS,
-		[_SC_THREAD_ROBUST_PRIO_INHERIT] = _POSIX_THREAD_ROBUST_PRIO_INHERIT,
-		[_SC_THREAD_ROBUST_PRIO_PROTECT] = _POSIX_THREAD_ROBUST_PRIO_PROTECT,
 #elif defined(__linux__)
 		[_SC_XOPEN_STREAMS] = JT_ZERO,
-		[_SC_THREAD_ROBUST_PRIO_INHERIT] = -1,
-		[_SC_THREAD_ROBUST_PRIO_PROTECT] = -1,
 #endif
+		[_SC_THREAD_ROBUST_PRIO_INHERIT] = _POSIX_THREAD_ROBUST_PRIO_INHERIT,
+		[_SC_THREAD_ROBUST_PRIO_PROTECT] = _POSIX_THREAD_ROBUST_PRIO_PROTECT,
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 		[_SC_XOPEN_UUCP] = _XOPEN_UUCP,
 #endif
@@ -461,9 +385,6 @@ long sysconf(int name)
 		return -1;
 	} else if (values[name] >= -1) {
 		return values[name];
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	}
-#elif defined(__linux__)
 	} else if (values[name] < -256) {
 		struct rlimit lim;
 		getrlimit(values[name]&16383, &lim);
@@ -476,15 +397,39 @@ long sysconf(int name)
 	case VER & 255:
 		return _POSIX_VERSION;
 	case JT_ARG_MAX & 255:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		return __sysctl_sysconf(CTL_KERN, KERN_ARGMAX, 0);
+#elif defined(__linux__)
 		return ARG_MAX;
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	case JT_XOPEN_SHM & 255:
+		return __sysctl_sysconf(CTL_KERN, KERN_SYSVSHM, 1);
+#elif defined(__linux__)
 	case JT_MQ_PRIO_MAX & 255:
 		return MQ_PRIO_MAX;
+#endif
 	case JT_PAGE_SIZE & 255:
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		return PAGE_SIZE ? PAGE_SIZE : __sysctl_sysconf(CTL_HW, HW_PAGESIZE, 0);
+#elif defined(__linux__)
 		return PAGE_SIZE;
+#endif
 	case JT_SEM_VALUE_MAX & 255:
 		return SEM_VALUE_MAX;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	case JT_IPV6 & 255:
+		return __ipv6_sysconf();
+#elif defined(__linux__)
 	case JT_DELAYTIMER_MAX & 255:
 		return DELAYTIMER_MAX;
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	case JT_NPROCESSORS_CONF & 255:
+		return __sysctl_sysconf(CTL_HW, HW_NCPU, 0);
+	case JT_NPROCESSORS_ONLN & 255: ;
+		return __sysctl_sysconf(CTL_HW, HW_NCPUONLINE, 0);
+#elif defined(__linux__)
 	case JT_NPROCESSORS_CONF & 255:
 	case JT_NPROCESSORS_ONLN & 255: ;
 		unsigned char set[128] = {1};
@@ -493,6 +438,13 @@ long sysconf(int name)
 		for (i=cnt=0; i<sizeof set; i++)
 			for (; set[i]; set[i]&=set[i]-1, cnt++);
 		return cnt;
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	case JT_PHYS_PAGES & 255:
+		return __sysctl_physpages(HW_PHYSMEM64);
+	case JT_AVPHYS_PAGES & 255:
+		return __sysctl_physpages(VM_UVMEXP);
+#elif defined(__linux__)
 	case JT_PHYS_PAGES & 255:
 	case JT_AVPHYS_PAGES & 255: ;
 		unsigned long long mem;
@@ -504,6 +456,17 @@ long sysconf(int name)
 		mem *= si.mem_unit;
 		mem /= PAGE_SIZE;
 		return (mem > LONG_MAX) ? LONG_MAX : mem;
+#endif
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	case JT_CHILD_MAX & 255:
+		return __getrlimit_sysconf(RLIMIT_NPROC, 0);
+	case JT_NGRPS_MAX & 255:
+		return __sysctl_sysconf(CTL_KERN, KERN_NGROUPS, 0);
+	case JT_OPEN_MAX & 255:
+		return __getrlimit_sysconf(RLIMIT_NOFILE, 0);
+	case JT_STREAM_MAX & 255:
+		return __getrlimit_sysconf(RLIMIT_NOFILE, 1);
+#elif defined(__linux__)
 	case JT_MINSIGSTKSZ & 255:
 	case JT_SIGSTKSZ & 255: ;
 		/* Value from auxv/kernel is only sigfame size. Clamp it
@@ -518,7 +481,7 @@ long sysconf(int name)
 		return val;
 	case JT_ZERO & 255:
 		return 0;
-	}
 #endif
+	}
 	return values[name];
 }

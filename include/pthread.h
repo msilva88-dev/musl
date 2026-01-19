@@ -55,6 +55,9 @@ extern "C" {
 #define PTHREAD_PROCESS_PRIVATE 0
 #define PTHREAD_PROCESS_SHARED 1
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define PTHREAD_THREADS_MAX ULONG_MAX
+#endif
 
 #define PTHREAD_MUTEX_INITIALIZER {{{0}}}
 #define PTHREAD_RWLOCK_INITIALIZER {{{0}}}

@@ -66,7 +66,7 @@ char *asctime (const struct tm *);
 char *ctime (const time_t *);
 int timespec_get(struct timespec *, int);
 
-#if defined(__OpenBSD__) && (_POSIX_VERSION < 200112L || defined(_BSD_SOURCE))
+#if _POSIX_VERSION < 200112L || defined(_BSD_SOURCE)
 #define CLK_TCK 100
 #endif
 
