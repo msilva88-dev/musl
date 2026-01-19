@@ -14,6 +14,12 @@ extern "C" {
 #define __NEED_pid_t
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+#define __NEED_fixpt_t
+#endif
+#endif
+
 #include <bits/alltypes.h>
 #if defined(__linux__)
 #include <bits/resource.h>
@@ -55,7 +61,6 @@ struct rusage {
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
-#define __NEED_fixpt_t
 struct loadavg {
         fixpt_t ldavg[3];
         long fscale;

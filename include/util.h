@@ -11,9 +11,13 @@ extern "C" {
 #include <utmp.h>
 
 #define FMT_SCALED_STRSIZE 7
-#define OPENDEV_PART 1
 
-enum {
+enum __opendev {
+	OPENDEV_PART = 1,
+	OPENDEV_BLCK = 4
+};
+
+enum __uu_lock {
 	UU_LOCK_OWNER_ERR = -7,
 	UU_LOCK_TRY_ERR,
 	UU_LOCK_LINK_ERR,

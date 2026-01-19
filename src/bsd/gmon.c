@@ -30,6 +30,7 @@
 /* gmon without _mcleanup/hertz from OpenBSD 7.0 source code: lib/libc/gmon/gmon.c */
 
 #define _BSD_SOURCE
+#include <sys/types.h>
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/sysctl.h>
 #elif defined(__OpenBSD__)

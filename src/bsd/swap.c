@@ -1,4 +1,6 @@
 #include <sys/swap.h>
+#include <stdlib.h>
+#include <string.h>
 #include "syscall.h"
 
 int swapctl(int cmd, const void *arg, int misc)

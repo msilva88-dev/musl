@@ -7,7 +7,7 @@
 extern char _end;
 static void *__curbrk = &_end;
 
-void *sbrk(int inc)
+void *sbrk(intptr_t inc)
 {
 	void *oldbrk = __curbrk;
 

@@ -67,6 +67,25 @@ static __inline long __syscall6(long long n, long long a1, long long a2, long lo
 	return ret;
 }
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static __inline long __syscall7(long long n, long long a1, long long a2, long long a3,
+                                     long long a4_, long long a5_, long long a6_, long long a7_)
+{
+	unsigned long ret;
+	register long a4 __asm__("r10") = a4_;
+	register long a5 __asm__("r8") = a5_;
+	register long a6 __asm__("r9") = a6_;
+	__asm__ __volatile__ (
+		"push %8\n\t"
+		"syscall\n\t"
+		"add $8, %%rsp"
+		: "=a"(ret) : "a"(n), "D"(a1), "S"(a2), "d"(a3), "r"(a4), "r"(a5), "r"(a6), "g"(a7)
+		: "rcx", "r11", "memory"
+	);
+	return ret;
+}
+#endif
+
 #if defined(__linux__)
 #undef SYS_futimesat
 

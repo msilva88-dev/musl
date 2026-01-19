@@ -15,6 +15,10 @@ extern "C" {
 #define __NEED_gid_t
 #define __NEED_struct_iovec
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint8_t
+#endif
+
 #include <bits/alltypes.h>
 
 #if defined(__linux__)
@@ -59,14 +63,16 @@ struct cmsghdr {
 	int cmsg_type;
 };
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+
+#include <sys/types.h>
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/ucred.h>
 #elif defined(__OpenBSD__)
 #include <sys/ucred.h>
 #endif
 
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#ifdef _BSD_SOURCE
 struct sockpeercred {
 	uid_t uid;
 	gid_t gid;

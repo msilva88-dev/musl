@@ -24,6 +24,8 @@ int fstatfs (int, struct statfs *);
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
 #define MAXFIDSZ 16
+struct stat;
+
 struct fid {
         unsigned short fid_len;
         unsigned short fid_reserved;

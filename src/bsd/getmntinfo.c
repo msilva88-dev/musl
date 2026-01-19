@@ -30,6 +30,7 @@
 /* getmntinfo from OpenBSD 7.0 source code: lib/libc/gen/getmntinfo.c */
 
 #define _BSD_SOURCE
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <stdlib.h>
 #include "syscall.h"

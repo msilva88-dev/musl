@@ -28,6 +28,7 @@
 /* setproctitle/setproctitle_fast from FreeBSD 14.1 source code: lib/libc/gen/setproctitle.c */
 
 #define _BSD_SOURCE
+#include <sys/types.h>
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/exec.h>
 #include <hyperbk/sysctl.h>
@@ -58,7 +59,6 @@ setproctitle_internal(const char *fmt, va_list ap)
 	int nargc;
 	int i;
 	size_t len;
-	unsigned long ul_ps_strings;
 
 	if (buf == NULL) {
 		buf = malloc(SPT_BUFSIZE);

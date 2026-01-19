@@ -28,6 +28,12 @@
 #define roundup(n,d) (howmany(n,d)*(d))
 #define powerof2(n) !(((n)-1) & (n))
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+#define	MAXCOMLEN 16
+#endif
+#endif
+
 #include <bits/param.h>
 #include <sys/resource.h>
 #include <endian.h>

@@ -51,6 +51,12 @@ ssize_t pwritev2 (int, const struct iovec *, int, off_t, int);
 #endif
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+enum uio_rw { UIO_READ, UIO_WRITE };
+#endif
+#endif
+
 #ifdef __cplusplus
 }
 #endif

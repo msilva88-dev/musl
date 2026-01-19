@@ -4,5 +4,8 @@
 *.so
 *.so.1
 config.mak
+include/hyperbk
+include/linux
+include/machine
 lib/musl-gcc.specs
 /obj/

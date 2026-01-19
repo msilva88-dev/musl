@@ -5,7 +5,11 @@
 extern "C" {
 #endif
 
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint32_t
+
+#include <bits/alltypes.h>
+#elif defined(__linux__)
 #include <stdint.h>
 
 #define _LINUX_QUOTA_VERSION 2

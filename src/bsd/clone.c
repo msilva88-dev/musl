@@ -13,6 +13,10 @@ struct clone_start_args {
 	sigset_t sigmask;
 };
 
+struct bsd_pthread_padd {
+	int *__empty;
+};
+
 static int clone_start(void *arg)
 {
 	struct clone_start_args *csa = arg;
@@ -109,7 +113,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 #else
 	uintptr_t sp = ((uintptr_t)stack & ~0xF);
 #endif
-	struct start_args *args = NULL;
+	struct clone_start_args *args = NULL;
 	pid_t pid = -1, *ptid = NULL, ptid_def = -1;
 	int ret = 0;
 	void *shmem = NULL;
@@ -117,7 +121,7 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 
 	va_start(ap, arg);
 
-	args = va_arg(ap, struct start_args *);
+	args = va_arg(ap, struct clone_start_args *);
 	if (!args) {
 		return -EINVAL;
 	}
@@ -242,7 +246,9 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 		} param = { NULL, NULL, NULL, NULL, NULL };
 
 		if (flags & CLONE_SETTLS) {
-			bsd_tib = __init_tls(sizeof(struct bsd_pthread_padd));
+			size_t ptp_size = sizeof(struct bsd_pthread_padd);
+			bsd_tib = malloc(ptp_size);
+			//bsd_tib = __init_tls(&ptp_size);
 
 			if (bsd_tib == NULL) {
 				return ENOMEM;
@@ -259,18 +265,18 @@ int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			// Stack pointer
 			param.tf_stack = (void *)sp;
 			// Start function
-			param.tf_func = args->start_func;
+			param.tf_func = args->func;
 			// Start argument
-			param.tf_arg = args->start_arg;
+			param.tf_arg = args->arg;
 			// Thread ID
 			param.tf_tid = &bsd_tib->tib_tid;
 		} else {
 			// Stack pointer
 			param.tf_stack = (void *)sp;
 			// Start function
-			param.tf_func = args->start_func;
+			param.tf_func = args->func;
 			// Start argument
-			param.tf_arg = args->start_arg;
+			param.tf_arg = args->arg;
 
 			if (ptid && (flags & CLONE_PARENT_SETTID)) {
 				param.tf_tid = &ptid;

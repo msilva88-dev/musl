@@ -5,6 +5,11 @@
 extern "C" {
 #endif
 
+#define __NEED_dev_t
+
+#include <bits/alltypes.h>
+#include <limits.h>
+
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 struct swapent {
 	dev_t se_dev;

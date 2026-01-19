@@ -1,6 +1,12 @@
 /* copied from kernel definition, but with padding replaced
  * by the corresponding correctly-sized userspace types. */
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint32_t
+
+#include <bits/alltypes.h>
+#endif
+
 struct stat {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	mode_t st_mode;

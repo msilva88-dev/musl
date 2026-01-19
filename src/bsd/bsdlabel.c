@@ -30,10 +30,15 @@
 /* bsdlabel from OpenBSD 7.0 source code: lib/libc/gen/disklabel.c */
 
 #define _BSD_SOURCE
+#include <sys/param.h>
+#include <sys/types.h>
+#include <stddef.h>
 #if defined(__HyperbolaBSD__)
+#define BDTYPENAMES
 #include <hyperbk/bsdlabel.h>
 #include <hyperbk/vfs/ffs/fs.h>
 #elif defined(__OpenBSD__)
+#define DKTYPENAMES
 #include <sys/disklabel.h>
 #include <ufs/ffs/fs.h>
 #endif
@@ -67,10 +72,10 @@ typedef struct bsdlabel bsdlabel_t;
 typedef struct disklabel bsdlabel_t;
 #define BSDLABELV1_FFS_FRAGBLOCK(s, f) DISKLABELV1_FFS_FRAGBLOCK(s, f)
 #define BSDL_SETPSIZE(p, f) DL_SETPSIZE(p, f)
-#define SDMAGIC DISKMAGIC
-#define _PATH_SDTAB _PATH_DISKTAB
+#define BLKDEVMAGIC DISKMAGIC
+#define _PATH_BLKDEVTAB _PATH_DISKTAB
 #define __BSDL_TC__(d) (d)
-#define sdtypenames dktypenames
+#define bdtypenames dktypenames
 #endif
 
 static bsdlabel_t *__getsdbyname(const char *name)
@@ -79,7 +84,7 @@ static bsdlabel_t *__getsdbyname(const char *name)
 	bsdlabel_t *bsdlp = &bsdl;
 	struct partition *pp;
 	char *buf;
-	char *db_array[2] = { _PATH_SDTAB, 0 };
+	char *db_array[2] = { _PATH_BLKDEVTAB, 0 };
 	char *cp, *cq;
 	char p, max, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];
@@ -113,7 +118,7 @@ static bsdlabel_t *__getsdbyname(const char *name)
 	getnum(bsdlp->d_ncylinders, "nc");
 
 	if (cgetstr(buf, "dt", &cq) > 0)
-		bsdlp->d_type = (unsigned short)gettype(cq, sdtypenames);
+		bsdlp->d_type = (unsigned short)gettype(cq, bdtypenames);
 	else
 		getnumdflt(bsdlp->d_type, "dt", 0);
 	getnumdflt(bsdlp->d_secpercyl, "sc", bsdlp->d_nsectors * bsdlp->d_ntracks);
@@ -166,8 +171,8 @@ static bsdlabel_t *__getsdbyname(const char *name)
 		psize[1] = p;
 		getnumdflt(*dx, psize, 0);
 	}
-	bsdlp->d_magic = SDMAGIC;
-	bsdlp->d_magic2 = SDMAGIC;
+	bsdlp->d_magic = BLKDEVMAGIC;
+	bsdlp->d_magic2 = BLKDEVMAGIC;
 	free(buf);
 	return bsdlp;
 }

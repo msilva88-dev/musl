@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-typedef unsigned short histcounter_t
+typedef unsigned short histcounter_t;
 #define HISTCOUNTER histcounter_t
 
 #define HISTFRACTION 0x00002
@@ -53,7 +53,7 @@ static inline unsigned long __roundup(unsigned long x, unsigned char y)
 {
 	return y*((y+x-1)/y);
 }
-#define ROUNDDOWN(x,y) __roundup((x), (y))
+#define ROUNDUP(x,y) __roundup((x), (y))
 
 enum { GMON_PROF_ON, GMON_PROF_BUSY, GMON_PROF_ERROR, GMON_PROF_OFF };
 enum { GPROF_STATE, GPROF_COUNT, GPROF_FROMS, GPROF_TOS, GPROF_GMONPARAM };

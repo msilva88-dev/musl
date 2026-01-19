@@ -30,6 +30,12 @@
 /* bsdpty from OpenBSD 7.0 source code: lib/libutil/pty.c */
 
 #define _BSD_SOURCE
+#include <sys/types.h>
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/tty.h>
+#elif defined(__OpenBSD__)
+#include <sys/tty.h>
+#endif
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
@@ -39,7 +45,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <grp.h>
-#include <sys/tty.h>
 #include <util.h>
 
 int getptmfd(void)

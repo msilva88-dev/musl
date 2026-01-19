@@ -43,7 +43,7 @@ ssize_t tee(int src, int dest, size_t len, unsigned flags)
 			}
 			written += m;
 		}
-		total += m;
+		total += n;
 	}
 
 	return total;

@@ -30,7 +30,12 @@
 /* getrawpartition from OpenBSD 7.0 source code: lib/libutil/getrawpartition.c */
 
 #define _BSD_SOURCE
+#include <sys/types.h>
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/sysctl.h>
+#elif defined(__OpenBSD__)
 #include <sys/sysctl.h>
+#endif
 #include <stdio.h> /* for NULL */
 #include <util.h>
 

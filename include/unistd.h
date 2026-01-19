@@ -47,6 +47,13 @@ extern "C" {
 #define __NEED_intptr_t
 #define __NEED_useconds_t
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+#define __NEED_struct___kbind
+#define __NEED_struct___tfork
+#endif
+#endif
+
 #include <bits/alltypes.h>
 
 #if defined(__HyperbolaBSD__)
@@ -55,9 +62,16 @@ extern "C" {
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
+#include <sys/types.h>
 #if defined(__HyperbolaBSD__)
+#include <sys/statfs.h>
+#include <hyperbk/ucred.h>
+#include <hyperbk/nfs/nfsproto.h>
 #include <hyperbk/nfs/nfs.h>
 #elif defined(__OpenBSD__)
+#include <sys/mount.h>
+#include <sys/ucred.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #endif
 #endif
@@ -231,8 +245,6 @@ extern int optreset;
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
-#define __NEED_struct___kbind
-#define __NEED_struct___tfork
 #define KBIND_BLOCK_MAX 2
 #define KBIND_DATA_MAX 24
 pid_t __tfork(const struct __tfork *, size_t);
@@ -275,6 +287,7 @@ pid_t gettid(void);
 //char *fflagstostr(uint32_t);
 mode_t getmode(const void *, mode_t);
 char *getwd(char *) DEPREC_A("getwd is obsolete and unsafe, use getcwd instead");
+int profil(char *, size_t, unsigned long, unsigned int);
 int rcmd(char **, int, const char *, const char *, const char *, int *);
 int rcmd_af(char **, int, const char *, const char *, const char *, int *, int);
 int rcmdsh(char **, int, const char *, const char *, const char *, char *);

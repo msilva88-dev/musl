@@ -1,9 +1,9 @@
 #include <sys/sysarch.h>
 
 #if defined(__i386__)
+
 #define ARCH_GET_FSBASE I386_GET_FSBASE
 #define ARCH_SET_FSBASE I386_SET_FSBASE
-#endif
 
 #if defined(__OpenBSD__)
 static
@@ -21,7 +21,6 @@ int set_fsbase(void *base)
 	return sysarch(ARCH_SET_FSBASE, base);
 }
 
-#if defined(__i386__)
 int i386_get_fsbase(void **base)
 {
 	return get_fsbase(base);
@@ -31,4 +30,5 @@ int i386_set_fsbase(void *base)
 {
 	return set_fsbase(base);
 }
+
 #endif

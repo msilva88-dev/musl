@@ -26,18 +26,25 @@
 
 /* opendev from OpenBSD 7.0 source code: lib/libutil/opendev.c */
 
+#define _BSD_SOURCE
+#define __USE_MI_MUTEX
 
+#define __NEED_size_t
+#define __NEED_uint32_t
+
+#include <bits/alltypes.h>
+
+#include <sys/types.h>
 #if defined(__HyperbolaBSD__)
-//#include <sys/blkdev.h>
-//#include <sys/bdio.h>
-#include <sys/disk.h>
-#include <sys/dkio.h>
+//#include <hyperbk/blkdev.h>
+//#include <hyperbk/bdio.h>
+#include <hyperbk/disk.h>
+#include <hyperbk/dkio.h>
 #elif defined(__OpenBSD__)
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #endif
 #include <sys/ioctl.h>
-#include <sys/limits.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>

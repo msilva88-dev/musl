@@ -2,7 +2,7 @@
 #include <sys/socket.h>
 #include "syscall.h"
 
-int getrtable(void);
+int getrtable(void)
 {
 	return syscall(SYS_getrtable);
 }

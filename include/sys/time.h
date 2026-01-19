@@ -6,6 +6,14 @@ extern "C" {
 
 #include <features.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#ifdef _BSD_SOURCE
+#define __NEED_int64_t
+
+#include <bits/alltypes.h>
+#endif
+#endif
+
 #include <sys/select.h>
 
 int gettimeofday (struct timeval *__restrict, void *__restrict);

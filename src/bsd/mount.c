@@ -1,3 +1,4 @@
+#define _BSD_SOURCE
 #include <sys/mount.h>
 #include "syscall.h"
 

@@ -98,7 +98,11 @@ extern "C" {
 #define MS_NOUSER      (1U<<31)
 #endif
 
-#if defined(__linux__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define MNT_WAIT        1
+#define MNT_NOWAIT      2
+#define MNT_LAZY        3
+#elif defined(__linux__)
 #define MS_RMT_MASK (MS_RDONLY|MS_SYNCHRONOUS|MS_MANDLOCK|MS_I_VERSION|MS_LAZYTIME)
 
 #define MS_MGC_VAL 0xc0ed0000

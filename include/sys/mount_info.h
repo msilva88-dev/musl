@@ -36,7 +36,14 @@
 extern "C" {
 #endif
 
+#define __NEED_ino_t
+#define __NEED_mode_t
+#define __NEED_off_t
+
+#include <bits/alltypes.h>
+
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #define MOUNT_AFS "afs"
 #if defined(__HyperbolaBSD__)
@@ -181,6 +188,7 @@ struct tmpfs_args {
 struct ufs_args { MOUNT_INFO_ARGS };
 
 union mount_info {
+	long long __align[20];
 	struct iso_args iso_args;
 	struct mfs_args mfs_args;
 	struct msdosfs_args msdosfs_args;
@@ -188,7 +196,7 @@ union mount_info {
 	struct nfs_args nfs_args;
 	struct tmpfs_args tmpfs_args;
 	struct ufs_args ufs_args;
-} _Alignas(160);
+};
 
 #ifdef __cplusplus
 }

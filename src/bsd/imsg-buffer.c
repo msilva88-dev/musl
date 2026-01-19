@@ -16,7 +16,20 @@
 
 /* imsg buffer from OpenBSD 7.0 source code: lib/libutil/imsg-buffer.c */
 
+#define __NEED_int64_t
+#define __NEED_time_t
+#define __NEED_struct_timespec
+#define __NEED_uintptr_t
+
+#include <bits/alltypes.h>
+
+#define _BSD_SOURCE
+#include <sys/types.h>
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/queue.h>
+#elif defined(__OpenBSD__)
 #include <sys/queue.h>
+#endif
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <limits.h>

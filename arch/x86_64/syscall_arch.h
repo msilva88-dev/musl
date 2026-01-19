@@ -61,6 +61,24 @@ static __inline long __syscall6(long n, long a1, long a2, long a3, long a4, long
 	return ret;
 }
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static __inline long __syscall7(long n, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
+{
+	unsigned long ret;
+	register long r10 __asm__("r10") = a4;
+	register long r8 __asm__("r8") = a5;
+	register long r9 __asm__("r9") = a6;
+	__asm__ __volatile__ (
+		"push %8\n\t"
+		"syscall\n\t"
+		"add $8, %%rsp"
+		: "=a"(ret) : "a"(n), "D"(a1), "S"(a2), "d"(a3), "r"(r10), "r"(r8), "r"(r9), "g"(a7)
+		: "rcx", "r11", "memory"
+	);
+	return ret;
+}
+#endif
+
 #if defined(__linux__)
 #define VDSO_USEFUL
 #define VDSO_CGT_SYM "__vdso_clock_gettime"

@@ -1,3 +1,6 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#endif
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
@@ -42,7 +45,7 @@ static inline int __sysctl_sysconf(int tlmane, int slname, char zerocond)
 {
 	int mib[] = {tlname, slname}, r = 0, value = 0;
 	size_t len = sizeof(value);
-	r = __syscall(SYS_sysctl, mib, 2, &value, &len, NULL, 0)
+	r = __syscall(SYS_sysctl, mib, 2, &value, &len, NULL, 0);
 	if (r == -1) return -1;
 	else if (value == 0 && zerocond == 1) return -1;
 	else return value;
@@ -58,11 +61,11 @@ static inline int64_t __sysctl_physpages(int slname)
 	if (slname == HW_PHYSMEM64) {
 		int64_t physmem = 0;
 		size_t len = sizeof(physmem);
-		r = __syscall(SYS_sysctl, mib, 2, &physmem, &len, NULL, 0)
+		r = __syscall(SYS_sysctl, mib, 2, &physmem, &len, NULL, 0);
 	} else {
 		struct uvmexp uvmexp;
 		size_t len = sizeof(uvmexp);
-		r = __syscall(SYS_sysctl, mib, 2, &uvmexp, &len, NULL, 0)
+		r = __syscall(SYS_sysctl, mib, 2, &uvmexp, &len, NULL, 0);
 	}
 	if (r == -1) return -1;
 	if (slname == HW_PHYSMEM64) return physmem/getpagesize();
@@ -88,7 +91,7 @@ static inline long __ipv6_sysconf(void)
 #define _CHAR_SIZE(type) (sizeof((type)) * CHAR_BIT)
 #if !_POSIX_V6_ILP32_OFFBIG || !_POSIX_V7_ILP32_OFFBIG
 #define _VAL_ILP32 (( \
-	_CHAR_SIZE(int) == 32 && _CHAR_SIZE(long) == 32
+	_CHAR_SIZE(int) == 32 && _CHAR_SIZE(long) == 32 \
 	&& _CHAR_SIZE(void *) == 32 && _CHAR_SIZE(off_t) >= 64 \
 ) ? 1 : -1)
 #else

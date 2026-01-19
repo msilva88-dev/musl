@@ -53,9 +53,7 @@ ssize_t splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t len,
 				do {
 					if (off_out) m = pwrite(fd_out, buf + written, n - written, *off_out);
 					else {
-						int send_flags = 0;
-						if (flags & SPLICE_F_MORE) send_flags |= MSG_MORE;
-						m = send(fd_out, buf + written, n - written, send_flags);
+						m = send(fd_out, buf + written, n - written, 0);
 					}
 				} while (m < 0 && errno == EINTR);
 

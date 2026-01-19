@@ -4,5 +4,5 @@
 
 int msyscall(void *addr, size_t len)
 {
-	return syscall(SYS_msyscall, add, len);
+	return syscall(SYS_msyscall, addr, len);
 }

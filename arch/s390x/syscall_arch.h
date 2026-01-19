@@ -73,6 +73,23 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
 	__asm_syscall("+r"(r2), "r"(r1), "r"(r3), "r"(r4), "r"(r5), "r"(r6), "r"(r7));
 }
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static inline long __syscall7(long n, long a, long b, long c, long d, long e, long f, long g)
+{
+	if (n == SYS_mmap) return __syscall1(n, (long)(long[]){a,b,c,d,e,f,g});
+
+	register long r1 __asm__("r1") = n;
+	register long r2 __asm__("r2") = a;
+	register long r3 __asm__("r3") = b;
+	register long r4 __asm__("r4") = c;
+	register long r5 __asm__("r5") = d;
+	register long r6 __asm__("r6") = e;
+	register long r7 __asm__("r7") = f;
+	register long r8 __asm__("r8") = g;
+	__asm_syscall("+r"(r2), "r"(r1), "r"(r3), "r"(r4), "r"(r5), "r"(r6), "r"(r7), "r"(r8));
+}
+#endif
+
 #if defined(__linux__)
 #define VDSO_USEFUL
 #define VDSO_CGT_SYM "__kernel_clock_gettime"

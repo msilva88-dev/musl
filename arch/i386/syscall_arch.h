@@ -82,6 +82,22 @@ static inline long __syscall6(long n, long a1, long a2, long a3, long a4, long a
 	return __ret;
 }
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static inline long __syscall7(long n, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
+{
+	unsigned long __ret;
+#if !defined(__PIC__) || !defined(BROKEN_EBX_ASM)
+	__asm__ __volatile__ ("pushl %8 ; pushl %7 ; push %%ebp ; mov 4(%%esp),%%ebp ; " SYSCALL_INSNS " ; pop %%ebp ; add $8,%%esp"
+		: "=a"(__ret) : "a"(n), "b"(a1), "c"(a2), "d"(a3), "S"(a4), "D"(a5), "g"(a6), "g"(a7) : "memory");
+#else
+	unsigned long a1a7[3] = { a1, a6, a7 };
+	__asm__ __volatile__ ("pushl %1 ; pushl 8(%1) ; pushl 4(%1) ; push %%ebx ; push %%ebp ; mov 12(%%esp),%%ebx ; mov 8(%%esp),%%ebp ; " SYSCALL_INSNS " ; pop %%ebp ; pop %%ebx ; add $8,%%esp"
+		: "=a"(__ret) : "g"(a1a7), "a"(n), "c"(a2), "d"(a3), "S"(a4), "D"(a5) : "memory");
+#endif
+    return __ret;
+}
+#endif
+
 #if defined(__linux__)
 #define VDSO_USEFUL
 #define VDSO_CGT32_SYM "__vdso_clock_gettime"

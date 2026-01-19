@@ -25,15 +25,23 @@
 
 /* readlabel from OpenBSD 7.0 source code: lib/libutil/readlabel.c */
 
+#define _BSD_SOURCE
+#define __USE_MI_MUTEX
+
+#ifndef FALLTHROUGH_A
+#define FALLTHROUGH_A __attribute__((__fallthrough__))
+#endif
+
+#include <sys/types.h>
+#include <stddef.h>
 #if defined(__HyperbolaBSD__)
-//#define BDTYPENAMES
 //#include <sys/bdio.h>
 //#include <sys/blkdev.h>
 //#include <sys/bsdlabel.h>
-#define DKTYPENAMES
-#include <sys/disk.h>
-#include <sys/disklabel.h>
-#include <sys/dkio.h>
+#define BDTYPENAMES
+#include <hyperbk/disk.h>
+#include <hyperbk/disklabel.h>
+#include <hyperbk/dkio.h>
 #elif defined(__OpenBSD__)
 #define DKTYPENAMES
 #include <sys/disk.h>

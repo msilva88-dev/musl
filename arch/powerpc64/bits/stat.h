@@ -1,3 +1,9 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint32_t
+
+#include <bits/alltypes.h>
+#endif
+
 struct stat {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	mode_t st_mode;

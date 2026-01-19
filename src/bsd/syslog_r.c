@@ -1,17 +1,23 @@
 #define _BSD_SOURCE
+#include <sys/uio.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 #include "libc.h"
 #include "lock.h"
 #include "syscall.h"
 
+static volatile int lock = 0;
+
 int setlogmask_r(int mask, struct syslog_data *data)
 {
-	LOCK(lock);
+	LOCK(&lock);
 	int ret = data->log_mask;
 	if (mask) data->log_mask = mask;
-	UNLOCK(lock);
+	UNLOCK(&lock);
 	return ret;
 }
 
@@ -19,9 +25,9 @@ void closelog_r(struct syslog_data *data)
 {
 	int cs;
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
-	LOCK(lock);
+	LOCK(&lock);
 	data->log_tag = NULL;
-	UNLOCK(lock);
+	UNLOCK(&lock);
 	pthread_setcancelstate(cs, NULL);
 }
 
@@ -29,11 +35,11 @@ void openlog_r(const char *ident, int opt, int facility, struct syslog_data *dat
 {
 	int cs;
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
-	LOCK(lock);
+	LOCK(&lock);
 	if (ident) data->log_tag = ident;
 	data->log_stat = opt;
 	if (facility && !(facility &~ LOG_FACMASK)) data->log_fac = facility;
-	UNLOCK(lock);
+	UNLOCK(&lock);
 	pthread_setcancelstate(cs, NULL);
 }
 
@@ -58,7 +64,7 @@ hidden void __vsyslog_r(int priority, struct syslog_data *data, const char *mess
 	char *mptr = mbuf, *tptr = tbuf, *sptr = NULL;
 	int bak_errno = 0, mleft = __VSL_MSIZE, plen = 0, tcount = 0, tleft = __VSL_TSIZE;
 	int cs, log_stat, log_mask, log_fac;
-	char *log_tag;
+	const char *log_tag;
 
 	if (priority & ~(__VSL_PMASK)) {
 		char buf[128];
@@ -77,13 +83,13 @@ hidden void __vsyslog_r(int priority, struct syslog_data *data, const char *mess
 	}
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
-	LOCK(lock);
+	LOCK(&lock);
 	if (!data->log_tag) data->log_tag = __progname;
 	log_tag = data->log_tag;
 	log_stat = data->log_stat;
 	log_mask = data->log_mask;
 	log_fac  = data->log_fac;
-	UNLOCK(lock);
+	UNLOCK(&lock);
 	pthread_setcancelstate(cs, NULL);
 
 	if (!(LOG_MASK(LOG_PRI(priority)) & log_mask)) return;
@@ -133,11 +139,8 @@ hidden void __vsyslog_r(int priority, struct syslog_data *data, const char *mess
 					*mptr = '%';
 					mptr++;
 					mleft = mleft - 2;
-				} else {
-					// the condition is not meet, continue to default case of "c"
-					__attribute__((__fallthrough__));
 				}
-				break;
+				__attribute__((__fallthrough__));
 			}
 			break;
 		default:

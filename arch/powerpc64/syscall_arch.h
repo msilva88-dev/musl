@@ -86,6 +86,24 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
 	return r3;
 }
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static inline long __syscall7(long n, long a, long b, long c, long d, long e, long f, long g)
+{
+	register long r0 __asm__("r0") = n;
+	register long r3 __asm__("r3") = a;
+	register long r4 __asm__("r4") = b;
+	register long r5 __asm__("r5") = c;
+	register long r6 __asm__("r6") = d;
+	register long r7 __asm__("r7") = e;
+	register long r8 __asm__("r8") = f;
+	register long r9 __asm__("r9") = g;
+	__asm__ __volatile__("sc ; bns+ 1f ; neg %1, %1 ; 1:"
+        : "+r"(r0), "+r"(r3), "+r"(r4), "+r"(r5), "+r"(r6), "+r"(r7), "+r"(r8), "+r"(r9)
+        :: "memory", "cr0", "r10", "r11", "r12", "ctr", "xer");
+	return r3;
+}
+#endif
+
 #if defined(__linux__)
 #define SO_RCVTIMEO_OLD  18
 #define SO_SNDTIMEO_OLD  19

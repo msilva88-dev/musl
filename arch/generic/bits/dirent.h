@@ -2,6 +2,12 @@
 #define _DIRENT_HAVE_D_OFF
 #define _DIRENT_HAVE_D_TYPE
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_uint8_t
+
+#include <bits/alltypes.h>
+#endif
+
 struct dirent {
 	ino_t d_ino;
 	off_t d_off;
