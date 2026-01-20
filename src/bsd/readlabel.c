@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "util.h"
+#include <util.h>
 
 #if defined(__HyperbolaBSD__)
 #define _PATH_BLKDEVMAP "/dev/diskmap"
@@ -132,7 +132,7 @@ char *readlabelfs(char *device, int verbose)
 			rpath[strlen(rpath) - 1] = 'a' + getrawpartition();
 			break;
 		}
-		FALLTHROUGH_A
+		FALLTHROUGH_A;
 	default:
 		if (verbose)
 			warnx("%s: not a device node", device);

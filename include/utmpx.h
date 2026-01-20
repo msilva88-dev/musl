@@ -33,9 +33,7 @@ struct utmpx {
 #endif
 	struct timeval ut_tv;
 	unsigned ut_addr_v6[4];
-	long long __unused;
-	long long __unused1;
-	int __unused2;
+	char __unused[20];
 };
 
 void          endutxent(void);
