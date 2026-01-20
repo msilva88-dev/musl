@@ -1,3 +1,6 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#endif
 #include <errno.h>
 #include <stddef.h>
 #include <string.h>

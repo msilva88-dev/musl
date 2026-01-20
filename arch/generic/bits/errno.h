@@ -81,6 +81,7 @@
 #ifdef _BSD_SOURCE
 #define ESHUTDOWN       58
 #define ETOOMANYREFS    59
+#endif
 #define ETIMEDOUT       60
 #define ECONNREFUSED    61
 #define ELOOP           62 // 40 linux
@@ -96,7 +97,6 @@
 #define EUSERS          68 // 87 linux
 #endif
 #define EDQUOT          69 // 122 linux
-#endif
 #define ESTALE          70 // 116 linux
 #ifdef _BSD_SOURCE
 #define EREMOTE         71 // 66 linux
