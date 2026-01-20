@@ -70,7 +70,7 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 	if (cp) r = __syscall_cp(sys, a, b, c, d, e, f);
 	else r = __syscall(sys, a, b, c, d, e, f);
 	if (r != -ENOSYS) return r;
-#if defined(SYS_socketcall) && defined(__linux__)
+#if defined(SYS_socketcall)
 	if (cp) r = __syscall_cp(SYS_socketcall, sock, ((long[6]){a, b, c, d, e, f}));
 	else r = __syscall(SYS_socketcall, sock, ((long[6]){a, b, c, d, e, f}));
 #endif
@@ -379,6 +379,14 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define SIOCGSTAMPNS_OLD 0x8907
 #endif
 
+#endif // __linux__
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __sys_open2(x,pn,fl) __syscall1(SYS_open, pn)
+#define __sys_open3(x,pn,fl,mo) __syscall1(SYS_open, pn)
+#define __sys_open_cp2(x,pn,fl) __syscall_cp1(SYS_open, pn)
+#define __sys_open_cp3(x,pn,fl,mo) __syscall_cp1(SYS_open, pn)
+#elif defined(__linux__)
 #ifdef SYS_open
 #define __sys_open2(x,pn,fl) __syscall2(SYS_open, pn, (fl)|O_LARGEFILE)
 #define __sys_open3(x,pn,fl,mo) __syscall3(SYS_open, pn, (fl)|O_LARGEFILE, mo)
@@ -390,8 +398,7 @@ static inline long __alt_socketcall(int sys, int sock, int cp, syscall_arg_t a, 
 #define __sys_open_cp2(x,pn,fl) __syscall_cp3(SYS_openat, AT_FDCWD, pn, (fl)|O_LARGEFILE)
 #define __sys_open_cp3(x,pn,fl,mo) __syscall_cp4(SYS_openat, AT_FDCWD, pn, (fl)|O_LARGEFILE, mo)
 #endif
-
-#endif // __linux__
+#endif
 
 #define __sys_open(...) __SYSCALL_DISP(__sys_open,,__VA_ARGS__)
 #define sys_open(...) __syscall_ret(__sys_open(__VA_ARGS__))
