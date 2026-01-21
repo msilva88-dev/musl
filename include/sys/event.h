@@ -91,6 +91,18 @@ enum kevent_returned {
 	EV_EOF   = 0x8000
 };
 
+enum kevent_filter {
+	EVFILT_EXCEPT = -9,
+	EVFILT_DEVICE,
+	EVFILT_TIMER,
+	EVFILT_SIGNAL,
+	EVFILT_PROC,
+	EVFILT_VNODE,
+	EVFILT_AIO,
+	EVFILT_WRITE,
+	EVFILT_READ
+};
+
 struct klistops;
 SLIST_HEAD(knlist, knote);
 

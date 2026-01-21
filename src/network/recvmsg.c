@@ -9,7 +9,9 @@ hidden void __convert_scm_timestamps(struct msghdr *, socklen_t);
 
 void __convert_scm_timestamps(struct msghdr *msg, socklen_t csize)
 {
+#if defined(__linux__)
 	if (SCM_TIMESTAMP == SCM_TIMESTAMP_OLD) return;
+#endif
 	if (!msg->msg_control || !msg->msg_controllen) return;
 
 	struct cmsghdr *cmsg, *last=0;
@@ -18,6 +20,7 @@ void __convert_scm_timestamps(struct msghdr *msg, socklen_t csize)
 	int type = 0;
 
 	for (cmsg=CMSG_FIRSTHDR(msg); cmsg; cmsg=CMSG_NXTHDR(msg, cmsg)) {
+#if defined(__linux__)
 		if (cmsg->cmsg_level==SOL_SOCKET) switch (cmsg->cmsg_type) {
 		case SCM_TIMESTAMP_OLD:
 			if (type) break;
@@ -32,6 +35,7 @@ void __convert_scm_timestamps(struct msghdr *msg, socklen_t csize)
 			tvts[1] = tmp;
 			break;
 		}
+#endif
 		last = cmsg;
 	}
 	if (!last || !type) return;
@@ -55,7 +59,9 @@ ssize_t recvmsg(int fd, struct msghdr *msg, int flags)
 	struct msghdr h, *orig = msg;
 	if (msg) {
 		h = *msg;
+#if defined(__linux__)
 		h.__pad1 = h.__pad2 = 0;
+#endif
 		msg = &h;
 	}
 #endif

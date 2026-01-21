@@ -28,7 +28,11 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 		socktype = hint->ai_socktype;
 
 		const int mask = AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST |
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+			AI_EXT | AI_NUMERICSERV | AI_FQDN | AI_ADDRCONFIG;
+#elif defined(__linux__)
 			AI_V4MAPPED | AI_ALL | AI_ADDRCONFIG | AI_NUMERICSERV;
+#endif
 		if ((flags & mask) != flags)
 			return EAI_BADFLAGS;
 

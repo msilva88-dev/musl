@@ -1,12 +1,17 @@
+#if !defined(__OpenBSD__)
+
+#if defined(__HyperbolaBSD__)
+#define _BSD_SOURCE
+#endif
 #include <fcntl.h>
-#if defined(__linux__)
-#include "syscall.h"
-#elif defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__)
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #endif
+#include "syscall.h"
 
 int posix_fallocate(int fd, off_t base, off_t len)
 {
@@ -58,3 +63,5 @@ int posix_fallocate(int fd, off_t base, off_t len)
 	return 0;
 #endif
 }
+
+#endif /* !__OpenBSD__ */

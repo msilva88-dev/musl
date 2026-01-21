@@ -1,12 +1,17 @@
+#if !defined(__OpenBSD__)
+
+#if defined(__HyperbolaBSD__)
+#define _BSD_SOURCE
+#endif
 #include <fcntl.h>
-#if defined(__linux__)
-#include "syscall.h"
-#elif defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__)
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 #include "libc.h"
 #endif
+#include "syscall.h"
 
 int posix_fadvise(int fd, off_t base, off_t len, int advice)
 {
@@ -86,3 +91,5 @@ int posix_fadvise(int fd, off_t base, off_t len, int advice)
 	return ret;
 #endif
 }
+
+#endif /* !__OpenBSD__ */

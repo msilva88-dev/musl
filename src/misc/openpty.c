@@ -1,9 +1,17 @@
+#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#define _BSD_SOURCE
+#endif
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <pty.h>
 #include <stdio.h>
 #include <pthread.h>
+#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#include <sys/types.h>
+#include <string.h>
+#include <hyperbk/tty.h>
+#endif
 
 /* Nonstandard, but vastly superior to the standard functions */
 

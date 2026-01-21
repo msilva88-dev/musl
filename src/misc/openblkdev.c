@@ -29,6 +29,7 @@
 
 /* openblkdev/opendisk from OpenBSD 7.0 source code: lib/libutil/opendisk.c */
 
+#define _BSD_SOURCE
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>

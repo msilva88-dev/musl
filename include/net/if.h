@@ -7,6 +7,13 @@ extern "C" {
 
 #include <features.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define __NEED_int64_t
+#define __NEED_uint64_t
+
+#include <bits/alltypes.h>
+#endif
+
 #define IF_NAMESIZE 16
 
 struct if_nameindex {

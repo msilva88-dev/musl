@@ -67,7 +67,7 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 		if (!strcmp(val, p->name)) return p;
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	if (!__syscall(SYS_issetugid) path = getenv("MUSL_LOCPATH");
+	if (!__syscall(SYS_issetugid)) path = getenv("MUSL_LOCPATH");
 #elif defined(__linux__)
 	if (!libc.secure) path = getenv("MUSL_LOCPATH");
 #endif

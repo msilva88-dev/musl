@@ -8,6 +8,8 @@
 #include <locale.h>
 #include <sys/mman.h>
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <limits.h>
+#include <stdlib.h>
 #include "syscall.h"
 #elif defined(__linux__)
 #include "libc.h"

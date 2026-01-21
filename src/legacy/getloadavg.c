@@ -1,4 +1,16 @@
 #define _GNU_SOURCE
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+
+#define __NEED_fixpt_t
+
+#include <bits/alltypes.h>
+
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <stddef.h>
+#endif
+
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/sysctl.h>
 #elif defined(__OpenBSD__)
@@ -6,10 +18,6 @@
 #elif defined(__linux__)
 #include <stdlib.h>
 #include <sys/sysinfo.h>
-#endif
-
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#define __NEED_fixpt_t
 #endif
 
 int getloadavg(double *a, int n)

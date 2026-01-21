@@ -380,7 +380,7 @@ struct ip6_mtuinfo {
 #define IPV6_JOIN_GROUP         12
 #define IPV6_LEAVE_GROUP        13
 #define IPV6_PORTRANGE          14
-#if _BSD_SOURCE
+#ifdef _BSD_SOURCE
 #define ICMP6_FILTER            18
 #endif
 #define IPV6_CHECKSUM           26
@@ -403,7 +403,7 @@ struct ip6_mtuinfo {
 #define IPV6_AUTH_LEVEL         53
 #define IPV6_ESP_TRANS_LEVEL    54
 #define IPV6_ESP_NETWORK_LEVEL  55
-#if _BSD_SOURCE
+#ifdef _BSD_SOURCE
 #define IPSEC6_OUTSA            56
 #endif
 #define IPV6_RECVTCLASS         57

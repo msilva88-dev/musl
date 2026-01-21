@@ -1,5 +1,9 @@
 #define _GNU_SOURCE
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#elif defined(__linux__)
 #include <sys/stat.h>
+#endif
 #include <sys/time.h>
 
 int futimes(int fd, const struct timeval tv[2])

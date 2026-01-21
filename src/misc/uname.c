@@ -1,3 +1,9 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#include <sys/types.h>
+#include <stddef.h>
+#include <string.h>
+#endif
 #include <sys/utsname.h>
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/sysctl.h>
@@ -7,36 +13,45 @@
 #include "syscall.h"
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-static int __sysctl_uts(int slname, struct utsname *uts)
+static int __sysctl_uts(int ctlname, int slname, struct utsname *uts)
 {
-	int mib[] = {
-		(slname == HW_MACHINE) ? CTL_KERN : CTL_HW,
-		slname
-	};
-	void *ptr;
-	size_t len;
+	int mib[] = { ctlname, slname };
+	void *ptr = NULL;
+	size_t len = 0;
 
-	switch (slname) {
-	case HW_MACHINE:
-		len = sizeof(uts->machine);
-		ptr = &uts->machine;
+	switch (ctlname) {
+	case CTL_HW:
+		switch (slname) {
+		case HW_MACHINE:
+			len = sizeof(uts->machine);
+			ptr = &uts->machine;
+			break;
+		default:
+			return -1;
+		}
 		break;
-	case KERN_HOSTNAME:
-		len = sizeof(uts->nodename);
-		ptr = &uts->nodename;
-		break;
-	case KERN_OSRELEASE:
-		len = sizeof(uts->release);
-		ptr = &uts->release;
-		break;
-	case KERN_OSTYPE:
-		len = sizeof(uts->sysname);
-		ptr = &uts->sysname;
-		break;
-	case KERN_OSVERSION:
-	case KERN_VERSION:
-		len = sizeof(uts->version);
-		ptr = &uts->version;
+	case CTL_KERN:
+		switch (slname) {
+		case KERN_HOSTNAME:
+			len = sizeof(uts->nodename);
+			ptr = &uts->nodename;
+			break;
+		case KERN_OSRELEASE:
+			len = sizeof(uts->release);
+			ptr = &uts->release;
+			break;
+		case KERN_OSTYPE:
+			len = sizeof(uts->sysname);
+			ptr = &uts->sysname;
+			break;
+		case KERN_OSVERSION:
+		case KERN_VERSION:
+			len = sizeof(uts->version);
+			ptr = &uts->version;
+			break;
+		default:
+			return -1;
+		}
 		break;
 	default:
 		return -1;
@@ -48,11 +63,22 @@ static int __sysctl_uts(int slname, struct utsname *uts)
 
 static inline int __sysctl_uname(struct utsname *uts)
 {
-	int r = 0, slnames[] = { KERN_OSTYPE, KERN_HOSTNAME, KERN_OSRELEASE, KERN_OSVERSION, HW_MACHINE };
+	int r = 0;
+	memset(uts, 0, sizeof *uts);
 
-	for (size_t i = 0; i < sizeof(slnames)/sizeof(slnames[0]); i++) {
-		r = __sysctl_uts(slnames[i], uts);
-		if (slnames[i] == KERN_OSVERSION && r == -1) __sysctl_uts(KERN_VERSION, uts);
+	const struct { int ctl, name; } mib[] = {
+		{ CTL_KERN, KERN_OSTYPE },
+		{ CTL_KERN, KERN_HOSTNAME },
+		{ CTL_KERN, KERN_OSRELEASE },
+		{ CTL_KERN, KERN_OSVERSION },
+		{ CTL_HW, HW_MACHINE }
+	};
+
+	for (size_t i = 0; i < sizeof(mib)/sizeof(mib[0]); i++) {
+		r = __sysctl_uts(mib[i].ctl, mib[i].name, uts);
+		if (mib[i].ctl == CTL_KERN && mib[i].name == KERN_OSVERSION && r == -1) {
+			r = __sysctl_uts(CTL_KERN, KERN_VERSION, uts);
+		}
 	}
 
 	return r;

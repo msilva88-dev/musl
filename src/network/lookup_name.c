@@ -321,10 +321,12 @@ int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], c
 	/* Procedurally, a request for v6 addresses with the v4-mapped
 	 * flag set is like a request for unspecified family, followed
 	 * by filtering of the results. */
+#if defined(__linux__)
 	if (flags & AI_V4MAPPED) {
 		if (family == AF_INET6) family = AF_UNSPEC;
 		else flags -= AI_V4MAPPED;
 	}
+#endif
 
 	/* Try each backend until there's at least one result. */
 	cnt = name_from_null(buf, name, family, flags);
@@ -336,6 +338,7 @@ int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], c
 	if (cnt<=0) return cnt ? cnt : EAI_NONAME;
 
 	/* Filter/transform results for v4-mapped lookup, if requested. */
+#if defined(__linux__)
 	if (flags & AI_V4MAPPED) {
 		if (!(flags & AI_ALL)) {
 			/* If any v6 results exist, remove v4 results. */
@@ -356,6 +359,7 @@ int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], c
 			buf[i].family = AF_INET6;
 		}
 	}
+#endif
 
 	/* No further processing is needed if there are fewer than 2
 	 * results or if there are only IPv4 results. */

@@ -66,18 +66,18 @@ MALLOC_DIR = malloc_mchunk
 COMMON_DIRS = src/aio src/complex src/conf src/crypt src/ctype src/dirent
 COMMON_DIRS += src/env src/errno src/exit src/fcntl src/fenv src/include
 COMMON_DIRS += src/internal src/ipc src/ldso src/legacy src/locale src/malloc
-COMMON_DIRS += src/math src/misc src/mman src/mq src/multibyte src/network
+COMMON_DIRS += src/math src/misc src/mman src/multibyte src/network
 COMMON_DIRS += src/passwd src/prng src/process src/regex src/sched src/search
 COMMON_DIRS += src/select src/setjmp src/signal src/stat src/stdio src/stdlib
 COMMON_DIRS += src/string src/temp src/termios src/thread src/time src/unistd
 
 ifeq ($(filter $(UNAME),HyperbolaBSD OpenBSD),$(UNAME))
-TARGET_DIR = src/bsd
+TARGET_DIRS = src/bsd
 else ifeq ($(filter $(UNAME),Linux),$(UNAME))
-TARGET_DIR = src/linux
+TARGET_DIRS = src/linux src/mq
 endif
 
-SRC_DIRS = $(addprefix $(srcdir)/,$(COMMON_DIRS) $(TARGET_DIR) src/malloc/$(MALLOC_DIR) crt ldso $(COMPAT_SRC_DIRS))
+SRC_DIRS = $(addprefix $(srcdir)/,$(COMMON_DIRS) $(TARGET_DIRS) src/malloc/$(MALLOC_DIR) crt ldso $(COMPAT_SRC_DIRS))
 BASE_GLOBS = $(addsuffix /*.c,$(SRC_DIRS))
 ARCH_GLOBS = $(addsuffix /$(ARCH)/*.[csS],$(SRC_DIRS))
 BASE_SRCS = $(sort $(wildcard $(BASE_GLOBS)))

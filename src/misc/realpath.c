@@ -1,3 +1,6 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#endif
 #if defined(__linux__)
 #include <stdlib.h>
 #endif
@@ -163,7 +166,10 @@ skip_readlink:
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	if (resolved) return strlcpy(resolved, output, PATH_MAX);
+	if (resolved) {
+		strlcpy(resolved, output, PATH_MAX);
+		return resolved;
+	}
 #elif defined(__linux__)
 	if (resolved) return memcpy(resolved, output, q+1);
 #endif

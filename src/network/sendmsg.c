@@ -14,7 +14,9 @@ ssize_t sendmsg(int fd, const struct msghdr *msg, int flags)
 	struct cmsghdr chbuf[CMSG_SPACE(255*sizeof(int))/sizeof(struct cmsghdr)+1], *c;
 	if (msg) {
 		h = *msg;
+#if defined(__linux__)
 		h.__pad1 = h.__pad2 = 0;
+#endif
 		msg = &h;
 		if (h.msg_controllen) {
 			if (h.msg_controllen > sizeof chbuf) {

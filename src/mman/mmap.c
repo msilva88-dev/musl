@@ -15,8 +15,8 @@ weak_alias(dummy, __vm_wait);
 
 void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 {
-#if defined(__linux__)
 	long ret;
+#if defined(__linux__)
 	if (off & OFF_MASK) {
 		errno = EINVAL;
 		return MAP_FAILED;
@@ -30,7 +30,7 @@ void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 		__vm_wait();
 	}
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	return __syscall(SYS_mmap, start, len, prot, flags, fd, 0L, off);
+	ret = __syscall(SYS_mmap, start, len, prot, flags, fd, 0L, off);
 #elif defined(__linux__)
 #ifdef SYS_mmap2
 	ret = __syscall(SYS_mmap2, start, len, prot, flags, fd, off/UNIT);
@@ -40,8 +40,8 @@ void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 	/* Fixup incorrect EPERM from kernel. */
 	if (ret == -EPERM && !start && (flags&MAP_ANON) && !(flags&MAP_FIXED))
 		ret = -ENOMEM;
-	return (void *)__syscall_ret(ret);
 #endif
+	return (void *)__syscall_ret(ret);
 }
 
 weak_alias(__mmap, mmap);

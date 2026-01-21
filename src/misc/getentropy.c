@@ -5,6 +5,9 @@
 #endif
 #include <pthread.h>
 #include <errno.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include "syscall.h"
+#endif
 
 int getentropy(void *buffer, size_t len)
 {

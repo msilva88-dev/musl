@@ -7,6 +7,9 @@
 #include <syscall.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <net/if_dl.h>
+#endif
 #include "netlink.h"
 
 #define IFADDRS_HASH_SIZE 64
@@ -25,7 +28,11 @@ struct sockaddr_ll_hack {
 
 union sockany {
 	struct sockaddr sa;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	struct sockaddr_dl dl;
+#elif defined(__linux__)
 	struct sockaddr_ll_hack ll;
+#endif
 	struct sockaddr_in v4;
 	struct sockaddr_in6 v6;
 };
@@ -93,6 +100,17 @@ static void gen_netmask(struct sockaddr **r, int af, union sockany *sa, int pref
 
 static void copy_lladdr(struct sockaddr **r, union sockany *sa, void *addr, size_t addrlen, int ifindex, unsigned short hatype)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	struct sockaddr_dl *sdl = &sa->dl;
+	if (addrlen > sizeof(sdl->sdl_data)) return;
+	memset(sdl, 0, sizeof *sdl);
+	sdl->sdl_len = sizeof(struct sockaddr_dl);
+	sdl->sdl_family = AF_LINK;
+	sdl->sdl_index = ifindex;
+	sdl->sdl_alen = addrlen;
+	memcpy(sdl->sdl_data, addr, addrlen);
+	*r = (struct sockaddr *)sdl;
+#elif defined(__linux__)
 	if (addrlen > sizeof(sa->ll.sll_addr)) return;
 	sa->ll.sll_family = AF_PACKET;
 	sa->ll.sll_ifindex = ifindex;
@@ -100,6 +118,7 @@ static void copy_lladdr(struct sockaddr **r, union sockany *sa, void *addr, size
 	sa->ll.sll_halen = addrlen;
 	memcpy(sa->ll.sll_addr, addr, addrlen);
 	*r = &sa->sa;
+#endif
 }
 
 static int netlink_msg_to_ifaddr(void *pctx, struct nlmsghdr *h)

@@ -1,3 +1,9 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#include <sys/types.h>
+#include <string.h>
+#include <unistd.h>
+#endif
 #include <elf.h>
 #include <link.h>
 #if defined(__HyperbolaBSD__)

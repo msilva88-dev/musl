@@ -1,3 +1,8 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#include <string.h>
+#include <unistd.h>
+#endif
 #include <stdlib.h>
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/tty.h>
@@ -43,12 +48,12 @@ static int __ptstatus(int fd)
 	const char *name;
 	int err;
 
-	if ((err = __syscall(fstat, fd, &buf))) return -err;
+	if ((err = __syscall(SYS_fstat, fd, &buf))) return -err;
 	name = devname(buf.st_rdev, S_IFCHR);
-        if ((err = (!S_ISCHR(buf.st_mode) || strncmp(name, "pty", 3))) {
-                errno = EINVAL;
-                return -err;
-        }
+	if ((err = (!S_ISCHR(buf.st_mode) || strncmp(name, "pty", 3)))) {
+		errno = EINVAL;
+		return -err;
+	}
 	return 0;
 }
 #endif

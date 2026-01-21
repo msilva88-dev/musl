@@ -24,6 +24,7 @@ typedef struct {
 	int used;
 	int val;
 	int kq;
+	int pipefd[2];
 } bsd_sem_t;
 
 static bsd_sem_t *get_shared_sems(void)
@@ -86,7 +87,8 @@ static bsd_sem_t *init_sem(int id, int initial_val, int *first_time)
 		if (sem->kq == -1) return NULL;
 
 		struct kevent kev;
-		EV_SET(&kev, 1, EVFILT_USER, EV_ADD | EV_CLEAR, 0, 0, NULL);
+		if (pipe(sem->pipefd) < 0) return NULL;
+		EV_SET(&kev, sem->pipefd[0], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 		if (kevent(sem->kq, &kev, 1, NULL, 0, NULL) == -1) return NULL;
 
 		sem->used = 1;
@@ -133,8 +135,9 @@ int semtimedop(int id, struct sembuf *buf, size_t n, const struct timespec *ts)
 			}
 			sem->val += op;
 		} else if (op > 0) { // signal / V
+			char dummy = 0;
 			sem->val += op;
-			EV_SET(&kev, 1, EVFILT_USER, 0, NOTE_TRIGGER, 0, NULL);
+			write(sem->pipefd[1], &dummy, 1);
 			kevent(sem->kq, &kev, 1, NULL, 0, NULL);
 		}
 	}

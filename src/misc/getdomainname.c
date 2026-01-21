@@ -1,4 +1,7 @@
 #define _GNU_SOURCE
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <sys/types.h>
+#endif
 #include <unistd.h>
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/sysctl.h>

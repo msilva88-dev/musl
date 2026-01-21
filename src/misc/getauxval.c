@@ -1,9 +1,12 @@
+#define __NEED_size_t
+
+#include <bits/alltypes.h>
+
 #include <sys/auxv.h>
 #include <errno.h>
+#include "libc.h"
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #include "syscall.h"
-#elif defined(__linux__)
-#include "libc.h"
 #endif
 
 unsigned long __getauxval(unsigned long item)
