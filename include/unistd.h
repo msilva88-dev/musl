@@ -283,7 +283,7 @@ pid_t gettid(void);
 #endif
 
 #ifdef _BSD_SOURCE
-//char *fflagstostr(uint32_t);
+char *fflagstostr(uint32_t);
 mode_t getmode(const void *, mode_t);
 char *getwd(char *) DEPREC_A("getwd is obsolete and unsafe, use getcwd instead");
 int profil(char *, size_t, unsigned long, unsigned int);
