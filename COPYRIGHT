@@ -142,6 +142,11 @@ by Wietse Venema, licensed under permissive terms allowing redistribution
 and modification with preservation of copyright notice.
 See the file itself for details.
 
+The implementation of b64_ntop and b64_pton (src/misc/base64.c) includes
+code originally developed by the Internet Software Consortium
+(permissive ISC-style license) and International Business Machines, Inc.
+(permissive license with a patent grant for DNS dynamic updates).
+
 The implementation of res_comp (src/network/res_comp.c) includes
 code originally developed by the University of California (BSD 3-clause license),
 and Digital Equipment Corporation (permissive MIT-like license),
@@ -150,7 +155,8 @@ See the file header for full license texts.
 The implementation of res_debug_syms (src/network/res_debug_syms.c) includes
 code originally developed by the University of California (BSD 3-clause license),
 Digital Equipment Corporation (permissive MIT-like license),
-and IBM (permissive license with a patent grant for DNS dynamic updates).
+and International Business Machines, Inc.
+(permissive license with a patent grant for DNS dynamic updates).
 See the file header for full license texts.
 
 The implementation of bsdlabel [disklabel] (src/bsd/bsdlabel.c) is

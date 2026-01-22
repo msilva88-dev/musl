@@ -145,6 +145,8 @@ int dn_expand(const unsigned char *, const unsigned char *, const unsigned char 
 int dn_skipname(const unsigned char *, const unsigned char *);
 
 #ifdef _BSD_SOURCE
+int b64_ntop(unsigned char const *, size_t, char *, size_t);
+int b64_pton(char const *, unsigned char *, size_t);
 const char *p_class(int);
 const char *p_type(int);
 void putlong(uint32_t, unsigned char *);
