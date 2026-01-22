@@ -178,7 +178,7 @@
 #define ENOTRECOVERABLE 93 // 131 linux
 #define EOWNERDEAD      94 // 130 linux
 #define EPROTO          95 // 71 linux
-#if __BSD_VISIBLE
+#ifdef _BSD_SOURCE
 #define ELAST           95 // bsd specific
 #endif
 #elif defined(__linux__)

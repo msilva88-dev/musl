@@ -15,7 +15,9 @@ void __convert_scm_timestamps(struct msghdr *msg, socklen_t csize)
 	if (!msg->msg_control || !msg->msg_controllen) return;
 
 	struct cmsghdr *cmsg, *last=0;
+#if defined(__linux__)
 	long tmp;
+#endif
 	long long tvts[2];
 	int type = 0;
 

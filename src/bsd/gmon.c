@@ -54,6 +54,8 @@ static int s_scale;
 
 #define ERR(s) write(STDERR_FILENO, s, sizeof(s))
 
+void __moncontrol(int mode);
+
 void monstartup(unsigned long lowpc, unsigned long highpc)
 {
 	int o;
@@ -102,7 +104,7 @@ void monstartup(unsigned long lowpc, unsigned long highpc)
 	} else
 		s_scale = SCALE_1_TO_1;
 
-	moncontrol(1);
+	__moncontrol(1);
 	return;
 
 mapfailed:
@@ -126,7 +128,7 @@ mapfailed:
  *	profiling is what mcount checks to see if
  *	all the data structures are ready.
  */
-hidden void __moncontrol(int mode)
+void __moncontrol(int mode)
 {
 	struct gmonparam *p = &_gmonparam;
 

@@ -56,7 +56,11 @@ int __libc_sigaction(int sig, const struct sigaction *restrict sa, struct sigact
 #endif
 		memcpy(&ksa.mask, &sa->sa_mask, _NSIG/8);
 	}
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	int r = __syscall(SYS_sigaction, sig, sa?&ksa:0, old?&ksa_old:0);
+#elif defined(__linux__)
 	int r = __syscall(SYS_rt_sigaction, sig, sa?&ksa:0, old?&ksa_old:0, _NSIG/8);
+#endif
 	if (old && !r) {
 		old->sa_handler = ksa_old.handler;
 		old->sa_flags = ksa_old.flags;

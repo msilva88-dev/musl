@@ -1,3 +1,6 @@
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#endif
 #include <unistd.h>
 #if defined(__HyperbolaBSD__)
 #include <hyperbk/sysctl.h>

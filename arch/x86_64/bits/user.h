@@ -31,7 +31,9 @@ struct user {
 	unsigned long			u_debugreg[8];
 };
 
-#define PAGE_MASK		(~(PAGESIZE-1))
+#if defined(__linux__)
+#define PAGE_MASK		(~(PAGESIZE - 1))
+#endif
 #define NBPG			PAGESIZE
 #define UPAGES			1
 #define HOST_TEXT_START_ADDR	(u.start_code)

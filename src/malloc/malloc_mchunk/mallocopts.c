@@ -1187,6 +1187,7 @@ __attribute__((__unused__)) static int munguard(void *ptr, size_t size)
 /* mreguard: resize guarded region. On Linux, try mremap fast-path; otherwise
  * allocate a new guarded region, copy, and replace list metadata. This is only
  * applicable to guarded allocations (mlen >= PAGE_SIZE when created). */
+#if defined(__linux__)
 static void *mreguard(void *ptr, size_t old_size, size_t new_size)
 {
 	/* Resize guarded region:
@@ -1304,6 +1305,7 @@ static void *mreguard(void *ptr, size_t old_size, size_t new_size)
 	guard_release(g);
 	return new_base2 + PAGE_SIZE;
 }
+#endif
 
 static void register_delayed_chunk(void *p, size_t len)
 {

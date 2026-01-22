@@ -2,7 +2,11 @@
 
 int sigismember(const sigset_t *set, int sig)
 {
-	unsigned s = sig-1;
-	if (s >= _NSIG-1) return 0;
+	unsigned s = sig - 1;
+	if (s >= _NSIG - 1) return 0;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	return !!(*set & (1U << s));
+#elif defined(__linux__)
 	return !!(set->__bits[s/8/sizeof *set->__bits] & 1UL<<(s&8*sizeof *set->__bits-1));
+#endif
 }

@@ -1,5 +1,6 @@
 #include <signal.h>
 #include <errno.h>
+#include <stddef.h>
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #include "syscall.h"
 #endif

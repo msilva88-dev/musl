@@ -1,4 +1,4 @@
-#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define _BSD_SOURCE
 #endif
 #include <stdlib.h>
@@ -7,7 +7,7 @@
 #include <pty.h>
 #include <stdio.h>
 #include <pthread.h>
-#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #include <sys/types.h>
 #include <string.h>
 #include <hyperbk/tty.h>
@@ -17,7 +17,7 @@
 
 int openpty(int *pm, int *ps, char *name, const struct termios *tio, const struct winsize *ws)
 {
-#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	struct ptmget ptm;
 	int m, s, cs;
 #elif defined(__linux__)
@@ -25,7 +25,7 @@ int openpty(int *pm, int *ps, char *name, const struct termios *tio, const struc
 #endif
 	char buf[20];
 
-#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	m = open("/dev/ptm", O_RDWR|O_NOCTTY);
 #elif defined(__linux__)
 	m = open("/dev/ptmx", O_RDWR|O_NOCTTY);
@@ -34,7 +34,7 @@ int openpty(int *pm, int *ps, char *name, const struct termios *tio, const struc
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
-#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	if (ioctl(m, PTMGET, &ptm) < 0)
 #elif defined(__linux__)
 	if (ioctl(m, TIOCSPTLCK, &n) || ioctl (m, TIOCGPTN, &n))
@@ -42,7 +42,7 @@ int openpty(int *pm, int *ps, char *name, const struct termios *tio, const struc
 		goto fail;
 
 	if (!name) name = buf;
-#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	strlcpy(name, ptm.sn, sizeof(ptm.sn));
 	s = ptm.cfd;
 	close(ptm.sfd);

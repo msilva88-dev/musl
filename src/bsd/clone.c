@@ -95,7 +95,7 @@ static int clone_start(void *arg)
  *
  * Consequently, it is a no-op in this implementation.
  */
-int __clone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
+static int __bsdclone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 {
 	if (!fn || !stack) {
 		return -EINVAL;
@@ -405,7 +405,7 @@ int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 	 * caller is content with an extremely restrictive execution context
 	 * like the one vfork() would provide. */
 	if (flags & CLONE_VM) return __syscall_ret(
-		__clone(func, stack, flags, arg, ptid, tls, ctid));
+		__bsdclone(func, stack, flags, arg, ptid, tls, ctid));
 
 	__block_all_sigs(&csa.sigmask);
 	LOCK(__abort_lock);
@@ -414,7 +414,7 @@ int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 	 * mimic _Fork in producing a consistent execution state. */
 	csa.func = func;
 	csa.arg = arg;
-	int ret = __clone(clone_start, stack, flags, &csa, ptid, tls, ctid);
+	int ret = __bsdclone(clone_start, stack, flags, &csa, ptid, tls, ctid);
 
 	__post_Fork(ret);
 	__restore_sigs(&csa.sigmask);

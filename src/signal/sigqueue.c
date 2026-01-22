@@ -44,6 +44,7 @@ static int enqueue_sigqueue(pid_t pid, int sig, union sigval value)
 	return r;
 }
 
+#if 0
 static int sigqueue_receive(union sigval *value, int *sig)
 {
 	sigset_t set;
@@ -63,6 +64,8 @@ static int sigqueue_receive(union sigval *value, int *sig)
 	__restore_sigs(&set);
 	return r;
 }
+#endif /* unused */
+
 #endif
 
 int sigqueue(pid_t pid, int sig, const union sigval value)

@@ -1,5 +1,6 @@
 #include <signal.h>
 #include <errno.h>
+#include <stddef.h>
 #include "syscall.h"
 
 #if defined(__linux__)

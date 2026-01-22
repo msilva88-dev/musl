@@ -150,12 +150,24 @@ enum {
 #define SIGSYNCCALL 34
 
 #define SIGALL_SET ((sigset_t *)(const unsigned long long [2]){ -1,-1 })
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static inline sigset_t __get_sigpt_set(void) {
+	sigset_t s;
+	sigemptyset(&s);
+	sigaddset(&s, SIGTSTP);
+	sigaddset(&s, SIGTTIN);
+	sigaddset(&s, SIGTTOU);
+	return s;
+}
+#define SIGPT_SET __get_sigpt_set()
+#elif defined(__linux__)
 #define SIGPT_SET \
 	((sigset_t *)(const unsigned long [_NSIG/8/sizeof(long)]){ \
 	[sizeof(long)==4] = 3UL<<(32*(sizeof(long)>4)) })
 #define SIGTIMER_SET \
 	((sigset_t *)(const unsigned long [_NSIG/8/sizeof(long)]){ \
 	 0x80000000 })
+#endif
 
 void *__tls_get_addr(tls_mod_off_t *);
 hidden int __init_tp(void *);

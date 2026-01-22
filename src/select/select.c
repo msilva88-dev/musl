@@ -13,7 +13,9 @@ int select(int n, fd_set *restrict rfds, fd_set *restrict wfds, fd_set *restrict
 {
 	time_t s = tv ? tv->tv_sec : 0;
 	suseconds_t us = tv ? tv->tv_usec : 0;
+#if defined(__linux__)
 	long ns;
+#endif
 	const time_t max_time = (1ULL<<8*sizeof(time_t)-1)-1;
 
 	if (s<0 || us<0) return __syscall_ret(-EINVAL);

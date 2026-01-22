@@ -1,4 +1,8 @@
 #define _GNU_SOURCE
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define _BSD_SOURCE
+#include <sys/param.h>
+#endif
 #define SYSCALL_NO_TLS 1
 #include <stdlib.h>
 #include <stdarg.h>
@@ -31,6 +35,16 @@
 #include "dynlink.h"
 #include "crypt_chacha.h"
 
+/* BSD membarrier */
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+static sem_t barrier_sem;
+
+static void membarrier_handler(int signum)
+{
+	sem_post(&barrier_sem);
+}
+#endif
+
 static size_t ldso_page_size;
 /* libc.h may have defined a macro for dynamic PAGE_SIZE already, but
  * PAGESIZE is only defined if it's constant for the arch. */
@@ -49,6 +63,9 @@ static void error_noop(const char *, ...);
 static void (*error)(const char *, ...) = error_noop;
 
 #define MAXP2(a,b) (-(-(a)&-(b)))
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#undef ALIGN
+#endif
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
 
 #define container_of(p,t,m) ((t*)((char *)(p)-offsetof(t,m)))
@@ -924,7 +941,7 @@ static ssize_t get_execpath_bsd(char *buf, size_t buf_size)
 	if (!buf || !buf_size) return -1;
 
 	char *argv0 = NULL, *argv0buf = NULL, *argvbuf = NULL;
-	size_t argvlen = 0, size_t buflen = 0;
+	size_t argvlen = 0, buflen = 0;
 	int mib_argv[4] = { CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV };
 
 	if (sysctl(mib_argv, 4, NULL, &argvlen, NULL, 0) == -1) return -1;
@@ -1813,7 +1830,7 @@ static void install_new_tls(void)
 	 * If any initialization step fails (sem_init or sigaction), the
 	 * emulation is silently skipped, similar to the Linux fallback.
 	 */
-	pthread_t self = __pthread_self(), td;
+	struct sigaction old_sa;
 	struct sigaction sa;
 
 	if (sem_init(&barrier_sem, 0, 0) == 0) {
@@ -1827,7 +1844,7 @@ static void install_new_tls(void)
 		int n = 0;
 		if (sigaction(SIGUSR1, &sa, &old_sa) == 0) {
 			for (td = self->next; td != self; td = td->next) {
-				if (pthread_kill(td->tid, SIGUSR1) == 0) n++;
+				if (pthread_kill(td, SIGUSR1) == 0) n++;
 			}
 
 			for (int i = 0; i < n; i++) sem_wait(&barrier_sem);
@@ -2271,7 +2288,7 @@ void __dls3(size_t *sp, size_t *auxv)
 	debug.head = head;
 	debug.base = ldso.base;
 	debug.state = RT_CONSISTENT;
-	_dl_debug_state();
+	dl_debug_state();
 
 	if (replace_argv0) argv[0] = replace_argv0;
 
@@ -2327,7 +2344,7 @@ void *dlopen(const char *file, int mode)
 	__inhibit_ptc();
 
 	debug.state = RT_ADD;
-	_dl_debug_state();
+	dl_debug_state();
 
 	p = 0;
 	if (shutting_down) {
@@ -2425,7 +2442,7 @@ void *dlopen(const char *file, int mode)
 	orig_tail = tail;
 end:
 	debug.state = RT_CONSISTENT;
-	_dl_debug_state();
+	dl_debug_state();
 	__release_ptc();
 	if (p) gencnt++;
 	pthread_rwlock_unlock(&lock);

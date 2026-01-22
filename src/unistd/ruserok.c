@@ -53,7 +53,9 @@
 
 static int __ivaliduser_sa(FILE *, struct sockaddr *, socklen_t, const char *, const char *);
 static int __icheckhost(struct sockaddr *, socklen_t, const char *);
+#if 0
 static char *__gethostloop(struct sockaddr *, socklen_t);
+#endif
 static int iruserok_sa(const void *, int, int, const char *, const char *);
 
 int ruserok(const char *rhost, int superuser, const char *ruser, const char *luser)
@@ -158,7 +160,9 @@ int __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 	char *buf;
 	const char *auser, *ahost;
 	int hostok, userok;
+#if 0
 	char *rhost = (char *)-1;
+#endif
 	char domain[HOST_NAME_MAX+1];
 	size_t buflen;
 
@@ -348,6 +352,7 @@ static int __icheckhost(struct sockaddr *raddr, socklen_t salen, const char *lho
  * Do a reverse lookup as well for security. If a loop cannot
  * be found, pack the result of inet_ntoa() into the string.
  */
+#if 0
 static char *__gethostloop(struct sockaddr *raddr, socklen_t salen)
 {
 	static char remotehost[NI_MAXHOST];
@@ -395,3 +400,4 @@ static char *__gethostloop(struct sockaddr *raddr, socklen_t salen)
 	freeaddrinfo(res);
 	return NULL;
 }
+#endif

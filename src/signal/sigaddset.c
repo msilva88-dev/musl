@@ -8,6 +8,10 @@ int sigaddset(sigset_t *set, int sig)
 		errno = EINVAL;
 		return -1;
 	}
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	*set |= 1U << s;
+#elif defined(__linux__)
 	set->__bits[s/8/sizeof *set->__bits] |= 1UL<<(s&8*sizeof *set->__bits-1);
+#endif
 	return 0;
 }

@@ -36,6 +36,8 @@
 extern "C" {
 #endif
 
+#define _BSD_SOURCE
+
 #define __NEED_ino_t
 #define __NEED_mode_t
 #define __NEED_off_t
@@ -44,6 +46,12 @@ extern "C" {
 
 #include <sys/socket.h>
 #include <sys/types.h>
+
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/ucred.h>
+#elif defined(__OpenBSD__)
+#include <sys/ucred.h>
+#endif
 
 #define MOUNT_AFS "afs"
 #if defined(__HyperbolaBSD__)

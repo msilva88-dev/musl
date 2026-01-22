@@ -7,7 +7,9 @@ static volatile int check_pi_result = -1;
 
 int pthread_mutexattr_setprotocol(pthread_mutexattr_t *a, int protocol)
 {
+#if defined(__linux__)
 	int r;
+#endif
 	switch (protocol) {
 	case PTHREAD_PRIO_NONE:
 		a->__attr &= ~8;

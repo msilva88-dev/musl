@@ -22,7 +22,7 @@ LDFLAGS_AUTO =
 LIBCC = -lgcc
 CPPFLAGS =
 CFLAGS =
-CFLAGS_AUTO = -Os -pipe
+CFLAGS_AUTO = -Os -fcx-limited-range -pipe
 CFLAGS_C99FSE = -std=c99 -ffreestanding -nostdinc
 
 AR      = $(CROSS_COMPILE)ar

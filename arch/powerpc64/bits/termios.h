@@ -303,7 +303,7 @@ struct termios {
 #endif
 #endif
 
-#if defined(__HyperbolaBSD__) && defined(__OpenBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #ifdef _BSD_SOURCE
 #define CIGNORE    00000001
 #define CRTS_IFLOW CRTSCTS

@@ -29,17 +29,29 @@ static void fixup(struct statvfs *out, const struct statfs *in)
 {
 	*out = (struct statvfs){0};
 	out->f_bsize = in->f_bsize;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	out->f_frsize = in->f_bsize;
+#elif defined(__linux__)
 	out->f_frsize = in->f_frsize ? in->f_frsize : in->f_bsize;
+#endif
 	out->f_blocks = in->f_blocks;
 	out->f_bfree = in->f_bfree;
 	out->f_bavail = in->f_bavail;
 	out->f_files = in->f_files;
 	out->f_ffree = in->f_ffree;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	out->f_favail = in->f_favail;
+#elif defined(__linux__)
 	out->f_favail = in->f_ffree;
+#endif
 	out->f_fsid = in->f_fsid.__val[0];
 	out->f_flag = in->f_flags;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	out->f_namemax = in->f_namemax;
+#elif defined(__linux__)
 	out->f_namemax = in->f_namelen;
 	out->f_type = in->f_type;
+#endif
 }
 
 int statvfs(const char *restrict path, struct statvfs *restrict buf)

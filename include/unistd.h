@@ -61,6 +61,7 @@ extern "C" {
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <limits.h>
 #ifdef _BSD_SOURCE
 #include <sys/types.h>
 #if defined(__HyperbolaBSD__)
@@ -146,10 +147,8 @@ pid_t getpgid(pid_t);
 int setpgid(pid_t, pid_t);
 pid_t setsid(void);
 pid_t getsid(pid_t);
-#if defined(__linux__)
 char *ttyname(int);
 int ttyname_r(int, char *, size_t);
-#endif
 int isatty(int);
 pid_t tcgetpgrp(int);
 int tcsetpgrp(int, pid_t);

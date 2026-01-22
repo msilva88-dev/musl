@@ -37,7 +37,7 @@ TYPEDEF unsigned _Int64 fsfilcnt_t;
 TYPEDEF unsigned wint_t;
 TYPEDEF unsigned long wctype_t;
 
-#if defined(__OpenBSD__) || defined(__HyperbolaBSD__)
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 TYPEDEF int timer_t;
 #elif defined(__linux__)
 TYPEDEF void * timer_t;

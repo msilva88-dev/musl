@@ -40,7 +40,11 @@ long __syscall_cp_c(syscall_arg_t nr,
 static void _sigaddset(sigset_t *set, int sig)
 {
 	unsigned s = sig-1;
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	*set |= 1U << s;
+#elif defined(__linux__)
 	set->__bits[s/8/sizeof *set->__bits] |= 1UL<<(s&8*sizeof *set->__bits-1);
+#endif
 }
 
 extern hidden const char __cp_begin[1], __cp_end[1], __cp_cancel[1];

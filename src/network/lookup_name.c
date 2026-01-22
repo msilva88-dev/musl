@@ -307,7 +307,11 @@ static int addrcmp(const void *_a, const void *_b)
 
 int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags)
 {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+	int cnt = 0, i;
+#elif defined(__linux__)
 	int cnt = 0, i, j;
+#endif
 
 	*canon = 0;
 	if (name) {

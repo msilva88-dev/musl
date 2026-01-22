@@ -26,7 +26,11 @@ static int checker(void *p)
 int faccessat(int fd, const char *filename, int amode, int flag)
 {
 	if (flag) {
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+		int ret = __syscall(SYS_faccessat, fd, filename, amode, flag);
+#elif defined(__linux__)
 		int ret = __syscall(SYS_faccessat2, fd, filename, amode, flag);
+#endif
 		if (ret != -ENOSYS) return __syscall_ret(ret);
 	}
 
@@ -46,7 +50,7 @@ int faccessat(int fd, const char *filename, int amode, int flag)
 	struct ctx c = { .fd = fd, .filename = filename, .amode = amode, .p = p[1] };
 
 	__block_all_sigs(&set);
-	
+
 	pid = __clone(checker, stack+sizeof stack, 0, &c);
 	__syscall(SYS_close, p[1]);
 

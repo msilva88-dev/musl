@@ -48,11 +48,7 @@ struct tm {
 	int tm_yday;
 	int tm_isdst;
 	long __tm_gmtoff;
-#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-	char *__tm_zone;
-#elif defined(__linux__)
 	const char *__tm_zone;
-#endif
 };
 
 clock_t clock (void);
@@ -142,9 +138,9 @@ int timer_delete (timer_t);
 int timer_settime (timer_t, int, const struct itimerspec *__restrict, struct itimerspec *__restrict);
 int timer_gettime (timer_t, struct itimerspec *);
 int timer_getoverrun (timer_t);
+#endif
 
 extern char *tzname[2];
-#endif
 
 #endif
 

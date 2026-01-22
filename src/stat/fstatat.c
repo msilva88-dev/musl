@@ -146,10 +146,12 @@ int __fstatat(int fd, const char *restrict path, struct stat *restrict st, int f
 {
 	int ret;
 #if defined(SYS_fstatat) || defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#if defined(__linux__)
 	if (sizeof((struct kstat){0}.st_atime_sec) < sizeof(time_t)) {
 		ret = fstatat_statx(fd, path, st, flag);
 		if (ret!=-ENOSYS) return __syscall_ret(ret);
 	}
+#endif
 	ret = fstatat_kstat(fd, path, st, flag);
 #else
 	ret = fstatat_statx(fd, path, st, flag);

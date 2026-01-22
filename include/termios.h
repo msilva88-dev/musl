@@ -23,7 +23,7 @@ typedef unsigned int tcflag_t;
 #endif
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
-#if __BSD_VISIBLE
+#ifdef _BSD_SOURCE
 #define CCEQ(v, c) ((c) == (v) ? (v) != _POSIX_VDISABLE : 0)
 #endif
 #endif

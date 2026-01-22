@@ -13,7 +13,6 @@ int pthread_sigmask(int how, const sigset_t *restrict set, sigset_t *restrict ol
 	if (!ret && old) *old = __siggetoldmask();
 #elif defined(__linux__)
 	ret = -__syscall(SYS_rt_sigprocmask, how, set, old, _NSIG/8);
-#endif
 	if (!ret && old) {
 		if (sizeof old->__bits[0] == 8) {
 			old->__bits[0] &= ~0x380000000ULL;
@@ -22,5 +21,6 @@ int pthread_sigmask(int how, const sigset_t *restrict set, sigset_t *restrict ol
 			old->__bits[1] &= ~0x3UL;
 		}
 	}
+#endif
 	return ret;
 }
