@@ -167,6 +167,10 @@ The implementation of bsdpty (src/bsd/bsdpty.c) is
 Copyright © 1990, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of BSD if header (arch/generic/bits/bsdif.h) is
+Copyright © 1982, 1986, 1989, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of devname without BSD db (src/stdlib/devname.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.

@@ -12,6 +12,7 @@ extern "C" {
 #define __NEED_uint64_t
 
 #include <bits/alltypes.h>
+#include <bits/bsdif.h>
 #endif
 
 #define IF_NAMESIZE 16
