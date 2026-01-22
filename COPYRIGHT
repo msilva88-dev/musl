@@ -238,11 +238,6 @@ The implementation of radixsort (src/stdlib/radixsort.c) is
 Copyright © 1990, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
-The implementation of rcmd (src/unistd/rcmd.c) is
-Copyright © 1995, 1996, 1998 Theo de Raadt, and
-Copyright © 1983, 1993, 1994 The Regents of the University of California.
-It is licensed under a three-clause BSD license.
-
 The implementation of rcmdsh (src/unistd/rcmdsh.c) is
 Copyright © 2001 MagniComp.
 It is licensed under a three-clause BSD license.

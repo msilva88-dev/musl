@@ -287,8 +287,6 @@ pid_t gettid(void);
 mode_t getmode(const void *, mode_t);
 char *getwd(char *) DEPREC_A("getwd is obsolete and unsafe, use getcwd instead");
 int profil(char *, size_t, unsigned long, unsigned int);
-int rcmd(char **, int, const char *, const char *, const char *, int *);
-int rcmd_af(char **, int, const char *, const char *, const char *, int *, int);
 int rcmdsh(char **, int, const char *, const char *, const char *, char *);
 void *setmode(const char *);
 int strtofflags(char **stringp, uint32_t *, uint32_t *);
