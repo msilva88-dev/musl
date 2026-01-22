@@ -247,18 +247,8 @@ The implementation of rcmdsh (src/unistd/rcmdsh.c) is
 Copyright © 2001 MagniComp.
 It is licensed under a three-clause BSD license.
 
-The implementation of rresvport (src/unistd/rresvport.c) is
-Copyright © 1995, 1996, 1998 Theo de Raadt, and
-Copyright © 1983, 1993, 1994 The Regents of the University of California.
-It is licensed under a three-clause BSD license.
-
 The implementation of rthdr (src/network/rthdr.c) is
 Copyright © 1995-1998 WIDE Project.
-It is licensed under a three-clause BSD license.
-
-The implementation of ruserok (src/unistd/ruserok.c) is
-Copyright © 1995, 1996, 1998 Theo de Raadt, and
-Copyright © 1983, 1993, 1994 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
 The implementation of setmode/getmode (src/unistd/setmode.c) is
@@ -365,11 +355,6 @@ It is licensed under a two-clause BSD license.
 
 The implementation of rmd160 header (include/rmd160.h) is
 Copyright © 2001 Markus Friedl.
-It is licensed under a two-clause BSD license.
-
-The implementation of RPC bindresvport (src/internal/bindresvport.c) is
-Copyright © 1996 Jason Downs, and
-Copyright © 1998 Theo de Raadt.
 It is licensed under a two-clause BSD license.
 
 The implementation of setproctitle (src/bsd/setproctitle.c) is
