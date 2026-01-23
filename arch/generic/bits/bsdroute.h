@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1982, 1986, 1989, 1993
+ * Copyright (c) 1980, 1986, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,43 +27,31 @@
  * SUCH DAMAGE.
  */
 
-/* bsdif header from OpenBSD 7.0 source code: sys/sys/net/if.h */
+/* bsdroute header from OpenBSD 7.0 source code: sys/sys/net/route.h */
 
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define _BSD_SOURCE
 #include <sys/types.h>
 
-struct if_data {
-	u_char ifi_type, ifi_addrlen, ifi_hdrlen, ifi_link_state;
-	u_int32_t ifi_mtu, ifi_metric, ifi_rdomain;
-	u_int64_t ifi_baudrate, ifi_ipackets, ifi_ierrors, ifi_opackets;
-	u_int64_t ifi_oerrors, ifi_collisions, ifi_ibytes, ifi_obytes;
-	u_int64_t ifi_imcasts, ifi_omcasts, ifi_iqdrops, ifi_oqdrops;
-	u_int64_t ifi_noproto;
-	u_int32_t ifi_capabilities;
-	struct timeval ifi_lastchange;
+struct rt_metrics {
+	u_int64_t rmx_pksent;
+	int64_t rmx_expire;
+	u_int rmx_locks, rmx_mtu, rmx_refcnt;
+	/* deprecated */
+	u_int rmx_hopcount, rmx_recvpipe, rmx_sendpipe, rmx_ssthresh;
+	u_int rmx_rtt, rmx_rttvar, rmx_pad;
 };
 
-struct if_msghdr {
-	u_short ifm_msglen;
-	u_char ifm_version, ifm_type;
-	u_short ifm_hdrlen, ifm_index, ifm_tableid;
-	u_char ifm_pad1, ifm_pad2;
-	int ifm_addrs, ifm_flags, ifm_xflags;
-	struct if_data ifm_data;
-};
-
-struct if_nameindex_msg {
-	unsigned int if_index;
-	char if_name[IF_NAMESIZE];
-};
-
-struct ifa_msghdr {
-	u_short ifam_msglen;
-	u_char ifam_version, ifam_type;
-	u_short ifam_hdrlen, ifam_index, ifam_tableid;
-	u_char ifam_pad1, ifam_pad2;
-	int ifam_addrs, ifam_flags, ifam_metric;
+struct rt_msghdr {
+	u_short rtm_msglen;
+	u_char rtm_version, rtm_type;
+	u_short rtm_hdrlen, rtm_index, rtm_tableid;
+	u_char rtm_priority, rtm_mpls;
+	int rtm_addrs, rtm_flags, rtm_fmask;
+	pid_t rtm_pid;
+	int rtm_seq, rtm_errno;
+	u_int rtm_inits;
+	struct rt_metrics rtm_rmx;
 };
 
 #endif

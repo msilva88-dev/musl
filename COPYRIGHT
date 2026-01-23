@@ -171,6 +171,10 @@ The implementation of BSD if header (arch/generic/bits/bsdif.h) is
 Copyright © 1982, 1986, 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
 
+The implementation of BSD route header (arch/generic/bits/bsdif.h) is
+Copyright © 1980, 1986, 1993 The Regents of the University of California.
+It is licensed under a three-clause BSD license.
+
 The implementation of devname without BSD db (src/stdlib/devname.c) is
 Copyright © 1989, 1993 The Regents of the University of California.
 It is licensed under a three-clause BSD license.
@@ -410,6 +414,15 @@ The implementation of uuid_to_string (src/misc/uuid_to_string.c) is
 Copyright © 2002 Marcel Moolenaar, and
 Copyright © 2002 Hiten Mahesh Pandya.
 It is licensed under a two-clause BSD license.
+
+The implementation of BSD getifaddrs (src/bsd/getifaddrs.c) is
+Copyright © 1995, 1999 Berkeley Software Design, Inc.
+It is licensed under a one-clause BSD license.
+
+The implementation of BSD if_nameindex (src/bsd/if_nameindex.c) is
+Copyright © 2015 Claudio Jeker <claudio@openbsd.org>, and
+Copyright © 1997, 2000 Berkeley Software Design, Inc.
+It is licensed under a one-clause BSD license.
 
 The implementation of arc4random (src/stdlib/arc4random.c) is
 Copyright © 1996, David Mazieres <dm@uun.org>,

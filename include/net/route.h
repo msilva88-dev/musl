@@ -10,6 +10,9 @@ extern "C" {
 #include <sys/types.h>
 #include <netinet/in.h>
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#include <bits/bsdroute.h>
+#endif
 
 struct rtentry {
 	unsigned long int rt_pad1;
@@ -116,6 +119,69 @@ struct in6_rtmsg {
 #define RTMSG_CONTROL		0x40
 
 #define RTMSG_AR_FAILED		0x51
+
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+#define RTM_VERSION 5
+
+enum {
+	RTA_DST = 01,
+	RTA_GATEWAY = 02,
+	RTA_NETMASK = 04,
+	RTA_GENMASK = 010,
+	RTA_IFP = 020,
+	RTA_IFA = 040,
+	RTA_AUTHOR = 0100,
+	RTA_BRD = 0200,
+	RTA_SRC = 0400,
+	RTA_SRCMASK = 01000,
+	RTA_LABEL = 02000,
+	RTA_BFD = 04000,
+	RTA_DNS = 010000,
+	RTA_STATIC = 020000,
+	RTA_SEARCH = 040000
+};
+
+enum {
+	RTAX_DST,
+	RTAX_GATEWAY,
+	RTAX_NETMASK,
+	RTAX_GENMASK,
+	RTAX_IFP,
+	RTAX_IFA,
+	RTAX_AUTHOR,
+	RTAX_BRD,
+	RTAX_SRC,
+	RTAX_SRCMASK,
+	RTAX_LABEL,
+	RTAX_BFD,
+	RTAX_DNS,
+	RTAX_STATIC,
+	RTAX_SEARCH,
+	RTAX_MAX
+};
+
+enum {
+	RTM_ADD = 01,
+	RTM_DELETE,
+	RTM_CHANGE,
+	RTM_GET,
+	RTM_LOSING,
+	RTM_REDIRECT,
+	RTM_MISS,
+	RTM_RESOLVE = 013,
+	RTM_NEWADDR,
+	RTM_DELADDR,
+	RTM_IFINFO,
+	RTM_IFANNOUNCE,
+	RTM_DESYNC,
+	RTM_INVALIDATE,
+	RTM_BFD,
+	RTM_PROPOSAL,
+	RTM_CHGADDRATTR,
+	RTM_80211INFO,
+	RTM_SOURCE
+};
+#endif
 
 #ifdef __cplusplus
 }

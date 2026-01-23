@@ -528,6 +528,19 @@ struct linger {
 #define SCM_CREDENTIALS 0x02
 #endif
 
+#if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
+enum {
+	NET_RT_DUMP = 1,
+	NET_RT_FLAGS,
+	NET_RT_IFLIST,
+	NET_RT_STATS,
+	NET_RT_TABLE,
+	NET_RT_IFNAMES,
+	NET_RT_SOURCE,
+	NET_RT_MAXID
+};
+#endif
+
 struct sockaddr {
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 	uint8_t sa_len;

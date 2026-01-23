@@ -7,6 +7,8 @@ extern "C" {
 
 #include <features.h>
 
+#define IF_NAMESIZE 16
+
 #if defined(__HyperbolaBSD__) || defined(__OpenBSD__)
 #define __NEED_int64_t
 #define __NEED_uint64_t
@@ -14,8 +16,6 @@ extern "C" {
 #include <bits/alltypes.h>
 #include <bits/bsdif.h>
 #endif
-
-#define IF_NAMESIZE 16
 
 struct if_nameindex {
 	unsigned int if_index;
