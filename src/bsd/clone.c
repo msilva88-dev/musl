@@ -2,6 +2,11 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <sched.h>
+#if defined(__HyperbolaBSD__)
+#include <hyperbk/queue.h>
+#elif defined(__OpenBSD__)
+#include <sys/queue.h>
+#endif
 #include "pthread_impl.h"
 #include "syscall.h"
 #include "lock.h"
@@ -11,10 +16,6 @@ struct clone_start_args {
 	int (*func)(void *);
 	void *arg;
 	sigset_t sigmask;
-};
-
-struct bsd_pthread_padd {
-	int *__empty;
 };
 
 static int clone_start(void *arg)
@@ -181,7 +182,7 @@ static int __bsdclone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 #endif
 
 		// This structures is required by bsd_tib pointer
-		struct bsd_pthread_unused {
+		struct bsd_pthread {
 			struct { // __sem
 				_atomic_lock_t lock;
 				// waitcount and value
@@ -196,14 +197,8 @@ static int __bsdclone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 			void *arg;
 			char name[32];
 			struct stack *stack;
-			struct { // LIST ENTRY
-				struct bsd_pthread_padd *le_next;
-				struct bsd_pthread_padd **le_prev;
-			} threads;
-			struct { // TAILQ ENTRY
-				struct bsd_pthread_padd *tqe_next;
-				struct bsd_pthread_padd **tqe_prev;
-			} waiting;
+			LIST_ENTRY(bsd_pthread) threads;
+			TAILQ_ENTRY(bsd_pthread) waiting;
 			void *blocking_cond; // pthread_cond *
 			struct { // pthread_attr
 				void *stack_addr;
@@ -246,9 +241,25 @@ static int __bsdclone(int (*fn)(void *), void *stack, int flags, void *arg, ...)
 		} param = { NULL, NULL, NULL, NULL, NULL };
 
 		if (flags & CLONE_SETTLS) {
-			size_t ptp_size = sizeof(struct bsd_pthread_padd);
-			bsd_tib = malloc(ptp_size);
-			//bsd_tib = __init_tls(&ptp_size);
+			size_t tls_size = sizeof(struct bsd_pthread);
+			void *tls_mem = (void *)__syscall(
+				SYS_mmap,
+				0,
+				tls_size,
+				PROT_READ | PROT_WRITE,
+				MAP_ANONYMOUS | MAP_PRIVATE,
+				-1,
+				0L,
+				0
+			);
+
+			if ((long)tls_mem < 0) {
+				return ENOMEM;
+			}
+
+			__init_tls(&tls_size);
+
+			bsd_tib = __copy_tls(tls_mem);
 
 			if (bsd_tib == NULL) {
 				return ENOMEM;
